@@ -1,0 +1,115 @@
+[Dell-001@L7290 ~\Downloads\SerialSplitter]$ .\hub4com.exe --help
+Usage:
+  C:\Users\Dell-001\Downloads\SerialSplitter\hub4com.exe [options] <port0> [options] [<port1> ...]
+
+Common options:
+  --load=[<file>][,<begin>[,<end>]][:<prms>]
+                           - load arguments (one argument per line) between
+                             <begin> and <end> lines from a file <file> (use
+                             standard input if empty) and insert them into the
+                             command line. The syntax of <prms> is
+                             <PRM1>[,<PRM2>...], where <PRMn> will replace
+                             %%n%% in the arguments. Do loading since begining
+                             if <begin> is empty. Do loading till end-of-file
+                             if <end> is empty. Ignore arguments begining with
+                             '#'. <file> will replace %%0%% in the arguments.
+                             It is possible up to 256 recursive loads.
+  --help                   - show this help.
+  --help=*                 - show help for all modules.
+  --help=<LstM>            - show help for modules listed in <LstM>.
+
+  The syntax of <LstM> above is <MID0>[,<MID1>...], where <MIDn> is a module
+  name.
+
+Route options:
+  --route=<LstR>:<LstL>    - send data received from any port listed in <LstR>
+                             to all ports (except itself) listed in <LstL>.
+  --bi-route=<LstR>:<LstL> - send data received from any port listed in <LstR>
+                             to all ports (except itself) listed in <LstL> and
+                             vice versa.
+  --echo-route=<Lst>       - send data received from any port listed in <Lst>
+                             back to itself via all attached filters.
+  --no-route=<LstR>:<LstL> - do not send data received from any port listed in
+                             <LstR> to the ports listed in <LstL>.
+  --fc-route=<LstR>:<LstL> - enable flow control route from any port listed in
+                             <LstR> to all ports listed in <LstL>.
+  --no-default-fc-route=<LstR>:<LstL>
+                             disable default flow control route from any port
+                             listed in <LstR> to all ports listed in <LstL>
+                             (default flow control route enabled from P1 to P2
+                             if enabled data route from P1 to P2 and from P2 to
+                             P1).
+
+  If no any route option specified, then the options --route=0:All --route=1:0
+  used by default (route data from first port to all ports and from second
+  port to first port).
+
+Filter options:
+  --create-filter=<MID>[,<FGID>[,<FN>]][:<Args>]
+                           - by using filter module with name <MID> create a
+                             filter with name <FN> (<FN> is <FGID> by default)
+                             and put arguments <Args> (if any) to the filter.
+                             Add filter to the end of filter group <FGID>
+                             (<FGID> is <MID> by default). Any filter can
+                             accept described above option --load=[...].
+  --add-filters=<Lst>:<LstF>
+                           - attach the filters listed in <LstF> to the ports
+                             listed in <Lst>. These filters will handle the
+                             data by IN method just after receiving from ports
+                             listed in <Lst> or by OUT method just before
+                             sending to ports listed in <Lst>.
+
+  The syntax of <LstF> above is <F1>[,<F2>...], where the syntax of <Fn> is
+  <FGID>[.<Method>][(<Lst>)], where <FGID> is a filter group, <Method> is IN or
+  OUT and <Lst> lists the source ports (the data only from them will be handled
+  by OUT method). The <FGID> w/o <Method> is equivalent to adding IN and OUT
+  for each filter from the group <FGID>. If the list of the source ports is not
+  specified then the data routed from any port will be handled by OUT method.
+
+Port options:
+  --use-driver=<MID>       - use driver module with name <MID> to create the
+                             following ports (<MID> is serial by default).
+
+The syntax of <LstR>, <LstL> and <Lst> above is <P1>[,<P2>...], where <Pn> is a
+zero based position number of port or All.
+
+List of filter modules:
+  awakseq - Connect on awakening sequence filter
+  crypt - Encrypting/decrypting filter
+  echo - Echo filter (alternative to --echo-route option)
+  escinsert - Escaped datastream generating filter
+  escparse - Escaped data stream parsing filter
+  linectl - Baudrate and line control mapping filter
+  lsrmap - LSR mapping filter
+  pin2con - Connect or disconnect on changing of line or modem state filter
+  pinmap - Pinouts mapping filter
+  purge - Purge mapping filter
+  tag - Tag filter
+  tag-sync - Tag synchronization filter
+  telnet - Telnet protocol filter
+  trace - Trace filter
+
+List of driver modules:
+  connector - Connectable fake port driver
+  serial - Serial port driver
+  tcp - TCP port driver
+
+Examples:
+  C:\Users\Dell-001\Downloads\SerialSplitter\hub4com.exe --route=All:All \\.\CNCB0 \\.\CNCB1 \\.\CNCB2
+    - receive data from CNCB0 and send it to CNCB1 and CNCB2,
+      receive data from CNCB1 and send it to CNCB0 and CNCB2,
+      receive data from CNCB2 and send it to CNCB0 and CNCB1.
+  C:\Users\Dell-001\Downloads\SerialSplitter\hub4com.exe --echo-route=0 COM2
+    - receive data from COM2 and send it back to COM2.
+  C:\Users\Dell-001\Downloads\SerialSplitter\hub4com.exe --load=
+      --echo-route=0
+      COM2
+      ^Z
+    - the same as above.
+  C:\Users\Dell-001\Downloads\SerialSplitter\hub4com.exe --load=,_BEGIN_,_END_
+      blah blah blah
+      _BEGIN_
+      --echo-route=0
+      COM2
+      _END_
+    - the same as above.
