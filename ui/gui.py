@@ -20,13 +20,13 @@ from PyQt6.QtGui import QFont, QIcon, QColor, QAction
 
 from core.components import (
     ResponsiveWindowManager, SerialPortInfo, PortScanner, Hub4comProcess,
-    WINREG_AVAILABLE, PortConfig, Com0comProcess
+    WINREG_AVAILABLE, PortConfig, Com0comProcess, DefaultConfig
 )
 from ui.theme.theme import (
     ThemeManager, AppStyles, AppFonts, AppDimensions, AppColors, 
     AppMessages, IconManager
 )
-from ui.dialogs import PortScanDialog, Com0ComHelpDialog, PairCreationDialog
+from ui.dialogs import PortScanDialog, Com0ComHelpDialog, PairCreationDialog, ConfigurationSummaryDialog, LaunchDialog
 from ui.widgets import OutputPortWidget
 
 
@@ -115,6 +115,7 @@ class Hub4comGUI(QMainWindow):
         """Setup initial timers"""
         QTimer.singleShot(50, self.update_route_mode_button)
         QTimer.singleShot(100, self.update_preview)
+        QTimer.singleShot(500, self.initialize_default_configuration)  # Initialize default config early
         QTimer.singleShot(1000, self._safe_refresh_ports)
         QTimer.singleShot(1500, self.add_output_port)
         QTimer.singleShot(2000, self.list_com0com_pairs)
@@ -893,6 +894,169 @@ class Hub4comGUI(QMainWindow):
     # COM0COM MANAGEMENT
     # ========================================================================
     
+    def initialize_default_configuration(self):
+        """Initialize application with default COM pair configuration"""
+        if not WINREG_AVAILABLE:
+            return
+            
+        self._update_status("Initialising virtual COM port configuration...", getattr(self, 'com0com_status', None))
+        
+        # Check for existing pairs and create only missing ones
+        self.default_config_thread = Com0comProcess([], "check_and_create_default")
+        self.default_config_thread.command_completed.connect(self._on_default_config_completed)
+        self.default_config_thread.start()
+    
+    def _on_default_config_completed(self, success: bool, output: str):
+        """Handle default configuration completion"""
+        if success:
+            # Parse the actual created pairs from the output
+            created_pairs = []
+            existing_pairs = []
+            
+            # Check for newly created pairs
+            if "Successfully created new virtual COM port pairs:" in output:
+                # Extract the pairs from the message
+                import re
+                # Match patterns like "COM131<->COM132"
+                pair_matches = re.findall(r'COM\d+<->COM\d+', output)
+                # Convert to the expected format with ↔
+                created_pairs = [pair.replace('<->', '↔') for pair in pair_matches]
+                self._update_status(f"Virtual COM pairs created successfully: {', '.join(created_pairs)}", getattr(self, 'com0com_status', None))
+            
+            # Check for existing pairs
+            if "Found existing virtual COM port pairs:" in output:
+                # Extract existing pairs
+                import re
+                pair_matches = re.findall(r'COM\d+<->COM\d+', output)
+                existing_pairs = [pair.replace('<->', '↔') for pair in pair_matches]
+                if not created_pairs:  # Only show this message if we didn't create new ones
+                    self._update_status(f"Virtual COM pairs verified: {', '.join(existing_pairs)} ready", getattr(self, 'com0com_status', None))
+            
+            # Store the parsed info for the dialog
+            self.created_pairs_info = created_pairs
+            self.existing_pairs_info = existing_pairs
+            
+            # Refresh the pairs list to show newly created pairs
+            QTimer.singleShot(500, self.list_com0com_pairs)
+            # Pre-populate output widgets with default ports
+            QTimer.singleShot(1000, self._populate_default_output_ports)
+            # Show configuration summary
+            QTimer.singleShot(1500, self._show_configuration_summary)
+        else:
+            self._update_status("Virtual COM pair configuration encountered issues - checking existing pairs", getattr(self, 'com0com_status', None))
+            self.created_pairs_info = []
+            self.existing_pairs_info = []
+            # Still try to populate defaults in case pairs already exist
+            QTimer.singleShot(1000, self._populate_default_output_ports)
+            QTimer.singleShot(1500, self._show_configuration_summary)
+
+
+    def _populate_default_output_ports(self):
+        """Pre-populate output port widgets with default COM131 and COM141"""
+        default_config = DefaultConfig()
+        
+        # Ensure we have at least 2 output port widgets
+        while len(self.output_port_widgets) < len(default_config.output_mapping):
+            self.add_output_port()
+        
+        # Set the default ports and baud rates
+        for i, port_config in enumerate(default_config.output_mapping):
+            if i < len(self.output_port_widgets):
+                widget = self.output_port_widgets[i]
+                # Set port name
+                if hasattr(widget, 'port_combo') and widget.port_combo:
+                    # Add the port to combo if not present and select it
+                    port_name = port_config["port"]
+                    combo = widget.port_combo
+                    
+                    # Check if port already exists in combo
+                    port_index = combo.findText(port_name)
+                    if port_index == -1:
+                        # Add port to combo
+                        combo.addItem(port_name)
+                        port_index = combo.findText(port_name)
+                    
+                    if port_index != -1:
+                        combo.setCurrentIndex(port_index)
+                
+                # Set baud rate
+                if hasattr(widget, 'baud_combo') and widget.baud_combo:
+                    baud_rate = port_config["baud"]
+                    baud_index = widget.baud_combo.findText(baud_rate)
+                    if baud_index != -1:
+                        widget.baud_combo.setCurrentIndex(baud_index)
+        
+        # Enable two-way routing by default if route mode button exists
+        if hasattr(self, 'route_mode_btn'):
+            # Set to two-way mode
+            self.is_two_way = True
+            self.update_route_mode_button()
+        
+        # Update status to show configuration is ready
+        self._update_status("Output routing configured: COM131 & COM141 @ 115200 baud, two-way mode enabled", getattr(self, 'com0com_status', None))
+        
+        # Update preview after configuration
+        QTimer.singleShot(200, self.update_preview)
+    
+    def _show_configuration_summary(self):
+        """Show launch dialog to user"""
+        try:
+            # Use the parsed pairs info
+            created_pairs = getattr(self, 'created_pairs_info', [])
+            existing_pairs = getattr(self, 'existing_pairs_info', [])
+            
+            # Debug logging
+            print(f"DEBUG: Showing launch dialog with created_pairs: {created_pairs}, existing_pairs: {existing_pairs}")
+            
+            # Import LaunchDialog here to avoid any potential circular import issues
+            from ui.dialogs.launch_dialog import LaunchDialog
+            
+            # Show the launch dialog
+            dialog = LaunchDialog(
+                parent=self,
+                created_pairs=created_pairs,
+                existing_pairs=existing_pairs
+            )
+            dialog.exec()
+            
+        except ImportError as e:
+            print(f"Import error in _show_configuration_summary: {e}")
+            # Try alternative import path
+            try:
+                from ui.dialogs import LaunchDialog
+                dialog = LaunchDialog(
+                    parent=self,
+                    created_pairs=created_pairs if 'created_pairs' in locals() else [],
+                    existing_pairs=existing_pairs if 'existing_pairs' in locals() else []
+                )
+                dialog.exec()
+            except Exception as e2:
+                print(f"Alternative import also failed: {e2}")
+                # Fallback in case dialog fails
+                self._show_message(
+                    "Configuration Summary",
+                    "Virtual COM port configuration completed successfully.\n\n"
+                    "• COM131↔COM132 and COM141↔COM142 pairs are ready\n"
+                    "• Output routing: COM131 & COM141 @ 115200 baud\n"
+                    "• Connect external applications to COM132 & COM142",
+                    "info"
+                )
+        except Exception as e:
+            # Log the actual error for debugging
+            print(f"Error in _show_configuration_summary: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Fallback in case dialog fails
+            self._show_message(
+                "Configuration Summary",
+                "Virtual COM port configuration completed successfully.\n\n"
+                "• COM131↔COM132 and COM141↔COM142 pairs are ready\n"
+                "• Output routing: COM131 & COM141 @ 115200 baud\n"
+                "• Connect external applications to COM132 & COM142",
+                "info"
+            )
+            
     def list_com0com_pairs(self):
         """List all com0com port pairs"""
         self._update_status(AppMessages.LISTING_PAIRS, self.com0com_status)
@@ -1219,14 +1383,14 @@ class Hub4comGUI(QMainWindow):
         ]
         
         for param, display_name in settings_config:
-            status = "ENABLED" if current_settings.get(param) == "yes" else "DISABLED"
+            status = "" if current_settings.get(param) == "yes" else ""
             menu.addAction(f"{display_name}: {status}").setEnabled(False)
             
             if current_settings.get(param) == "yes":
-                menu.addAction(f"   > Turn OFF {display_name}", 
+                menu.addAction(f"☑ {display_name}", 
                              partial(self.quick_modify_pair, param, "no"))
             else:
-                menu.addAction(f"   > Turn ON {display_name}", 
+                menu.addAction(f"☐ {display_name}", 
                              partial(self.quick_modify_pair, param, "yes"))
             menu.addSeparator()
         
@@ -1288,33 +1452,33 @@ class Hub4comGUI(QMainWindow):
         menu = QMenu(self)
         
         # Header
-        header_action = menu.addAction("📋 Route Mode Configuration")
+        header_action = menu.addAction("Route Mode Configuration")
         header_action.setEnabled(False)
         menu.addSeparator()
         
         # Basic modes section
-        basic_header = menu.addAction("🔄 BASIC MODES")
+        basic_header = menu.addAction("Basic Modes")
         basic_header.setEnabled(False)
         
         # One-way mode
-        one_way_action = menu.addAction("    ● One-Way Splitting" if self.route_settings['mode'] == 'one_way' else "    ○ One-Way Splitting")
+        one_way_action = menu.addAction("    ☑ One-Way Splitting" if self.route_settings['mode'] == 'one_way' else "    ☐ One-Way Splitting")
         one_way_action.triggered.connect(lambda: self.set_route_mode('one_way'))
         one_way_action.setToolTip("Send data from incoming port to all outgoing ports only")
         
         # Two-way mode
-        two_way_action = menu.addAction("    ● Two-Way Communication" if self.route_settings['mode'] == 'two_way' else "    ○ Two-Way Communication")
+        two_way_action = menu.addAction("    ☑ Two-Way Communication" if self.route_settings['mode'] == 'two_way' else "    ☐ Two-Way Communication")
         two_way_action.triggered.connect(lambda: self.set_route_mode('two_way'))
         two_way_action.setToolTip("Allow data to flow both ways between incoming and outgoing ports")
         
         # Full network mode
-        network_action = menu.addAction("    ● Full Network Mode" if self.route_settings['mode'] == 'full_network' else "    ○ Full Network Mode")
+        network_action = menu.addAction("    ☑ Full Network Mode" if self.route_settings['mode'] == 'full_network' else "    ☐ Full Network Mode")
         network_action.triggered.connect(lambda: self.set_route_mode('full_network'))
         network_action.setToolTip("All ports can communicate with each other (like a network hub)")
         
         menu.addSeparator()
         
         # Advanced options section
-        advanced_header = menu.addAction("⚙️ ADVANCED OPTIONS")
+        advanced_header = menu.addAction("Advanced Modes")
         advanced_header.setEnabled(False)
         
         # Echo option
@@ -1338,7 +1502,7 @@ class Hub4comGUI(QMainWindow):
         menu.addSeparator()
         
         # Help option
-        help_action = menu.addAction("❓ What do these settings do?")
+        help_action = menu.addAction("Help")
         help_action.triggered.connect(self.show_route_help)
         
         # Show menu
@@ -1380,7 +1544,7 @@ class Hub4comGUI(QMainWindow):
         help_text = """
 HUB4COM Route Mode Guide
 
-🔄 BASIC MODES:
+    Basic Modes:
 
 • One-Way Splitting (Default)
   Data flows FROM incoming port TO all outgoing ports only.
@@ -1394,7 +1558,7 @@ HUB4COM Route Mode Guide
   All ports can talk to all other ports (like a network hub).
   Example: Multiple devices all communicating with each other
 
-⚙️ ADVANCED OPTIONS:
+    Advanced Options:
 
 • Echo Back to Source
   Sends received data back to the same port it came from.
@@ -1408,7 +1572,7 @@ HUB4COM Route Mode Guide
   Turns off automatic flow control management.
   Only for advanced users who need custom flow control.
 
-💡 RECOMMENDATIONS:
+   Recommendations:
 - Start with "One-Way Splitting" for most applications
 - Use "Two-Way Communication" when devices need to respond
 - Enable "Flow Control" only if both devices support it
@@ -1424,15 +1588,7 @@ HUB4COM Route Mode Guide
         help_display = ThemeManager.create_textedit("console_large")
         help_display.setReadOnly(True)
         help_display.setPlainText(help_text.strip())
-        layout.addWidget(help_display)
-        
-        # Close button
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        close_btn = ThemeManager.create_button("Close", dialog.accept)
-        button_layout.addWidget(close_btn)
-        layout.addLayout(button_layout)
-        
+        layout.addWidget(help_display)        
         dialog.exec()
     
     # ========================================================================

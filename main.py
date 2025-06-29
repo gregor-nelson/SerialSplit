@@ -62,12 +62,11 @@ class Hub4comGUIWithTray(Hub4comGUI):
             event.ignore()
             self.hide()
             self.tray_icon.showMessage(
-                "Hub4com Launcher",
+                "Serial Port Splitter",
                 "Application minimized to tray",
                 QSystemTrayIcon.MessageIcon.Information,
                 2000
             )
-
 
 def main():
     """Main entry point for the Hub4com Launcher application"""
@@ -77,13 +76,7 @@ def main():
     # Set application properties
     app.setApplicationName("Hub4com Launcher with Port Scanner & Baud Rate Support")
     app.setApplicationVersion("0.1")
-    
-    # Set dark theme for the main window
-    palette = QPalette()
-    palette.setColor(QPalette.ColorRole.Window, QColor("#282c34"))  # One Dark background
-    palette.setColor(QPalette.ColorRole.WindowText, QColor("#abb2bf"))  # One Dark text
-    app.setPalette(palette)
-    
+
     # Create system tray icon
     app_icon = create_app_icon()
     tray_icon = QSystemTrayIcon(app_icon)
@@ -98,7 +91,6 @@ def main():
     
     # Create and show main window
     window = Hub4comGUIWithTray(tray_icon)
-    window.setStyleSheet("QMainWindow { background-color: #282c34; }")  # Ensure QMainWindow is dark
     window.setWindowIcon(app_icon)
     
     # Connect tray actions
@@ -107,7 +99,7 @@ def main():
     tray_icon.activated.connect(lambda reason: window.show_window() if reason == QSystemTrayIcon.ActivationReason.DoubleClick else None)
     
     tray_icon.setContextMenu(tray_menu)
-    tray_icon.setToolTip("Hub4com Launcher")
+    tray_icon.setToolTip("Virtual Port Splitter")
     tray_icon.show()
     
     window.show()
