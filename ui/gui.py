@@ -122,31 +122,20 @@ class Hub4comGUI(QMainWindow):
     # ========================================================================
     # UI HELPER METHODS
     # ========================================================================
-    
     def _create_groupbox_with_layout(self, title: str, layout_class=QVBoxLayout) -> tuple:
         """Create a styled groupbox with layout"""
         group = ThemeManager.create_groupbox(title)
         layout = layout_class(group) if layout_class else None
         if layout:
             layout.setSpacing(AppDimensions.SPACING_MEDIUM)
-            margins = ThemeManager.get_standard_margins()
-            layout.setContentsMargins(*margins)
+            ThemeManager.set_widget_margins(layout, "standard")
         return group, layout
-    
-    def _add_separator(self, layout: QVBoxLayout):
-        """Add a horizontal separator to layout"""
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        line.setStyleSheet(f"""
-            QFrame {{
-                color: {AppColors.BORDER_LIGHT};
-                background-color: {AppColors.BORDER_LIGHT};
-                max-height: 1px;
-            }}
-        """)
-        layout.addWidget(line)
-    
+        
+    def _add_separator(self, layout: QVBoxLayout, orientation: str = "horizontal"):
+        """Add a themed separator to layout"""
+        separator = ThemeManager.create_separator(orientation)
+        layout.addWidget(separator)
+
     def _show_message(self, title: str, message: str, msg_type: str = "info"):
         """Show message box with specified type"""
         msg_funcs = {
@@ -167,15 +156,13 @@ class Hub4comGUI(QMainWindow):
     # ========================================================================
     # UI SECTION BUILDERS
     # ========================================================================
-    
     def _create_virtual_ports_section(self) -> QGroupBox:
         """Create virtual ports management section"""
-        group, layout = self._create_groupbox_with_layout(
-            "Com0com Configuration"
-        )
+        group, layout = self._create_groupbox_with_layout("Com0com Configuration")
         
         # Control buttons
         buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         
         # Action buttons (refresh/create)
         action_buttons = [
@@ -189,19 +176,8 @@ class Hub4comGUI(QMainWindow):
             btn.setEnabled(enabled)
             buttons_layout.addWidget(btn)
         
-        # Vertical separator
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.VLine)
-        separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setStyleSheet(f"""
-            QFrame {{
-                color: {AppColors.BORDER_DEFAULT};
-                background-color: {AppColors.BORDER_DEFAULT};
-                max-width: 1px;
-                margin: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-            }}
-        """)
-        buttons_layout.addWidget(separator)
+        # Vertical separator using theme
+        buttons_layout.addWidget(ThemeManager.create_separator("vertical"))
         
         # Management buttons (delete/settings/help)
         management_buttons = [
@@ -222,15 +198,8 @@ class Hub4comGUI(QMainWindow):
             elif icon_name == "settings":
                 self.settings_btn = btn
         
-        # Status label (inline with control buttons, matching hub4com style)
-        self.com0com_status = ThemeManager.create_label(AppMessages.READY, "status")
-        self.com0com_status.setStyleSheet(f"""
-            QLabel {{
-                color: {AppColors.TEXT_DISABLED};
-                font-style: italic;
-                margin-left: {AppDimensions.PADDING_MEDIUM};
-            }}
-        """)
+        # Status label using theme
+        self.com0com_status = ThemeManager.create_status_label_inline(AppMessages.READY)
         buttons_layout.addWidget(self.com0com_status)
         buttons_layout.addStretch()
         layout.addLayout(buttons_layout)
@@ -255,6 +224,7 @@ class Hub4comGUI(QMainWindow):
         
         # Unified control bar - all hub4com controls in one row
         controls_layout = QHBoxLayout()
+        controls_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         
         # Port scanning buttons
         scan_buttons = [
@@ -268,19 +238,8 @@ class Hub4comGUI(QMainWindow):
             btn.setEnabled(enabled)
             controls_layout.addWidget(btn)
         
-        # Separator
-        separator1 = QFrame()
-        separator1.setFrameShape(QFrame.Shape.VLine)
-        separator1.setFrameShadow(QFrame.Shadow.Sunken)
-        separator1.setStyleSheet(f"""
-            QFrame {{
-                color: {AppColors.BORDER_DEFAULT};
-                background-color: {AppColors.BORDER_DEFAULT};
-                max-width: 1px;
-                margin: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-            }}
-        """)
-        controls_layout.addWidget(separator1)
+        # Add themed separator
+        controls_layout.addWidget(ThemeManager.create_separator("vertical"))
         
         # Port management buttons
         port_buttons = [
@@ -294,23 +253,11 @@ class Hub4comGUI(QMainWindow):
             btn.setEnabled(enabled)
             controls_layout.addWidget(btn)
             
-            # Store reference for remove all button
             if icon_name == "delete":
                 self.remove_all_ports_btn = btn
         
-        # Separator
-        separator2 = QFrame()
-        separator2.setFrameShape(QFrame.Shape.VLine)
-        separator2.setFrameShadow(QFrame.Shadow.Sunken)
-        separator2.setStyleSheet(f"""
-            QFrame {{
-                color: {AppColors.BORDER_DEFAULT};
-                background-color: {AppColors.BORDER_DEFAULT};
-                max-width: 1px;
-                margin: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-            }}
-        """)
-        controls_layout.addWidget(separator2)
+        # Add another separator
+        controls_layout.addWidget(ThemeManager.create_separator("vertical"))
         
         # Configuration checkboxes
         self.disable_cts = ThemeManager.create_checkbox("Disable CTS Handshaking")
@@ -324,59 +271,31 @@ class Hub4comGUI(QMainWindow):
         self.sync_baud_rates.setToolTip("Set all ports to the same baud rate automatically")
         controls_layout.addWidget(self.sync_baud_rates)
         
-        # Route mode dropdown
-        self.route_mode_btn = ThemeManager.create_button("Route Mode ▼", self.show_route_options_menu)
-        self.route_mode_btn.setToolTip("Configure data routing between ports")
+        # Route mode dropdown using theme
+        self.route_mode_btn = ThemeManager.create_route_mode_button('one_way', self.show_route_options_menu)
         controls_layout.addWidget(self.route_mode_btn)
         
         # Initialize route settings
         self.route_settings = {
-            'mode': 'one_way',  # one_way, two_way, full_network
+            'mode': 'one_way',
             'echo_enabled': False,
             'flow_control_enabled': False,
             'disable_default_fc': False
         }
         
-        # Separator
-        separator3 = QFrame()
-        separator3.setFrameShape(QFrame.Shape.VLine)
-        separator3.setFrameShadow(QFrame.Shadow.Sunken)
-        separator3.setStyleSheet(f"""
-            QFrame {{
-                color: {AppColors.BORDER_DEFAULT};
-                background-color: {AppColors.BORDER_DEFAULT};
-                max-width: 1px;
-                margin: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-            }}
-        """)
-        controls_layout.addWidget(separator3)
+        # Another separator
+        controls_layout.addWidget(ThemeManager.create_separator("vertical"))
         
-        # Quick baud rate buttons
-        baud_label = ThemeManager.create_label("Set All:")
-        baud_label.setStyleSheet(f"""
-            QLabel {{
-                color: {AppColors.TEXT_DEFAULT};
-                font-weight: bold;
-                margin-right: {AppDimensions.SPACING_SMALL};
-            }}
-        """)
+        # Quick baud rate section
+        baud_label = ThemeManager.create_section_header_label(AppMessages.BUTTON_SET_ALL)
         controls_layout.addWidget(baud_label)
         
         for rate in Config.QUICK_BAUD_RATES:
-            btn = ThemeManager.create_button(rate, lambda checked, r=rate: self.set_all_baud_rates(r), "compact")
-            btn.setFixedWidth(50)
-            btn.setToolTip(f"Set all ports to {rate} baud")
+            btn = ThemeManager.create_quick_baud_button(rate, self.set_all_baud_rates)
             controls_layout.addWidget(btn)
         
         # Status label
-        self.port_status_label = ThemeManager.create_label(AppMessages.SCANNING)
-        self.port_status_label.setStyleSheet(f"""
-            QLabel {{
-                color: {AppColors.TEXT_DISABLED};
-                font-style: italic;
-                margin-left: {AppDimensions.PADDING_MEDIUM};
-            }}
-        """)
+        self.port_status_label = ThemeManager.create_status_label_inline(AppMessages.SCANNING)
         controls_layout.addWidget(self.port_status_label)
         controls_layout.addStretch()
         
@@ -384,6 +303,7 @@ class Hub4comGUI(QMainWindow):
         
         # Port configuration
         ports_layout = QHBoxLayout()
+        ports_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         ports_layout.addWidget(self._create_incoming_port_section())
         ports_layout.addWidget(self._create_outgoing_ports_section())
         layout.addLayout(ports_layout, 1, 0, 1, 4)
@@ -407,15 +327,8 @@ class Hub4comGUI(QMainWindow):
         self.incoming_baud.currentTextChanged.connect(self.on_incoming_baud_changed)
         layout.addWidget(self.incoming_baud)
         
-        self.incoming_port_type = ThemeManager.create_label("")
-        self.incoming_port_type.setWordWrap(True)
-        self.incoming_port_type.setStyleSheet(f"""
-            QLabel {{
-                color: {AppColors.TEXT_DISABLED};
-                font-style: italic;
-                padding: {AppDimensions.PADDING_SMALL};
-            }}
-        """)
+        # Use themed port type indicator
+        self.incoming_port_type = ThemeManager.create_port_type_indicator()
         layout.addWidget(self.incoming_port_type)
         
         return group
@@ -428,19 +341,16 @@ class Hub4comGUI(QMainWindow):
         self.output_ports_widget = QWidget()
         self.output_ports_layout = QVBoxLayout(self.output_ports_widget)
         self.output_ports_layout.setSpacing(AppDimensions.SPACING_TINY)
-        self.output_ports_layout.setContentsMargins(0, 0, 0, 0)
+        ThemeManager.set_widget_margins(self.output_ports_layout, "none")
         
-        # Scroll area
+        # Scroll area using theme configuration
         output_scroll = QScrollArea()
-        output_scroll.setWidgetResizable(True)
+        ThemeManager.configure_scroll_area(output_scroll, AppDimensions.HEIGHT_TEXT_XLARGE)
         output_scroll.setWidget(self.output_ports_widget)
-        output_scroll.setMaximumHeight(AppDimensions.HEIGHT_TEXT_XLARGE)
-        output_scroll.setStyleSheet(AppStyles.scroll_area())
         layout.addWidget(output_scroll)
         
         return group
-    
-    
+
     def _create_control_buttons(self) -> QHBoxLayout:
         """Create unified control buttons bar with inline status and output log"""
         layout = QHBoxLayout()
@@ -453,18 +363,7 @@ class Hub4comGUI(QMainWindow):
         layout.addWidget(self.preview_btn)
         
         # Separator
-        separator1 = QFrame()
-        separator1.setFrameShape(QFrame.Shape.VLine)
-        separator1.setFrameShadow(QFrame.Shadow.Sunken)
-        separator1.setStyleSheet(f"""
-            QFrame {{
-                color: {AppColors.BORDER_DEFAULT};
-                background-color: {AppColors.BORDER_DEFAULT};
-                max-width: 1px;
-                margin: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-            }}
-        """)
-        layout.addWidget(separator1)
+        layout.addWidget(ThemeManager.create_separator("vertical"))
         
         # Hub4com controls
         self.start_btn = ThemeManager.create_icon_button("play", "Start hub4com routing", "medium")
@@ -477,38 +376,19 @@ class Hub4comGUI(QMainWindow):
         layout.addWidget(self.stop_btn)
         
         # Separator
-        separator2 = QFrame()
-        separator2.setFrameShape(QFrame.Shape.VLine)
-        separator2.setFrameShadow(QFrame.Shadow.Sunken)
-        separator2.setStyleSheet(f"""
-            QFrame {{
-                color: {AppColors.BORDER_DEFAULT};
-                background-color: {AppColors.BORDER_DEFAULT};
-                max-width: 1px;
-                margin: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-            }}
-        """)
-        layout.addWidget(separator2)
+        layout.addWidget(ThemeManager.create_separator("vertical"))
         
-        # Status label (inline with controls, matching other sections)
-        self.status_label = ThemeManager.create_label(AppMessages.READY, "status")
-        self.status_label.setStyleSheet(f"""
-            QLabel {{
-                color: {AppColors.TEXT_DISABLED};
-                font-style: italic;
-                margin-left: {AppDimensions.PADDING_MEDIUM};
-            }}
-        """)
+        # Status label
+        self.status_label = ThemeManager.create_status_label_inline(AppMessages.READY)
         layout.addWidget(self.status_label)
         
         layout.addStretch()
         
-        return layout
-    
+        return layout 
+
     def _create_output_section(self) -> QSplitter:
         """Create horizontal two-pane design with command preview and output log"""
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.setChildrenCollapsible(False)
+        splitter = ThemeManager.create_splitter(Qt.Orientation.Horizontal)
         
         # Command preview
         preview_group, preview_layout = self._create_groupbox_with_layout("Command Preview")
@@ -531,11 +411,10 @@ class Hub4comGUI(QMainWindow):
         splitter.setStretchFactor(1, 1)
         
         return splitter
-    
     # ========================================================================
     # PORT MANAGEMENT
     # ========================================================================
-    
+
     def _populate_baud_rates(self, combo: QComboBox):
         """Populate combo box with baud rates"""
         for rate in Config.BAUD_RATES:
@@ -711,32 +590,33 @@ class Hub4comGUI(QMainWindow):
         self.update_port_type_indicator()
     
     def update_port_type_indicator(self):
-        """Update the port type indicator"""
+        """Update the port type indicator using theme messages"""
         current_port = self.incoming_port.currentData()
         if not current_port:
             self.incoming_port_type.setText("")
+            self.incoming_port_type.setVisible(False)
             return
         
         port_info = next((p for p in self.scanned_ports if p.port_name == current_port), None)
         if not port_info:
             self.incoming_port_type.setText("")
+            self.incoming_port_type.setVisible(False)
             return
         
-        indicators = {
-            "moxa": "MOXA Network Device - Make sure baud rate matches your source device",
-            "physical": "PHYSICAL PORT - Connected to real hardware, verify device baud rate",
-            "virtual": "VIRTUAL PORT - Software-created port for inter-application communication"
-        }
-        
+        # Use theme messages
         if port_info.is_moxa:
-            text = indicators["moxa"]
+            text = AppMessages.PORT_TYPE_MOXA
+            style_type = "warning"
         elif port_info.port_type == "Physical":
-            text = indicators["physical"]
+            text = AppMessages.PORT_TYPE_PHYSICAL
+            style_type = "success"
         else:
-            text = indicators["virtual"]
+            text = AppMessages.PORT_TYPE_VIRTUAL
+            style_type = "info"
         
         self.incoming_port_type.setText(text)
-    
+        self.incoming_port_type.setStyleSheet(AppStyles.port_type_indicator(style_type))
+        self.incoming_port_type.setVisible(True)
     # ========================================================================
     # HUB4COM MANAGEMENT
     # ========================================================================
@@ -1221,12 +1101,12 @@ class Hub4comGUI(QMainWindow):
         dialog.exec()
     
     def _create_pair_details_dialog(self, item: QListWidgetItem) -> QDialog:
-        """Create port pair details dialog"""
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Port Pair Details")
-        dialog.setMinimumSize(500, 300)
+        """Create port pair details dialog using theme system"""
+        dialog = ThemeManager.create_dialog_window("Port Pair Details", 500, 300)
         
         layout = QVBoxLayout(dialog)
+        ThemeManager.set_widget_margins(layout, "dialog")
+        layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         
         details_text = ThemeManager.create_textedit("console_large")
         details_text.setReadOnly(True)
@@ -1241,13 +1121,13 @@ class Hub4comGUI(QMainWindow):
         # Add parameter explanations
         param_explanations = {
             "EmuBR=yes": ("BAUD RATE TIMING: ENABLED\n"
-                         "   - Port behaves with realistic serial port timing\n\n"),
+                        "   - Port behaves with realistic serial port timing\n\n"),
             "EmuOverrun=yes": ("BUFFER OVERRUN PROTECTION: ENABLED\n"
-                              "   - Data can be lost if not read fast enough (like real ports)\n\n"),
+                            "   - Data can be lost if not read fast enough (like real ports)\n\n"),
             "ExclusiveMode=yes": ("EXCLUSIVE ACCESS MODE: ENABLED\n"
-                                 "   - Port is hidden until the paired port is opened\n\n"),
+                                "   - Port is hidden until the paired port is opened\n\n"),
             "PlugInMode=yes": ("PLUG-IN MODE: ENABLED\n"
-                              "   - Port appears/disappears when paired port opens/closes\n\n")
+                            "   - Port appears/disappears when paired port opens/closes\n\n")
         }
         
         for param, explanation in param_explanations.items():
@@ -1265,13 +1145,14 @@ class Hub4comGUI(QMainWindow):
         
         # Close button
         button_layout = QHBoxLayout()
+        button_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         button_layout.addStretch()
         close_btn = ThemeManager.create_button("Close", dialog.accept)
         button_layout.addWidget(close_btn)
         layout.addLayout(button_layout)
         
         return dialog
-    
+
     def show_settings_menu(self):
         """Show dynamic settings menu for selected pair"""
         current_item = self.port_pairs_list.currentItem()
@@ -1485,14 +1366,14 @@ class Hub4comGUI(QMainWindow):
         self.update_preview()
     
     def update_route_mode_button(self):
-        """Update route mode button text"""
+        """Update route mode button text using theme messages"""
         mode_names = {
             'one_way': 'One-Way',
             'two_way': 'Two-Way', 
             'full_network': 'Full Network'
         }
         mode_name = mode_names.get(self.route_settings['mode'], 'One-Way')
-        self.route_mode_btn.setText(f"Route Mode: {mode_name} ▼")
+        self.route_mode_btn.setText(AppMessages.BUTTON_ROUTE_MODE.format(mode=mode_name))
     
     def show_route_help(self):
         """Show route options help dialog"""

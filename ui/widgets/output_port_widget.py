@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-Output Port Widget for Hub4com GUI
-Handles individual port configuration with port selection and baud rate settings
-Fully integrated with global theme system
+Output Port Widget for Hub4com GUI - Fully Refactored
+All styles and dimensions extracted to global theme system
 """
 
 from typing import List, Optional
@@ -11,13 +10,10 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.components import PortConfig, SerialPortInfo
-from ui.theme.theme import ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts
-
-
-# Configuration constants
-BAUD_RATES = ["1200", "2400", "4800", "9600", "14400", "19200", 
-              "38400", "57600", "115200", "230400", "460800", "921600"]
-DEFAULT_BAUD = "115200"
+from ui.theme.theme import (
+    ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts, 
+    AppMessages, Config
+)
 
 
 class OutputPortWidget(QWidget):
@@ -30,47 +26,24 @@ class OutputPortWidget(QWidget):
         self.port_number = port_number
         self.scanned_ports: List[SerialPortInfo] = []
         
-        # Apply widget styling
-        self.setStyleSheet(f"""
-            OutputPortWidget {{
-                background-color: {AppColors.BACKGROUND_WHITE};
-                padding: {AppDimensions.PADDING_MEDIUM};
-                margin-bottom: {AppDimensions.SPACING_SMALL}px;
-            }}
-            OutputPortWidget:hover {{
-                background-color: {AppColors.BUTTON_HOVER};
-            }}
-        """)
+        # Apply widget styling from theme
+        self.setStyleSheet(AppStyles.output_port_widget())
         
         self.init_ui(available_ports)
     
     def init_ui(self, available_ports: List[str]):
         """Initialize the user interface with full theme integration"""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(
-            AppDimensions.SPACING_MEDIUM,
-            AppDimensions.SPACING_MEDIUM,
-            AppDimensions.SPACING_MEDIUM,
-            AppDimensions.SPACING_MEDIUM
-        )
+        ThemeManager.set_widget_margins(main_layout, "control")
         main_layout.setSpacing(AppDimensions.SPACING_SMALL)
         
         # Main horizontal layout
         layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        ThemeManager.set_widget_margins(layout, "none")
         layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         
-        # Port label with fixed width
-        self.label = ThemeManager.create_label(f"Port {self.port_number}:")
-        self.label.setFixedWidth(55)  # Fixed width for alignment
-        self.label.setStyleSheet(f"""
-            QLabel {{
-                font-weight: bold;
-                color: {AppColors.TEXT_DEFAULT};
-                font-family: {AppFonts.DEFAULT_FAMILY};
-                font-size: {AppFonts.DEFAULT_SIZE};
-            }}
-        """)
+        # Port label using theme manager
+        self.label = ThemeManager.create_port_label(self.port_number)
         layout.addWidget(self.label)
         
         # Port selection combo
@@ -78,79 +51,42 @@ class OutputPortWidget(QWidget):
         self.populate_ports(available_ports)
         self.port_combo.currentTextChanged.connect(self.port_changed.emit)
         self.port_combo.currentTextChanged.connect(self.update_port_type_indicator)
-        self.port_combo.setMinimumWidth(120)
+        self.port_combo.setMinimumWidth(AppDimensions.COMBOBOX_MIN_WIDTH)
         layout.addWidget(self.port_combo, 2)  # Give it more stretch
         
-        # Separator
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.VLine)
-        separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setStyleSheet(f"""
-            QFrame {{
-                color: {AppColors.BORDER_LIGHT};
-                margin: 0px {AppDimensions.SPACING_SMALL}px;
-            }}
-        """)
-        layout.addWidget(separator)
+        # Separator using theme
+        layout.addWidget(ThemeManager.create_separator("vertical"))
         
-        # Baud rate label
-        baud_label = ThemeManager.create_label("Baud:")
-        baud_label.setStyleSheet(f"""
-            QLabel {{
-                color: {AppColors.TEXT_DEFAULT};
-                font-family: {AppFonts.DEFAULT_FAMILY};
-                font-size: {AppFonts.DEFAULT_SIZE};
-                margin-right: {AppDimensions.SPACING_SMALL}px;
-            }}
-        """)
-        layout.addWidget(baud_label)
+        # Baud rate label using theme
+        layout.addWidget(ThemeManager.create_baud_label())
         
         # Baud rate selection
         self.baud_combo = ThemeManager.create_combobox()
-        self.populate_baud_rates(DEFAULT_BAUD)
+        self.populate_baud_rates(Config.DEFAULT_BAUD)
         self.baud_combo.currentTextChanged.connect(self.port_changed.emit)
-        self.baud_combo.setFixedWidth(100)
+        self.baud_combo.setFixedWidth(AppDimensions.WIDTH_BAUD_COMBO)
         layout.addWidget(self.baud_combo)
         
-        # Remove button with icon
+        # Remove button with theme-based styling
         self.remove_btn = ThemeManager.create_icon_button(
-            "REMOVE",  # Use REMOVE icon from AppIcons
+            "REMOVE",
             f"Remove port {self.port_number}",
             "small"
         )
-        # Add hover effect
-        self.remove_btn.setStyleSheet(self.remove_btn.styleSheet() + f"""
-            QPushButton:hover {{
-                background-color: {AppColors.ERROR_BACKGROUND};
-                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ERROR_BORDER};
-            }}
-        """)
+        # Apply danger hover style
+        current_style = self.remove_btn.styleSheet()
+        self.remove_btn.setStyleSheet(AppStyles.icon_button_hover_danger())
         layout.addWidget(self.remove_btn)
         
         main_layout.addLayout(layout)
         
-        # Port type indicator with custom styling
-        self.port_type_label = QLabel("")
-        self.port_type_label.setWordWrap(True)
-        self.port_type_label.setStyleSheet(f"""
-            QLabel {{
-                color: {AppColors.TEXT_DISABLED};
-                font-style: italic;
-                font-family: {AppFonts.DEFAULT_FAMILY};
-                font-size: {AppFonts.SMALL_SIZE};
-                padding: {AppDimensions.PADDING_SMALL};
-                background-color: {AppColors.INFO_BACKGROUND};
-                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.INFO_BACKGROUND};
-                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
-                margin-top: {AppDimensions.SPACING_SMALL}px;
-            }}
-        """)
-        self.port_type_label.setVisible(False)  # Hidden by default
+        # Port type indicator using theme
+        self.port_type_label = ThemeManager.create_port_type_indicator()
         
         # Create indented layout for the port type label
         indicator_layout = QHBoxLayout()
         indicator_layout.setContentsMargins(
-            55 + AppDimensions.SPACING_MEDIUM,  # Align with port combo
+            AppDimensions.WIDTH_LABEL_PORT + AppDimensions.SPACING_MEDIUM,
             0, 0, 0
         )
         indicator_layout.addWidget(self.port_type_label)
@@ -162,7 +98,7 @@ class OutputPortWidget(QWidget):
         if available_ports:
             self.port_combo.addItems(available_ports)
         else:
-            self.port_combo.addItem("No COM devices detected")
+            self.port_combo.addItem(AppMessages.NO_DEVICES)
             self.port_combo.setEnabled(False)
     
     def populate_ports_enhanced(self, ports: List[SerialPortInfo]):
@@ -174,7 +110,7 @@ class OutputPortWidget(QWidget):
         self.port_combo.setEnabled(True)
         
         if not ports:
-            self.port_combo.addItem("No COM devices detected")
+            self.port_combo.addItem(AppMessages.NO_DEVICES)
             self.port_combo.setEnabled(False)
             self.port_type_label.setVisible(False)
             return
@@ -190,14 +126,26 @@ class OutputPortWidget(QWidget):
             # Add item with custom data
             self.port_combo.addItem(display_text, port.port_name)
             
-            # Color code based on port type
+            # Color code based on port type using theme colors
             index = self.port_combo.count() - 1
             if port.is_moxa:
-                self.port_combo.setItemData(index, ThemeManager.get_accent_color('orange'), Qt.ItemDataRole.ForegroundRole)
+                self.port_combo.setItemData(
+                    index, 
+                    ThemeManager.get_accent_color('orange'), 
+                    Qt.ItemDataRole.ForegroundRole
+                )
             elif port.port_type == "Physical":
-                self.port_combo.setItemData(index, ThemeManager.get_accent_color('green'), Qt.ItemDataRole.ForegroundRole)
+                self.port_combo.setItemData(
+                    index, 
+                    ThemeManager.get_accent_color('green'), 
+                    Qt.ItemDataRole.ForegroundRole
+                )
             else:  # Virtual
-                self.port_combo.setItemData(index, ThemeManager.get_accent_color('blue'), Qt.ItemDataRole.ForegroundRole)
+                self.port_combo.setItemData(
+                    index, 
+                    ThemeManager.get_accent_color('blue'), 
+                    Qt.ItemDataRole.ForegroundRole
+                )
         
         # Restore previous selection if possible
         if current_port:
@@ -212,10 +160,10 @@ class OutputPortWidget(QWidget):
         
         self.update_port_type_indicator()
     
-    def populate_baud_rates(self, default=DEFAULT_BAUD):
+    def populate_baud_rates(self, default=Config.DEFAULT_BAUD):
         """Populate combo box with common baud rate options"""
         self.baud_combo.clear()
-        for rate in BAUD_RATES:
+        for rate in Config.BAUD_RATES:
             self.baud_combo.addItem(rate, rate)
         
         # Set default
@@ -224,13 +172,13 @@ class OutputPortWidget(QWidget):
             self.baud_combo.setCurrentIndex(index)
     
     def update_port_type_indicator(self):
-        """Update the port type indicator with theme-appropriate styling"""
+        """Update the port type indicator with theme messages and styling"""
         if not self.scanned_ports:
             self.port_type_label.setVisible(False)
             return
         
         current_port = self.port_combo.currentData() or self.port_combo.currentText().split(" ")[0]
-        if not current_port or current_port == "No COM devices detected":
+        if not current_port or current_port == AppMessages.NO_DEVICES:
             self.port_type_label.setVisible(False)
             return
         
@@ -239,37 +187,18 @@ class OutputPortWidget(QWidget):
         if port_info:
             self.port_type_label.setVisible(True)
             
+            # Use theme messages and apply appropriate style
             if port_info.is_moxa:
-                self.port_type_label.setText("🌐 MOXA Network Device - Make sure baud rate matches your source device")
-                self._apply_indicator_style("warning")
+                self.port_type_label.setText(AppMessages.PORT_TYPE_MOXA)
+                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("warning"))
             elif port_info.port_type == "Physical":
-                self.port_type_label.setText("🔌 PHYSICAL PORT - Connected to real hardware, verify device baud rate")
-                self._apply_indicator_style("success")
+                self.port_type_label.setText(AppMessages.PORT_TYPE_PHYSICAL)
+                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("success"))
             else:
-                self.port_type_label.setText("💻 VIRTUAL PORT - Software-created port for inter-application communication")
-                self._apply_indicator_style("info")
+                self.port_type_label.setText(AppMessages.PORT_TYPE_VIRTUAL)
+                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("info"))
         else:
             self.port_type_label.setVisible(False)
-    
-    def _apply_indicator_style(self, style_type: str):
-        """Apply themed styling to the port type indicator"""
-        bg_color = ThemeManager.get_semantic_color(style_type, "background")
-        border_color = ThemeManager.get_semantic_color(style_type, "border")
-        text_color = ThemeManager.get_semantic_color(style_type, "primary")
-        
-        self.port_type_label.setStyleSheet(f"""
-            QLabel {{
-                color: {text_color};
-                font-style: italic;
-                font-family: {AppFonts.DEFAULT_FAMILY};
-                font-size: {AppFonts.SMALL_SIZE};
-                padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-                background-color: {bg_color};
-                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {border_color};
-                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
-                margin-top: {AppDimensions.SPACING_SMALL}px;
-            }}
-        """)
     
     def get_current_port_info(self) -> Optional[SerialPortInfo]:
         """Get the SerialPortInfo for the currently selected port"""
@@ -293,21 +222,19 @@ class OutputPortWidget(QWidget):
     def renumber(self, new_number: int):
         """Update the port number after reordering"""
         self.port_number = new_number
-        self.label.setText(f"Port {new_number}:")
+        self.label.setText(AppMessages.BUTTON_PORT_LABEL.format(number=new_number))
         self.remove_btn.setToolTip(f"Remove port {new_number}")
     
     def setEnabled(self, enabled: bool):
         """Override to handle enabling/disabling with proper visual feedback"""
         super().setEnabled(enabled)
         
-        # Apply disabled styling if needed
+        # Apply disabled styling from theme
         if not enabled:
-            self.setStyleSheet(self.styleSheet() + f"""
-                OutputPortWidget:disabled {{
-                    background-color: {AppColors.BACKGROUND_DISABLED};
-                    border-color: {AppColors.BORDER_DISABLED};
-                }}
-            """)
+            current_style = self.styleSheet()
+            self.setStyleSheet(current_style + AppStyles.output_port_widget_disabled())
+        else:
+            self.setStyleSheet(AppStyles.output_port_widget())
         
         # Enable/disable child widgets
         self.port_combo.setEnabled(enabled)
@@ -316,25 +243,11 @@ class OutputPortWidget(QWidget):
     
     def mousePressEvent(self, event):
         """Handle mouse press for visual feedback"""
-        self.setStyleSheet(self.styleSheet() + f"""
-            OutputPortWidget {{
-                background-color: {AppColors.BUTTON_PRESSED};
-                border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
-            }}
-        """)
+        self.setStyleSheet(AppStyles.output_port_widget_pressed())
         super().mousePressEvent(event)
     
     def mouseReleaseEvent(self, event):
         """Handle mouse release to restore normal state"""
-        # Restore normal styling
-        self.setStyleSheet(f"""
-            OutputPortWidget {{
-                background-color: {AppColors.BACKGROUND_WHITE};
-                padding: {AppDimensions.PADDING_MEDIUM};
-                margin-bottom: {AppDimensions.SPACING_SMALL}px;
-            }}
-            OutputPortWidget:hover {{
-                background-color: {AppColors.BUTTON_HOVER};
-            }}
-        """)
+        # Restore normal styling from theme
+        self.setStyleSheet(AppStyles.output_port_widget())
         super().mouseReleaseEvent(event)

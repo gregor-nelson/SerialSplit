@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Windows 10 System-Accurate Theme Configuration for Hub4com GUI
+Complete revised version with all enhancements
 Matches exact Windows 10 system conventions for all UI elements
 Based on official Microsoft design specifications and system measurements
 """
@@ -10,7 +11,8 @@ from PyQt6.QtCore import QSize, QRect, Qt
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import (QPushButton, QComboBox, QGroupBox, QTextEdit, 
                              QLineEdit, QCheckBox, QLabel, QListWidget, 
-                             QProgressBar, QWidget, QTableWidget)
+                             QProgressBar, QWidget, QTableWidget, QFrame,
+                             QScrollArea, QDialog)
 from dataclasses import dataclass
 from typing import Dict, Any, Optional, Callable
 import math
@@ -148,6 +150,11 @@ class AppFonts:
     DEFAULT_SIZE = "9pt"      # Standard Windows 10 size
     SMALL_SIZE = "8pt"
     CAPTION_SIZE = "11pt"     # Windows 10 caption font size
+    
+    # Additional font specifications
+    BOLD_WEIGHT = "bold"
+    NORMAL_WEIGHT = "normal"
+    ITALIC_STYLE = "italic"
 
 
 @dataclass 
@@ -172,6 +179,7 @@ class AppDimensions:
     COMBOBOX_HEIGHT = 23                # Standard combobox height
     COMBOBOX_ARROW_WIDTH = 16           # Width of dropdown arrow area
     COMBOBOX_ARROW_SIZE = 8             # Actual arrow glyph size
+    COMBOBOX_MIN_WIDTH = 120            # Minimum combobox width
     
     # === ICON DIMENSIONS ===
     # Based on Windows 10 icon sizes (16x16, 20x20, 24x24, 32x32)
@@ -192,6 +200,7 @@ class AppDimensions:
     MARGIN_DIALOG = (11, 11, 11, 11)   # Standard dialog margins
     MARGIN_CONTROL = (7, 7, 7, 7)      # Control spacing margins
     MARGIN_SMALL = (4, 4, 4, 4)        # Small margins
+    MARGIN_NONE = (0, 0, 0, 0)         # No margins
     
     # === PADDING VALUES ===
     PADDING_TINY = "1px"
@@ -210,6 +219,17 @@ class AppDimensions:
     HEIGHT_LIST_MEDIUM = 150
     HEIGHT_LIST_LARGE = 180
     HEIGHT_PROGRESS = 20
+    HEIGHT_SEPARATOR = 1                # Height of horizontal separators
+    
+    # === WIDGET WIDTHS ===
+    WIDTH_LABEL_PORT = 55               # Fixed width for port labels
+    WIDTH_BAUD_COMBO = 100              # Fixed width for baud rate combos
+    WIDTH_BUTTON_QUICK_BAUD = 50        # Quick baud rate button width
+    WIDTH_BUTTON_ICON_CONTAINER = 28    # Icon button container width
+    
+    # === WIDGET MINIMUMS ===
+    MIN_DIALOG_WIDTH = 500
+    MIN_DIALOG_HEIGHT = 300
     
     # === BORDER SPECIFICATIONS ===
     BORDER_WIDTH_STANDARD = 1          # Standard 1px border
@@ -220,6 +240,9 @@ class AppDimensions:
     # === FOCUS RECTANGLE ===
     FOCUS_RECT_WIDTH = 1               # Focus rectangle line width
     FOCUS_RECT_OFFSET = 2              # Focus rectangle offset from control
+    
+    # === OUTPUT PORT WIDGET SPECIFICS ===
+    OUTPUT_PORT_MIN_COUNT = 1          # Minimum number of output ports
 
 
 class AppMessages:
@@ -245,6 +268,16 @@ Port B ({port_b}): {params_b}
 
 Right-click or use 'Configure Features' to modify settings
 Click 'Help' button for detailed explanations of all features"""
+    
+    # Button labels
+    BUTTON_ROUTE_MODE = "Route Mode: {mode} ▼"
+    BUTTON_PORT_LABEL = "Port {number}:"
+    BUTTON_SET_ALL = "Set All:"
+    
+    # Port type indicators
+    PORT_TYPE_MOXA = "🌐 MOXA Network Device - Make sure baud rate matches your source device"
+    PORT_TYPE_PHYSICAL = "🔌 PHYSICAL PORT - Connected to real hardware, verify device baud rate"
+    PORT_TYPE_VIRTUAL = "💻 VIRTUAL PORT - Software-created port for inter-application communication"
 
 
 class AppStyles:
@@ -806,6 +839,154 @@ class AppStyles:
             font-size: {AppFonts.DEFAULT_SIZE};
         }}
         """
+    
+    @staticmethod
+    def separator(orientation: str = "horizontal") -> str:
+        """Windows 10 separator line style"""
+        if orientation == "horizontal":
+            return f"""
+            QFrame {{
+                color: {AppColors.BORDER_LIGHT};
+                background-color: {AppColors.BORDER_LIGHT};
+                max-height: {AppDimensions.HEIGHT_SEPARATOR}px;
+            }}
+            """
+        else:  # vertical
+            return f"""
+            QFrame {{
+                color: {AppColors.BORDER_DEFAULT};
+                background-color: {AppColors.BORDER_DEFAULT};
+                max-width: {AppDimensions.BORDER_WIDTH_STANDARD}px;
+                margin: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
+            }}
+            """
+    
+    @staticmethod
+    def status_label_inline() -> str:
+        """Inline status label style for section headers"""
+        return f"""
+        QLabel {{
+            color: {AppColors.TEXT_DISABLED};
+            font-style: {AppFonts.ITALIC_STYLE};
+            margin-left: {AppDimensions.PADDING_MEDIUM};
+        }}
+        """
+    
+    @staticmethod
+    def port_label() -> str:
+        """Port number label style"""
+        return f"""
+        QLabel {{
+            font-weight: {AppFonts.BOLD_WEIGHT};
+            color: {AppColors.TEXT_DEFAULT};
+            font-family: {AppFonts.DEFAULT_FAMILY};
+            font-size: {AppFonts.DEFAULT_SIZE};
+        }}
+        """
+    
+    @staticmethod
+    def output_port_widget() -> str:
+        """Output port widget container style"""
+        return f"""
+        OutputPortWidget {{
+            background-color: {AppColors.BACKGROUND_WHITE};
+            padding: {AppDimensions.PADDING_MEDIUM};
+            margin-bottom: {AppDimensions.SPACING_SMALL}px;
+        }}
+        OutputPortWidget:hover {{
+            background-color: {AppColors.BUTTON_HOVER};
+        }}
+        """
+    
+    @staticmethod
+    def output_port_widget_pressed() -> str:
+        """Output port widget pressed state"""
+        return f"""
+        OutputPortWidget {{
+            background-color: {AppColors.BUTTON_PRESSED};
+            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+        }}
+        """
+    
+    @staticmethod
+    def output_port_widget_disabled() -> str:
+        """Output port widget disabled state"""
+        return f"""
+        OutputPortWidget:disabled {{
+            background-color: {AppColors.BACKGROUND_DISABLED};
+            border-color: {AppColors.BORDER_DISABLED};
+        }}
+        """
+    
+    @staticmethod
+    def port_type_indicator(style_type: str = "info") -> str:
+        """Port type indicator label style"""
+        from .theme import ThemeManager  # Local import to avoid circular dependency
+        bg_color = ThemeManager.get_semantic_color(style_type, "background")
+        border_color = ThemeManager.get_semantic_color(style_type, "border")
+        text_color = ThemeManager.get_semantic_color(style_type, "primary")
+        
+        return f"""
+        QLabel {{
+            color: {text_color};
+            font-style: {AppFonts.ITALIC_STYLE};
+            font-family: {AppFonts.DEFAULT_FAMILY};
+            font-size: {AppFonts.SMALL_SIZE};
+            padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
+            background-color: {bg_color};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {border_color};
+            border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+            margin-top: {AppDimensions.SPACING_SMALL}px;
+        }}
+        """
+    
+    @staticmethod
+    def baud_label() -> str:
+        """Baud rate label style"""
+        return f"""
+        QLabel {{
+            color: {AppColors.TEXT_DEFAULT};
+            font-family: {AppFonts.DEFAULT_FAMILY};
+            font-size: {AppFonts.DEFAULT_SIZE};
+            margin-right: {AppDimensions.SPACING_SMALL}px;
+        }}
+        """
+    
+    @staticmethod
+    def section_header_label() -> str:
+        """Section header label style"""
+        return f"""
+        QLabel {{
+            color: {AppColors.TEXT_DEFAULT};
+            font-weight: {AppFonts.BOLD_WEIGHT};
+            margin-right: {AppDimensions.SPACING_SMALL}px;
+        }}
+        """
+    
+    @staticmethod
+    def icon_button_hover_danger() -> str:
+        """Icon button with danger hover effect"""
+        base = AppStyles.icon_button()
+        return base + f"""
+        QPushButton:hover {{
+            background-color: {AppColors.ERROR_BACKGROUND};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ERROR_BORDER};
+        }}
+        """
+    
+    @staticmethod
+    def splitter() -> str:
+        """Splitter widget style"""
+        return f"""
+        QSplitter::handle {{
+            background-color: {AppColors.BORDER_LIGHT};
+            width: {AppDimensions.SPACING_SMALL}px;
+            height: {AppDimensions.SPACING_SMALL}px;
+        }}
+        QSplitter::handle:hover {{
+            background-color: {AppColors.BORDER_FOCUS};
+        }}
+        """
 
 
 class IconManager:
@@ -1028,6 +1209,123 @@ class ThemeManager:
         label.setStyleSheet(AppStyles.notification(notification_type))
         return label
     
+    @staticmethod
+    def create_separator(orientation: str = "horizontal", parent: Optional[QWidget] = None) -> QFrame:
+        """Create a styled separator line"""
+        separator = QFrame(parent)
+        if orientation == "horizontal":
+            separator.setFrameShape(QFrame.Shape.HLine)
+        else:
+            separator.setFrameShape(QFrame.Shape.VLine)
+        separator.setFrameShadow(QFrame.Shadow.Sunken)
+        separator.setStyleSheet(AppStyles.separator(orientation))
+        return separator
+    
+    @staticmethod
+    def create_status_label_inline(text: str) -> QLabel:
+        """Create inline status label for section headers"""
+        label = QLabel(text)
+        label.setStyleSheet(AppStyles.status_label_inline())
+        return label
+    
+    @staticmethod
+    def create_port_label(number: int) -> QLabel:
+        """Create port number label"""
+        label = QLabel(AppMessages.BUTTON_PORT_LABEL.format(number=number))
+        label.setFixedWidth(AppDimensions.WIDTH_LABEL_PORT)
+        label.setStyleSheet(AppStyles.port_label())
+        return label
+    
+    @staticmethod
+    def create_baud_label(text: str = "Baud:") -> QLabel:
+        """Create baud rate label"""
+        label = QLabel(text)
+        label.setStyleSheet(AppStyles.baud_label())
+        return label
+    
+    @staticmethod
+    def create_section_header_label(text: str) -> QLabel:
+        """Create section header label"""
+        label = QLabel(text)
+        label.setStyleSheet(AppStyles.section_header_label())
+        return label
+    
+    @staticmethod
+    def create_quick_baud_button(rate: str, callback: Callable) -> QPushButton:
+        """Create quick baud rate button"""
+        btn = ThemeManager.create_button(rate, lambda checked, r=rate: callback(r), "compact")
+        btn.setFixedWidth(AppDimensions.WIDTH_BUTTON_QUICK_BAUD)
+        btn.setToolTip(f"Set all ports to {rate} baud")
+        return btn
+    
+    @staticmethod
+    def create_port_type_indicator() -> QLabel:
+        """Create port type indicator label"""
+        label = QLabel("")
+        label.setWordWrap(True)
+        label.setStyleSheet(AppStyles.port_type_indicator())
+        label.setVisible(False)
+        return label
+    
+    @staticmethod
+    def create_route_mode_button(initial_mode: str = "one_way", callback: Callable = None) -> QPushButton:
+        """Create route mode dropdown button"""
+        mode_names = {
+            'one_way': 'One-Way',
+            'two_way': 'Two-Way',
+            'full_network': 'Full Network'
+        }
+        text = AppMessages.BUTTON_ROUTE_MODE.format(mode=mode_names.get(initial_mode, 'One-Way'))
+        btn = ThemeManager.create_button(text, callback)
+        btn.setToolTip("Configure data routing between ports")
+        return btn
+    
+    @staticmethod
+    def configure_scroll_area(scroll_area, max_height: Optional[int] = None):
+        """Configure a scroll area with proper styling"""
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setStyleSheet(AppStyles.scroll_area())
+        if max_height:
+            scroll_area.setMaximumHeight(max_height)
+        return scroll_area
+    
+    @staticmethod
+    def create_splitter(orientation: Qt.Orientation = Qt.Orientation.Horizontal) -> QWidget:
+        """Create a styled splitter"""
+        from PyQt6.QtWidgets import QSplitter
+        splitter = QSplitter(orientation)
+        splitter.setChildrenCollapsible(False)
+        splitter.setStyleSheet(AppStyles.splitter())
+        return splitter
+    
+    @staticmethod
+    def set_widget_margins(widget, margin_type: str = "standard"):
+        """Set widget margins based on type"""
+        margin_map = {
+            "dialog": AppDimensions.MARGIN_DIALOG,
+            "control": AppDimensions.MARGIN_CONTROL,
+            "small": AppDimensions.MARGIN_SMALL,
+            "none": AppDimensions.MARGIN_NONE,
+            "standard": AppDimensions.MARGIN_DIALOG
+        }
+        margins = margin_map.get(margin_type, AppDimensions.MARGIN_DIALOG)
+        if hasattr(widget, 'setContentsMargins'):
+            widget.setContentsMargins(*margins)
+    
+    @staticmethod
+    def create_dialog_window(title: str, width: Optional[int] = None, height: Optional[int] = None):
+        """Create a dialog window with standard dimensions"""
+        from PyQt6.QtWidgets import QDialog
+        dialog = QDialog()
+        dialog.setWindowTitle(title)
+        dialog.setMinimumSize(
+            width or AppDimensions.MIN_DIALOG_WIDTH,
+            height or AppDimensions.MIN_DIALOG_HEIGHT
+        )
+        return dialog
+    
     # Layout and sizing helpers
     @staticmethod
     def get_standard_margins() -> tuple:
@@ -1171,80 +1469,12 @@ class ThemeManager:
         app.setStyleSheet(global_style)
 
 
-# Example usage demonstrating Windows 10 system accuracy
-if __name__ == "__main__":
-    """
-    Example usage of the Windows 10 system-accurate theme
-    """
-    from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QHBoxLayout
-    import sys
-    
-    app = QApplication(sys.argv)
-    
-    # Apply Windows 10 system theming
-    ThemeManager.apply_global_stylesheet(app)
-    
-    # Create main window
-    window = QMainWindow()
-    central_widget = QWidget()
-    layout = QVBoxLayout(central_widget)
-    layout.setContentsMargins(*ThemeManager.get_standard_margins())
-    layout.setSpacing(ThemeManager.get_standard_spacing())
-    
-    # Create Windows 10 system-accurate controls
-    
-    # Buttons with exact Windows 10 dimensions and styling
-    button_layout = QHBoxLayout()
-    standard_btn = ThemeManager.create_button("Standard (75x23)")
-    primary_btn = ThemeManager.create_button("Primary", variant="primary")
-    success_btn = ThemeManager.create_button("Success", variant="success")
-    danger_btn = ThemeManager.create_button("Danger", variant="danger")
-    compact_btn = ThemeManager.create_button("Compact", style_type="compact")
-    
-    for btn in [standard_btn, primary_btn, success_btn, danger_btn, compact_btn]:
-        button_layout.addWidget(btn)
-    
-    # Windows 10 system checkboxes (18x18 px)
-    checkbox_layout = QHBoxLayout()
-    cb1 = ThemeManager.create_checkbox("Checkbox Option 1")
-    cb2 = ThemeManager.create_checkbox("Checkbox Option 2")
-    cb2.setChecked(True)
-    cb3 = ThemeManager.create_checkbox("Disabled Checkbox")
-    cb3.setEnabled(False)
-    
-    for cb in [cb1, cb2, cb3]:
-        checkbox_layout.addWidget(cb)
-    
-    # Windows 10 system combobox (23px height)
-    combo = ThemeManager.create_combobox()
-    combo.addItems(["Windows 10 ComboBox", "Option 2", "Option 3", "Disabled Option"])
-    
-    # Windows 10 text controls
-    lineedit = ThemeManager.create_lineedit()
-    lineedit.setPlaceholderText("Windows 10 LineEdit with system styling...")
-    
-    textedit = ThemeManager.create_textedit("console")
-    textedit.setPlainText("Windows 10 TextEdit with Consolas font\nExact system styling applied\nMatches native Windows controls")
-    textedit.setMaximumHeight(100)
-    
-    # Notification examples
-    success_notif = ThemeManager.create_notification_label("✓ Operation completed successfully!", "success")
-    warning_notif = ThemeManager.create_notification_label("⚠ Check your Windows 10 settings", "warning")
-    error_notif = ThemeManager.create_notification_label("✗ Connection failed - Windows 10 styling", "error")
-    
-    # Add all widgets to layout
-    layout.addLayout(button_layout)
-    layout.addLayout(checkbox_layout)
-    layout.addWidget(combo)
-    layout.addWidget(lineedit)
-    layout.addWidget(textedit)
-    layout.addWidget(success_notif)
-    layout.addWidget(warning_notif)
-    layout.addWidget(error_notif)
-    
-    window.setCentralWidget(central_widget)
-    window.setWindowTitle("Windows 10 System-Accurate Theme Demo")
-    window.resize(600, 500)
-    window.show()
-    
-    sys.exit(app.exec())
+# Configuration constants that should be in the theme
+class Config:
+    """Application configuration constants using theme system"""
+    BAUD_RATES = ["1200", "2400", "4800", "9600", "14400", "19200", 
+                  "38400", "57600", "115200", "230400", "460800", "921600"]
+    QUICK_BAUD_RATES = ["9600", "19200", "38400", "57600", "115200"]
+    DEFAULT_BAUD = "115200"
+    MIN_OUTPUT_PORTS = AppDimensions.OUTPUT_PORT_MIN_COUNT
+
