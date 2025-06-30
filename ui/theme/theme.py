@@ -282,7 +282,6 @@ Click 'Help' button for detailed explanations of all features"""
 
 class AppStyles:
     """Exact Windows 10 system stylesheets matching native controls"""
-    
     @staticmethod
     def button(style_variant: str = "default") -> str:
         """Windows 10 system button - exact match to native controls"""
@@ -394,7 +393,7 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DISABLED};
         }}
         """
-    
+
     @staticmethod
     def button_compact() -> str:
         """Compact button for toolbars and space-constrained areas"""
@@ -425,7 +424,7 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DISABLED};
         }}
         """
-    
+
     @staticmethod
     def icon_button() -> str:
         """Icon-only button matching Windows 10 toolbar buttons"""
@@ -457,7 +456,6 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid transparent;
         }}
         """
-    
     @staticmethod
     def combobox() -> str:
         """Windows 10 system combobox - exact native styling"""
@@ -519,7 +517,6 @@ class AppStyles:
             background-color: {AppColors.BUTTON_HOVER};
         }}
         """
-    
     @staticmethod
     def checkbox() -> str:
         """Windows 10 system checkbox - exact native appearance"""
@@ -576,7 +573,6 @@ class AppStyles:
             background-color: {AppColors.BORDER_DISABLED};
         }}
         """
-    
     @staticmethod
     def groupbox() -> str:
         """Windows 10 system groupbox"""
@@ -600,7 +596,6 @@ class AppStyles:
             color: {AppColors.TEXT_DEFAULT};
         }}
         """
-    
     @staticmethod
     def textedit() -> str:
         """Windows 10 system text edit"""
@@ -626,7 +621,6 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DISABLED};
         }}
         """
-    
     @staticmethod
     def lineedit() -> str:
         """Windows 10 system line edit"""
@@ -656,7 +650,6 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DISABLED};
         }}
         """
-    
     @staticmethod
     def label() -> str:
         """Standard label"""
@@ -667,7 +660,6 @@ class AppStyles:
             font-size: {AppFonts.DEFAULT_SIZE};
         }}
         """
-    
     @staticmethod
     def label_status() -> str:
         """Status label with Windows 10 styling"""
@@ -683,7 +675,6 @@ class AppStyles:
             border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
         }}
         """
-    
     @staticmethod
     def listwidget() -> str:
         """Windows 10 system list widget"""
@@ -715,7 +706,6 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
         }}
         """
-    
     @staticmethod
     def tablewidget() -> str:
         """Windows 10 system table widget"""
@@ -752,7 +742,6 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
         }}
         """
-    
     @staticmethod
     def progress_bar() -> str:
         """Windows 10 system progress bar"""
@@ -771,7 +760,6 @@ class AppStyles:
             border-radius: {AppDimensions.BORDER_RADIUS_MODERN - 1}px;
         }}
         """
-    
     @staticmethod
     def scroll_area() -> str:
         """Windows 10 system scroll area"""
@@ -800,7 +788,6 @@ class AppStyles:
             background: none;
         }}
         """
-    
     @staticmethod
     def tooltip() -> str:
         """Windows 10 system tooltip"""
@@ -815,7 +802,6 @@ class AppStyles:
             border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
         }}
         """
-    
     @staticmethod
     def notification(notification_type: str = "info") -> str:
         """Windows 10 notification panel styles"""
@@ -839,7 +825,6 @@ class AppStyles:
             font-size: {AppFonts.DEFAULT_SIZE};
         }}
         """
-    
     @staticmethod
     def separator(orientation: str = "horizontal") -> str:
         """Windows 10 separator line style"""
@@ -860,7 +845,6 @@ class AppStyles:
                 margin: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
             }}
             """
-    
     @staticmethod
     def status_label_inline() -> str:
         """Inline status label style for section headers"""
@@ -871,7 +855,6 @@ class AppStyles:
             margin-left: {AppDimensions.PADDING_MEDIUM};
         }}
         """
-    
     @staticmethod
     def port_label() -> str:
         """Port number label style"""
@@ -883,7 +866,6 @@ class AppStyles:
             font-size: {AppFonts.DEFAULT_SIZE};
         }}
         """
-    
     @staticmethod
     def output_port_widget() -> str:
         """Output port widget container style"""
@@ -897,7 +879,6 @@ class AppStyles:
             background-color: {AppColors.BUTTON_HOVER};
         }}
         """
-    
     @staticmethod
     def output_port_widget_pressed() -> str:
         """Output port widget pressed state"""
@@ -907,7 +888,6 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
         }}
         """
-    
     @staticmethod
     def output_port_widget_disabled() -> str:
         """Output port widget disabled state"""
@@ -917,7 +897,6 @@ class AppStyles:
             border-color: {AppColors.BORDER_DISABLED};
         }}
         """
-    
     @staticmethod
     def port_type_indicator(style_type: str = "info") -> str:
         """Port type indicator label style"""
@@ -939,7 +918,6 @@ class AppStyles:
             margin-top: {AppDimensions.SPACING_SMALL}px;
         }}
         """
-    
     @staticmethod
     def baud_label() -> str:
         """Baud rate label style"""
@@ -951,7 +929,6 @@ class AppStyles:
             margin-right: {AppDimensions.SPACING_SMALL}px;
         }}
         """
-    
     @staticmethod
     def section_header_label() -> str:
         """Section header label style"""
@@ -962,7 +939,6 @@ class AppStyles:
             margin-right: {AppDimensions.SPACING_SMALL}px;
         }}
         """
-    
     @staticmethod
     def icon_button_hover_danger() -> str:
         """Icon button with danger hover effect"""
@@ -973,7 +949,6 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ERROR_BORDER};
         }}
         """
-    
     @staticmethod
     def splitter() -> str:
         """Splitter widget style"""
@@ -987,8 +962,33 @@ class AppStyles:
             background-color: {AppColors.BORDER_FOCUS};
         }}
         """
-
-
+    
+    @staticmethod
+    def dialog_window() -> str:
+        """Standard dialog window styling"""
+        return f"""
+        QDialog {{
+            background-color: {AppColors.BACKGROUND_LIGHT};
+            color: {AppColors.TEXT_DEFAULT};
+        }}
+        """
+    @staticmethod
+    def textedit_html() -> str:
+        """Text edit for HTML content display"""
+        return f"""
+        QTextEdit {{
+            background-color: {AppColors.BACKGROUND_WHITE};
+            border: 1px solid {AppColors.BORDER_DEFAULT};
+            border-radius: 6px;
+            padding: 15px;
+            font-family: {AppFonts.DEFAULT_FAMILY};
+        }}
+        QTextEdit:focus {{
+            border: 2px solid {AppColors.BORDER_FOCUS};
+            outline: none;
+        }}
+        """
+    
 class IconManager:
     """Enhanced icon manager with Windows 10 system icon support"""
     
@@ -1388,7 +1388,20 @@ class ThemeManager:
         }
         
         return color_map.get(semantic_type, color_map["info"]).get(element, AppColors.INFO_PRIMARY)
-    
+    @staticmethod
+    def create_html_content_widget(max_height: int = 350) -> QTextEdit:
+        """Create widget for HTML content display"""
+        widget = QTextEdit()
+        widget.setReadOnly(True)
+        widget.setMaximumHeight(max_height)
+        widget.setStyleSheet(AppStyles.textedit_html())
+        return widget
+
+    @staticmethod
+    def style_dialog(dialog: QDialog):
+        """Apply standard dialog styling"""
+        dialog.setStyleSheet(AppStyles.dialog_window())
+
     @staticmethod
     def apply_global_stylesheet(app) -> None:
         """Apply Windows 10 system-accurate global stylesheet"""
@@ -1468,6 +1481,109 @@ class ThemeManager:
         
         app.setStyleSheet(global_style)
 
+class HTMLTheme:
+    """HTML styling using theme colors"""
+    
+    @staticmethod
+    def get_styles() -> str:
+        """Get CSS styles for HTML content"""
+        return f"""
+        <style>
+            body {{
+                font-family: '{AppFonts.DEFAULT_FAMILY}', Arial, sans-serif;
+                line-height: 1.6;
+                color: {AppColors.TEXT_DEFAULT};
+                margin: 0;
+                padding: 0;
+            }}
+            h2 {{
+                color: {AppColors.ACCENT_BLUE};
+                text-align: center;
+                margin-bottom: 20px;
+                font-size: 18px;
+            }}
+            h3 {{
+                color: {AppColors.ACCENT_BLUE};
+                margin-top: 0;
+                font-size: 14px;
+                font-weight: bold;
+            }}
+            .center-text {{
+                text-align: center;
+                color: {AppColors.TEXT_DEFAULT};
+                margin-bottom: 25px;
+                font-size: 14px;
+            }}
+            .success {{
+                color: {AppColors.SUCCESS_PRIMARY};
+                font-weight: bold;
+            }}
+            .info-box {{
+                background-color: {AppColors.INFO_BACKGROUND};
+                border-left: 4px solid {AppColors.ACCENT_BLUE};
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 4px;
+            }}
+            .warning-box {{
+                background-color: {AppColors.WARNING_BACKGROUND};
+                border-left: 4px solid {AppColors.WARNING_PRIMARY};
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 4px;
+            }}
+            .warning-box h3 {{
+                color: {AppColors.WARNING_PRIMARY};
+            }}
+            .footer-box {{
+                text-align: center;
+                margin-top: 20px;
+                padding: 10px;
+                background-color: {AppColors.INFO_BACKGROUND};
+                border-radius: 4px;
+            }}
+            .footer-box p {{
+                margin: 0;
+                color: {AppColors.TEXT_DEFAULT};
+                font-size: 12px;
+                font-style: italic;
+            }}
+            code {{
+                background: {AppColors.GRAY_200};
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: Consolas, monospace;
+                font-size: 13px;
+            }}
+            ul {{
+                margin: 10px 0;
+                padding-left: 20px;
+                color: {AppColors.TEXT_DEFAULT};
+            }}
+            li {{
+                margin: 5px 0;
+            }}
+            .item-text {{
+                font-size: 13px;
+            }}
+        </style>
+        """
+    
+    @staticmethod
+    def success_icon() -> str:
+        """Get success checkmark icon"""
+        return "✅"
+    
+    @staticmethod
+    def format_port_pair(pair: str) -> str:
+        """Format a port pair with code styling"""
+        return f"<code>{pair}</code>"
+    
+    @staticmethod
+    def format_success_text(text: str) -> str:
+        """Format text with success styling"""
+        return f'<span class="success">{text}</span>'
+    
 
 # Configuration constants that should be in the theme
 class Config:
