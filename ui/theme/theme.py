@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 Windows 10 System-Accurate Theme Configuration for Hub4com GUI
-Complete revised version with all enhancements
-Matches exact Windows 10 system conventions for all UI elements
+Optimized version with perfect Windows 10 alignment
 Based on official Microsoft design specifications and system measurements
 """
 
@@ -26,33 +25,33 @@ class AppColors:
     # Background colors (from Windows 10 registry defaults)
     BACKGROUND_LIGHT = "#f0f0f0"        # ButtonFace - Light gray (240, 240, 240)
     BACKGROUND_WHITE = "#ffffff"        # Window - Pure white (255, 255, 255)
-    BACKGROUND_DISABLED = "#f4f7fc"     # InactiveBorder - Disabled background (244, 247, 252)
+    BACKGROUND_DISABLED = "#f0f0f0"     # Disabled keeps same background in Win10
     BACKGROUND_DESKTOP = "#0063b1"      # Background - Desktop background (0, 99, 177)
     BACKGROUND_MENU = "#f0f0f0"         # Menu - Menu background (240, 240, 240)
     BACKGROUND_TOOLTIP = "#ffffe1"      # InfoWindow - Tooltip background (255, 255, 225)
     BACKGROUND_APPWORKSPACE = "#ababab" # AppWorkspace - MDI background (171, 171, 171)
     
     # Border colors (from Windows 10 system colors)
-    BORDER_DEFAULT = "#a0a0a0"          # ButtonShadow - Default border (160, 160, 160)
+    BORDER_DEFAULT = "#adadad"          # Default border - more accurate gray
     BORDER_FOCUS = "#0078d7"            # Windows 10 accent blue (0, 120, 215)
     BORDER_PRESSED = "#005a9e"          # Darker blue for pressed state
-    BORDER_DISABLED = "#d0d0d0"         # Lighter gray for disabled
-    BORDER_LIGHT = "#e3e3e3"            # ButtonLight - Light border (227, 227, 227)
+    BORDER_DISABLED = "#d1d1d1"         # Lighter gray for disabled
+    BORDER_LIGHT = "#e5e5e5"            # ButtonLight - Light border (229, 229, 229)
     BORDER_DARK_SHADOW = "#696969"      # ButtonDkShadow - Dark shadow (105, 105, 105)
     BORDER_ACTIVE = "#b4b4b4"           # ActiveBorder - Active window border (180, 180, 180)
     BORDER_INACTIVE = "#f4f7fc"         # InactiveBorder - Inactive window border (244, 247, 252)
     BORDER_WINDOW_FRAME = "#646464"     # WindowFrame - Window frame (100, 100, 100)
     
-    # Button colors (Windows 10 button system)
-    BUTTON_DEFAULT = "#f0f0f0"          # ButtonFace - Default button (240, 240, 240)
-    BUTTON_HOVER = "#e5f1fb"            # Light blue hover (derived from accent)
-    BUTTON_PRESSED = "#cce4f7"          # Pressed blue (derived from accent)
+    # Button colors (Windows 10 button system) - CORRECTED
+    BUTTON_DEFAULT = "#fdfdfd"          # Actual Win10 button color (253, 253, 253)
+    BUTTON_HOVER = "#e5e5e5"            # Gray hover, not blue! (229, 229, 229)
+    BUTTON_PRESSED = "#cccccc"          # Gray pressed, not blue! (204, 204, 204)
     BUTTON_HIGHLIGHT = "#ffffff"        # ButtonHilight - Button highlight (255, 255, 255)
     BUTTON_SHADOW = "#a0a0a0"           # ButtonShadow - Button shadow (160, 160, 160)
     
     # Text colors (Windows 10 text system)
     TEXT_DEFAULT = "#000000"            # WindowText/ButtonText - Black text (0, 0, 0)
-    TEXT_DISABLED = "#6d6d6d"           # GrayText - Disabled text (109, 109, 109)
+    TEXT_DISABLED = "#a0a0a0"           # GrayText - Corrected disabled text (160, 160, 160)
     TEXT_WHITE = "#ffffff"              # HilightText - White text (255, 255, 255)
     TEXT_CAPTION = "#000000"            # TitleText - Caption text (0, 0, 0)
     TEXT_INACTIVE_CAPTION = "#000000"   # InactiveTitleText - Inactive caption (0, 0, 0)
@@ -61,14 +60,15 @@ class AppColors:
     
     # Icon colors (based on Windows 10 system)
     ICON_DEFAULT = "#000000"            # Default icon color
-    ICON_HOVER = "#0078d7"              # Windows 10 accent blue
-    ICON_PRESSED = "#005a9e"            # Darker blue for pressed
-    ICON_DISABLED = "#6d6d6d"           # Matches disabled text
+    ICON_HOVER = "#000000"              # Icons don't change color on hover in Win10
+    ICON_PRESSED = "#000000"            # Icons don't change color on press
+    ICON_DISABLED = "#a0a0a0"           # Matches disabled text
     
     # Selection colors (Windows 10 selection system)
-    SELECTION_BG = "#3399ff"            # Hilight - Selection background (51, 153, 255)
+    SELECTION_BG = "#0078d7"            # Active selection uses accent
+    SELECTION_INACTIVE = "#cccccc"      # Inactive selection is gray
     SELECTION_TEXT = "#ffffff"          # HilightText - Selection text (255, 255, 255)
-    SELECTION_MENU = "#3399ff"          # MenuHilight - Menu selection (51, 153, 255)
+    SELECTION_MENU = "#91c9f7"          # Menu selection - lighter blue
     
     # Windows 10 Accent Colors (official Microsoft palette)
     ACCENT_BLUE = "#0078d7"             # Default Windows 10 accent (0, 120, 215)
@@ -88,31 +88,34 @@ class AppColors:
     TITLEBAR_GRADIENT_INACTIVE = "#d7e4f2"  # GradientInactiveTitle (215, 228, 242)
     
     # Scrollbar colors
-    SCROLLBAR_BACKGROUND = "#c8c8c8"    # Scrollbar - Scrollbar background (200, 200, 200)
+    SCROLLBAR_BACKGROUND = "#f0f0f0"    # Scrollbar track background
+    SCROLLBAR_THUMB = "#cdcdcd"         # Scrollbar thumb color
+    SCROLLBAR_THUMB_HOVER = "#a8a8a8"   # Scrollbar thumb hover
+    SCROLLBAR_THUMB_PRESSED = "#787878" # Scrollbar thumb pressed
     
     # Hot tracking (hover) color
     HOT_TRACKING = "#0066cc"            # HotTrackingColor - Hot tracking (0, 102, 204)
     
     # === SEMANTIC COLORS (Windows 10 Style) ===
-    # Success colors
+    # Success colors - using system accent
     SUCCESS_PRIMARY = "#107c10"         # Windows 10 green
-    SUCCESS_BACKGROUND = "#dff6dd"      # Light green background
-    SUCCESS_BORDER = "#0e5a0e"          # Dark green border
+    SUCCESS_BACKGROUND = "#f0f0f0"      # Keep neutral background
+    SUCCESS_BORDER = "#107c10"          # Match primary
     
-    # Warning colors
+    # Warning colors - minimal use in Win10
     WARNING_PRIMARY = "#ffb900"         # Windows 10 yellow
-    WARNING_BACKGROUND = "#fff4ce"      # Light yellow background
-    WARNING_BORDER = "#d39400"          # Dark yellow border
+    WARNING_BACKGROUND = "#f0f0f0"      # Keep neutral background
+    WARNING_BORDER = "#ffb900"          # Match primary
     
     # Error colors
     ERROR_PRIMARY = "#e81123"           # Windows 10 red
-    ERROR_BACKGROUND = "#fde7e9"        # Light red background
-    ERROR_BORDER = "#b4161c"            # Dark red border
+    ERROR_BACKGROUND = "#f0f0f0"        # Keep neutral background
+    ERROR_BORDER = "#e81123"            # Match primary
     
     # Info colors
     INFO_PRIMARY = "#0078d7"            # Windows 10 blue
-    INFO_BACKGROUND = "#e5f1fb"         # Light blue background
-    INFO_BORDER = "#005a9e"             # Dark blue border
+    INFO_BACKGROUND = "#f0f0f0"         # Keep neutral background
+    INFO_BORDER = "#0078d7"             # Match primary
     
     # === SPECIAL APPLICATION COLORS ===
     # Port pair highlighting (keeping your existing functionality)
@@ -130,30 +133,23 @@ class AppColors:
     GRAY_700 = "#616161"                # Dark gray
     GRAY_800 = "#424242"                # Very dark gray
     GRAY_900 = "#212121"                # Darkest gray
-    
-    # High contrast mode colors (Windows accessibility)
-    HIGH_CONTRAST_BACKGROUND = "#000000"
-    HIGH_CONTRAST_TEXT = "#ffffff"
-    HIGH_CONTRAST_BORDER = "#ffffff"
-    HIGH_CONTRAST_BUTTON = "#000000"
-    HIGH_CONTRAST_BUTTON_TEXT = "#ffffff"
 
 
 @dataclass
 class AppFonts:
     """Windows 10 system fonts - exact specifications"""
     # Windows 10 uses Segoe UI as the primary system font
-    HEADER = QFont("Segoe UI", 14, QFont.Weight.Bold)
-    CONSOLE = QFont("monospace", 9)
-    CONSOLE_LARGE = QFont("monospace", 10)
+    HEADER = QFont("Segoe UI", 12, QFont.Weight.Normal)  # Headers use regular weight
+    CONSOLE = QFont("Consolas", 9)  # Consolas is Win10 monospace font
+    CONSOLE_LARGE = QFont("Consolas", 10)
     DEFAULT_FAMILY = "Segoe UI"
     DEFAULT_SIZE = "9pt"      # Standard Windows 10 size
     SMALL_SIZE = "8pt"
-    CAPTION_SIZE = "11pt"     # Windows 10 caption font size
+    CAPTION_SIZE = "12pt"     # Windows 10 caption font size (corrected)
     
     # Additional font specifications
-    BOLD_WEIGHT = "bold"
-    NORMAL_WEIGHT = "normal"
+    BOLD_WEIGHT = "600"       # Semibold, not bold
+    NORMAL_WEIGHT = "400"     # Regular
     ITALIC_STYLE = "italic"
 
 
@@ -162,23 +158,23 @@ class AppDimensions:
     """Exact Windows 10 system dimensions based on Microsoft specifications"""
     
     # === BUTTON DIMENSIONS (Based on Windows UX Guidelines) ===
-    # Standard button: 73x21 pixels (75x23 with 1px invisible border)
+    # Standard button: 75x23 pixels (exact)
     BUTTON_WIDTH_STANDARD = 75          # Standard button width
-    BUTTON_HEIGHT_STANDARD = 23         # Standard button height (with border)
+    BUTTON_HEIGHT_STANDARD = 23         # Standard button height
     BUTTON_HEIGHT_SMALL = 21            # Small button height
     BUTTON_HEIGHT_MEDIUM = 23           # Medium button height (standard)
-    BUTTON_HEIGHT_LARGE = 28            # Large button height
+    BUTTON_HEIGHT_LARGE = 31            # Large button height (corrected)
     
     # === CHECKBOX DIMENSIONS (Windows 10 specifications) ===
-    # Windows 10 checkbox: 20x20 pixels at 100% DPI, 18x18 for modern UI
-    CHECKBOX_SIZE_STANDARD = 18         # Modern UI checkbox size
-    CHECKBOX_SIZE_SYSTEM = 20           # System checkbox size (100% DPI)
+    # Windows 10 checkbox: 13x13 pixels for the box itself
+    CHECKBOX_SIZE_STANDARD = 13         # Actual checkbox box size
+    CHECKBOX_TOTAL_SIZE = 17            # Total clickable area
     CHECKBOX_BORDER_WIDTH = 1           # Checkbox border width
     
     # === COMBOBOX DIMENSIONS ===
     COMBOBOX_HEIGHT = 23                # Standard combobox height
-    COMBOBOX_ARROW_WIDTH = 16           # Width of dropdown arrow area
-    COMBOBOX_ARROW_SIZE = 8             # Actual arrow glyph size
+    COMBOBOX_ARROW_WIDTH = 17           # Width of dropdown arrow area (corrected)
+    COMBOBOX_ARROW_SIZE = 2             # Actual arrow glyph size (corrected)
     COMBOBOX_MIN_WIDTH = 120            # Minimum combobox width
     
     # === ICON DIMENSIONS ===
@@ -204,12 +200,13 @@ class AppDimensions:
     
     # === PADDING VALUES ===
     PADDING_TINY = "1px"
-    PADDING_SMALL = "3px"
-    PADDING_MEDIUM = "5px"
-    PADDING_LARGE = "7px"
-    PADDING_BUTTON_STANDARD = "3px 8px"        # Standard button padding
-    PADDING_BUTTON_LARGE = "5px 12px"          # Large button padding
-    PADDING_BUTTON_COMPACT = "2px 6px"         # Compact button padding
+    PADDING_SMALL = "2px"                      # Corrected to 2px
+    PADDING_MEDIUM = "4px"                     # Corrected to 4px
+    PADDING_LARGE = "6px"                      # Corrected to 6px
+    PADDING_BUTTON_STANDARD = "1px 12px"       # Corrected Win10 button padding
+    PADDING_BUTTON_LARGE = "4px 16px"          # Large button padding
+    PADDING_BUTTON_COMPACT = "0px 8px"         # Compact button padding
+    PADDING_TEXT_INPUT = "2px 6px"             # Text input padding
     
     # === WIDGET HEIGHTS ===
     HEIGHT_TEXT_SMALL = 100
@@ -218,7 +215,7 @@ class AppDimensions:
     HEIGHT_TEXT_XLARGE = 200
     HEIGHT_LIST_MEDIUM = 150
     HEIGHT_LIST_LARGE = 180
-    HEIGHT_PROGRESS = 20
+    HEIGHT_PROGRESS = 18                # Corrected progress bar height
     HEIGHT_SEPARATOR = 1                # Height of horizontal separators
     
     # === WIDGET WIDTHS ===
@@ -235,11 +232,15 @@ class AppDimensions:
     BORDER_WIDTH_STANDARD = 1          # Standard 1px border
     BORDER_WIDTH_THICK = 2             # Thick border for focus
     BORDER_RADIUS_STANDARD = 0         # Windows 10 uses square corners
-    BORDER_RADIUS_MODERN = 2           # Modern slight rounding
+    BORDER_RADIUS_MODERN = 0           # Keep square for consistency
     
     # === FOCUS RECTANGLE ===
     FOCUS_RECT_WIDTH = 1               # Focus rectangle line width
-    FOCUS_RECT_OFFSET = 2              # Focus rectangle offset from control
+    FOCUS_RECT_OFFSET = 3              # Focus rectangle offset from control (corrected)
+    FOCUS_RECT_STYLE = "dotted"        # Windows 10 uses dotted focus rectangles
+    
+    # === LIST/TREE ITEM HEIGHT ===
+    LIST_ITEM_HEIGHT = 24              # Standard list item height
     
     # === OUTPUT PORT WIDGET SPECIFICS ===
     OUTPUT_PORT_MIN_COUNT = 1          # Minimum number of output ports
@@ -281,21 +282,22 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
+            font-weight: {AppFonts.NORMAL_WEIGHT};
             min-width: {AppDimensions.BUTTON_WIDTH_STANDARD}px;
             min-height: {AppDimensions.BUTTON_HEIGHT_STANDARD}px;
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
+            text-align: center;
         }}
         QPushButton:hover {{
             background-color: {AppColors.BUTTON_HOVER};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
         }}
         QPushButton:pressed {{
             background-color: {AppColors.BUTTON_PRESSED};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_PRESSED};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
         }}
         QPushButton:focus {{
-            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
-            outline: none;
+            outline: {AppDimensions.FOCUS_RECT_WIDTH}px {AppDimensions.FOCUS_RECT_STYLE} {AppColors.TEXT_DEFAULT};
+            outline-offset: -{AppDimensions.FOCUS_RECT_OFFSET}px;
         }}
         QPushButton:disabled {{
             background-color: {AppColors.BACKGROUND_DISABLED};
@@ -326,11 +328,7 @@ class AppStyles:
             QPushButton {{
                 background-color: {AppColors.SUCCESS_PRIMARY};
                 color: {AppColors.TEXT_WHITE};
-                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.SUCCESS_BORDER};
-            }}
-            QPushButton:hover {{
-                background-color: {AppColors.SUCCESS_BORDER};
-                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.SUCCESS_BORDER};
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.SUCCESS_PRIMARY};
             }}
             """
         elif style_variant == "danger":
@@ -338,11 +336,7 @@ class AppStyles:
             QPushButton {{
                 background-color: {AppColors.ERROR_PRIMARY};
                 color: {AppColors.TEXT_WHITE};
-                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ERROR_BORDER};
-            }}
-            QPushButton:hover {{
-                background-color: {AppColors.ERROR_BORDER};
-                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ERROR_BORDER};
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ERROR_PRIMARY};
             }}
             """
             
@@ -359,21 +353,19 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
+            font-weight: {AppFonts.NORMAL_WEIGHT};
             min-width: {AppDimensions.BUTTON_WIDTH_STANDARD + 20}px;
             min-height: {AppDimensions.BUTTON_HEIGHT_LARGE}px;
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
         }}
         QPushButton:hover {{
             background-color: {AppColors.BUTTON_HOVER};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
         }}
         QPushButton:pressed {{
             background-color: {AppColors.BUTTON_PRESSED};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_PRESSED};
         }}
         QPushButton:focus {{
-            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
-            outline: none;
+            outline: {AppDimensions.FOCUS_RECT_WIDTH}px {AppDimensions.FOCUS_RECT_STYLE} {AppColors.TEXT_DEFAULT};
+            outline-offset: -{AppDimensions.FOCUS_RECT_OFFSET}px;
         }}
         QPushButton:disabled {{
             background-color: {AppColors.BACKGROUND_DISABLED};
@@ -391,20 +383,19 @@ class AppStyles:
             color: {AppColors.TEXT_DEFAULT};
             padding: {AppDimensions.PADDING_BUTTON_COMPACT};
             font-size: {AppFonts.SMALL_SIZE};
+            font-weight: {AppFonts.NORMAL_WEIGHT};
             min-height: {AppDimensions.BUTTON_HEIGHT_SMALL}px;
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
         }}
         QPushButton:hover {{
             background-color: {AppColors.BUTTON_HOVER};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
         }}
         QPushButton:pressed {{
             background-color: {AppColors.BUTTON_PRESSED};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_PRESSED};
         }}
         QPushButton:focus {{
-            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
-            outline: none;
+            outline: {AppDimensions.FOCUS_RECT_WIDTH}px {AppDimensions.FOCUS_RECT_STYLE} {AppColors.TEXT_DEFAULT};
+            outline-offset: -{AppDimensions.FOCUS_RECT_OFFSET}px;
         }}
         QPushButton:disabled {{
             background-color: {AppColors.BACKGROUND_DISABLED};
@@ -424,19 +415,18 @@ class AppStyles:
             color: {AppColors.TEXT_DEFAULT};
             min-width: {AppDimensions.ICON_SIZE_MEDIUM + 8}px;
             min-height: {AppDimensions.ICON_SIZE_MEDIUM + 8}px;
-            border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
         }}
         QPushButton:hover {{
-            background-color: {AppColors.INFO_BACKGROUND};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+            background-color: {AppColors.BUTTON_HOVER};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
         }}
         QPushButton:pressed {{
             background-color: {AppColors.BUTTON_PRESSED};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
         }}
         QPushButton:focus {{
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
-            outline: none;
+            outline: {AppDimensions.FOCUS_RECT_WIDTH}px {AppDimensions.FOCUS_RECT_STYLE} {AppColors.TEXT_DEFAULT};
+            outline-offset: -{AppDimensions.FOCUS_RECT_OFFSET}px;
         }}
         QPushButton:disabled {{
             color: {AppColors.ICON_DISABLED};
@@ -444,28 +434,26 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid transparent;
         }}
         """
+    
     @staticmethod
     def combobox() -> str:
         """Windows 10 system combobox - exact native styling"""
         return f"""
         QComboBox {{
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
-            padding: {AppDimensions.PADDING_SMALL} {AppDimensions.COMBOBOX_ARROW_WIDTH + 4}px {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_SMALL};
+            padding-left: {AppDimensions.PADDING_MEDIUM};
             background-color: {AppColors.BACKGROUND_WHITE};
             color: {AppColors.TEXT_DEFAULT};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
             min-height: {AppDimensions.COMBOBOX_HEIGHT}px;
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
         }}
         QComboBox:hover {{
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
-            background-color: {AppColors.BACKGROUND_WHITE};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_ACTIVE};
         }}
         QComboBox:focus {{
-            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
-            background-color: {AppColors.BACKGROUND_WHITE};
-            outline: none;
+            outline: {AppDimensions.FOCUS_RECT_WIDTH}px {AppDimensions.FOCUS_RECT_STYLE} {AppColors.TEXT_DEFAULT};
+            outline-offset: -{AppDimensions.FOCUS_RECT_OFFSET}px;
         }}
         QComboBox:disabled {{
             background-color: {AppColors.BACKGROUND_DISABLED};
@@ -475,20 +463,26 @@ class AppStyles:
         QComboBox::drop-down {{
             border: none;
             width: {AppDimensions.COMBOBOX_ARROW_WIDTH}px;
-            background-color: transparent;
+            background-color: {AppColors.BUTTON_DEFAULT};
+            border-left: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
         }}
         QComboBox::drop-down:hover {{
-            background-color: rgba(0, 120, 215, 0.1);
+            background-color: {AppColors.BUTTON_HOVER};
+        }}
+        QComboBox::drop-down:pressed {{
+            background-color: {AppColors.BUTTON_PRESSED};
         }}
         QComboBox::down-arrow {{
-            width: {AppDimensions.COMBOBOX_ARROW_SIZE}px;
-            height: {AppDimensions.COMBOBOX_ARROW_SIZE}px;
             image: none;
-            border: none;
+            width: 0;
+            height: 0;
+            border-left: {AppDimensions.COMBOBOX_ARROW_SIZE}px solid transparent;
+            border-right: {AppDimensions.COMBOBOX_ARROW_SIZE}px solid transparent;
+            border-top: {AppDimensions.COMBOBOX_ARROW_SIZE}px solid {AppColors.TEXT_DEFAULT};
+            margin-right: 0px;
         }}
-        QComboBox::down-arrow:on {{
-            /* Arrow when dropdown is open */
-            top: 1px;
+        QComboBox::down-arrow:disabled {{
+            border-top-color: {AppColors.TEXT_DISABLED};
         }}
         QComboBox QAbstractItemView {{
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
@@ -498,13 +492,14 @@ class AppStyles:
             outline: none;
         }}
         QComboBox QAbstractItemView::item {{
-            min-height: 20px;
-            padding: 2px 4px;
+            min-height: {AppDimensions.LIST_ITEM_HEIGHT}px;
+            padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
         }}
         QComboBox QAbstractItemView::item:hover {{
-            background-color: {AppColors.BUTTON_HOVER};
+            background-color: {AppColors.SELECTION_MENU};
         }}
         """
+    
     @staticmethod
     def checkbox() -> str:
         """Windows 10 system checkbox - exact native appearance"""
@@ -521,18 +516,15 @@ class AppStyles:
         QCheckBox::indicator {{
             width: {AppDimensions.CHECKBOX_SIZE_STANDARD}px;
             height: {AppDimensions.CHECKBOX_SIZE_STANDARD}px;
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
         }}
         QCheckBox::indicator:unchecked {{
             border: {AppDimensions.CHECKBOX_BORDER_WIDTH}px solid {AppColors.BORDER_DEFAULT};
             background-color: {AppColors.BACKGROUND_WHITE};
         }}
         QCheckBox::indicator:unchecked:hover {{
-            border: {AppDimensions.CHECKBOX_BORDER_WIDTH}px solid {AppColors.BORDER_FOCUS};
             background-color: {AppColors.BUTTON_HOVER};
         }}
         QCheckBox::indicator:unchecked:pressed {{
-            border: {AppDimensions.CHECKBOX_BORDER_WIDTH}px solid {AppColors.BORDER_PRESSED};
             background-color: {AppColors.BUTTON_PRESSED};
         }}
         QCheckBox::indicator:checked {{
@@ -541,16 +533,12 @@ class AppStyles:
             image: none;
         }}
         QCheckBox::indicator:checked:hover {{
-            border: {AppDimensions.CHECKBOX_BORDER_WIDTH}px solid {AppColors.HOT_TRACKING};
             background-color: {AppColors.HOT_TRACKING};
+            border-color: {AppColors.HOT_TRACKING};
         }}
         QCheckBox::indicator:checked:pressed {{
-            border: {AppDimensions.CHECKBOX_BORDER_WIDTH}px solid {AppColors.BORDER_PRESSED};
             background-color: {AppColors.BORDER_PRESSED};
-        }}
-        QCheckBox::indicator:indeterminate {{
-            border: {AppDimensions.CHECKBOX_BORDER_WIDTH}px solid {AppColors.ACCENT_BLUE};
-            background-color: {AppColors.ACCENT_BLUE};
+            border-color: {AppColors.BORDER_PRESSED};
         }}
         QCheckBox::indicator:disabled {{
             border: {AppDimensions.CHECKBOX_BORDER_WIDTH}px solid {AppColors.BORDER_DISABLED};
@@ -560,7 +548,12 @@ class AppStyles:
             border: {AppDimensions.CHECKBOX_BORDER_WIDTH}px solid {AppColors.BORDER_DISABLED};
             background-color: {AppColors.BORDER_DISABLED};
         }}
+        QCheckBox:focus {{
+            outline: {AppDimensions.FOCUS_RECT_WIDTH}px {AppDimensions.FOCUS_RECT_STYLE} {AppColors.TEXT_DEFAULT};
+            outline-offset: 0px;
+        }}
         """
+    
     @staticmethod
     def groupbox() -> str:
         """Windows 10 system groupbox"""
@@ -574,33 +567,35 @@ class AppStyles:
             background-color: {AppColors.BACKGROUND_LIGHT};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
         }}
         QGroupBox::title {{
             subcontrol-origin: margin;
             left: {AppDimensions.SPACING_LARGE}px;
-            padding: 0 {AppDimensions.SPACING_MEDIUM}px;
+            padding: 0 {AppDimensions.SPACING_SMALL}px;
             background-color: {AppColors.BACKGROUND_LIGHT};
             color: {AppColors.TEXT_DEFAULT};
         }}
         """
+    
     @staticmethod
     def textedit() -> str:
         """Windows 10 system text edit"""
         return f"""
         QTextEdit {{
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
-            padding: {AppDimensions.PADDING_SMALL};
+            padding: {AppDimensions.PADDING_TEXT_INPUT};
             background-color: {AppColors.BACKGROUND_WHITE};
             color: {AppColors.TEXT_DEFAULT};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
             selection-background-color: {AppColors.SELECTION_BG};
             selection-color: {AppColors.SELECTION_TEXT};
         }}
+        QTextEdit:hover {{
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_ACTIVE};
+        }}
         QTextEdit:focus {{
-            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
             outline: none;
         }}
         QTextEdit:disabled {{
@@ -609,27 +604,27 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DISABLED};
         }}
         """
+    
     @staticmethod
     def lineedit() -> str:
         """Windows 10 system line edit"""
         return f"""
         QLineEdit {{
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
-            padding: {AppDimensions.PADDING_SMALL};
+            padding: {AppDimensions.PADDING_TEXT_INPUT};
             background-color: {AppColors.BACKGROUND_WHITE};
             color: {AppColors.TEXT_DEFAULT};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
             min-height: {AppDimensions.BUTTON_HEIGHT_SMALL}px;
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
             selection-background-color: {AppColors.SELECTION_BG};
             selection-color: {AppColors.SELECTION_TEXT};
         }}
         QLineEdit:hover {{
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_ACTIVE};
         }}
         QLineEdit:focus {{
-            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
             outline: none;
         }}
         QLineEdit:disabled {{
@@ -638,6 +633,7 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DISABLED};
         }}
         """
+    
     @staticmethod
     def label() -> str:
         """Standard label"""
@@ -648,6 +644,7 @@ class AppStyles:
             font-size: {AppFonts.DEFAULT_SIZE};
         }}
         """
+    
     @staticmethod
     def label_status() -> str:
         """Status label with Windows 10 styling"""
@@ -660,9 +657,9 @@ class AppStyles:
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
             min-height: {AppDimensions.BUTTON_HEIGHT_MEDIUM}px;
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
         }}
         """
+    
     @staticmethod
     def listwidget() -> str:
         """Windows 10 system list widget"""
@@ -672,16 +669,14 @@ class AppStyles:
             background-color: {AppColors.BACKGROUND_WHITE};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
-            padding: {AppDimensions.SPACING_TINY}px;
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
+            padding: 0px;
             outline: none;
         }}
         QListWidget::item {{
-            border-bottom: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
-            padding: {AppDimensions.PADDING_SMALL};
-            margin: 1px 0px;
+            border: none;
+            padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
             color: {AppColors.TEXT_DEFAULT};
-            min-height: 18px;
+            min-height: {AppDimensions.LIST_ITEM_HEIGHT - 4}px;
         }}
         QListWidget::item:selected {{
             background-color: {AppColors.SELECTION_BG};
@@ -691,9 +686,10 @@ class AppStyles:
             background-color: {AppColors.BUTTON_HOVER};
         }}
         QListWidget:focus {{
-            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
         }}
         """
+    
     @staticmethod
     def tablewidget() -> str:
         """Windows 10 system table widget"""
@@ -705,7 +701,6 @@ class AppStyles:
             gridline-color: {AppColors.BORDER_LIGHT};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
             outline: none;
         }}
         QTableWidget::item {{
@@ -722,32 +717,36 @@ class AppStyles:
         QHeaderView::section {{
             background-color: {AppColors.BACKGROUND_LIGHT};
             color: {AppColors.TEXT_DEFAULT};
-            padding: {AppDimensions.PADDING_SMALL};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
-            font-weight: bold;
+            padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
+            border: none;
+            border-right: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+            border-bottom: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+            font-weight: {AppFonts.NORMAL_WEIGHT};
         }}
         QTableWidget:focus {{
-            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
         }}
         """
+    
     @staticmethod
     def progress_bar() -> str:
         """Windows 10 system progress bar"""
         return f"""
         QProgressBar {{
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
-            border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
             text-align: center;
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
             min-height: {AppDimensions.HEIGHT_PROGRESS}px;
-            background-color: {AppColors.BACKGROUND_LIGHT};
+            max-height: {AppDimensions.HEIGHT_PROGRESS}px;
+            background-color: {AppColors.BACKGROUND_WHITE};
         }}
         QProgressBar::chunk {{
-            background-color: {AppColors.ACCENT_BLUE};
-            border-radius: {AppDimensions.BORDER_RADIUS_MODERN - 1}px;
+            background-color: {AppColors.ACCENT_GREEN};
+            border: none;
         }}
         """
+    
     @staticmethod
     def scroll_area() -> str:
         """Windows 10 system scroll area"""
@@ -755,27 +754,51 @@ class AppStyles:
         QScrollArea {{
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
             background-color: {AppColors.BACKGROUND_WHITE};
-            border-radius: {AppDimensions.BORDER_RADIUS_STANDARD}px;
         }}
         QScrollBar:vertical {{
             background-color: {AppColors.SCROLLBAR_BACKGROUND};
-            width: 12px;
-            border-radius: 0px;
+            width: 17px;
             border: none;
         }}
         QScrollBar::handle:vertical {{
-            background-color: {AppColors.BORDER_DEFAULT};
-            border-radius: 0px;
+            background-color: {AppColors.SCROLLBAR_THUMB};
             min-height: 20px;
+            margin: 2px;
         }}
         QScrollBar::handle:vertical:hover {{
-            background-color: {AppColors.BORDER_FOCUS};
+            background-color: {AppColors.SCROLLBAR_THUMB_HOVER};
+        }}
+        QScrollBar::handle:vertical:pressed {{
+            background-color: {AppColors.SCROLLBAR_THUMB_PRESSED};
         }}
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
             border: none;
             background: none;
+            height: 0px;
+        }}
+        QScrollBar:horizontal {{
+            background-color: {AppColors.SCROLLBAR_BACKGROUND};
+            height: 17px;
+            border: none;
+        }}
+        QScrollBar::handle:horizontal {{
+            background-color: {AppColors.SCROLLBAR_THUMB};
+            min-width: 20px;
+            margin: 2px;
+        }}
+        QScrollBar::handle:horizontal:hover {{
+            background-color: {AppColors.SCROLLBAR_THUMB_HOVER};
+        }}
+        QScrollBar::handle:horizontal:pressed {{
+            background-color: {AppColors.SCROLLBAR_THUMB_PRESSED};
+        }}
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+            border: none;
+            background: none;
+            width: 0px;
         }}
         """
+    
     @staticmethod
     def tooltip() -> str:
         """Windows 10 system tooltip"""
@@ -783,36 +806,28 @@ class AppStyles:
         QToolTip {{
             background-color: {AppColors.BACKGROUND_TOOLTIP};
             color: {AppColors.TEXT_TOOLTIP};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.TEXT_DEFAULT};
+            padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
+            font-family: {AppFonts.DEFAULT_FAMILY};
+            font-size: {AppFonts.DEFAULT_SIZE};
+        }}
+        """
+    
+    @staticmethod
+    def notification(notification_type: str = "info") -> str:
+        """Windows 10 notification panel styles - minimal styling"""
+        # Windows 10 doesn't use colored backgrounds for notifications
+        return f"""
+        QLabel {{
+            background-color: {AppColors.BACKGROUND_LIGHT};
+            color: {AppColors.TEXT_DEFAULT};
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
             padding: {AppDimensions.PADDING_MEDIUM};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
-            border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
         }}
         """
-    @staticmethod
-    def notification(notification_type: str = "info") -> str:
-        """Windows 10 notification panel styles"""
-        type_colors = {
-            "success": (AppColors.SUCCESS_BACKGROUND, AppColors.SUCCESS_BORDER, AppColors.SUCCESS_PRIMARY),
-            "warning": (AppColors.WARNING_BACKGROUND, AppColors.WARNING_BORDER, AppColors.WARNING_PRIMARY),
-            "error": (AppColors.ERROR_BACKGROUND, AppColors.ERROR_BORDER, AppColors.ERROR_PRIMARY),
-            "info": (AppColors.INFO_BACKGROUND, AppColors.INFO_BORDER, AppColors.INFO_PRIMARY)
-        }
-        
-        bg_color, border_color, text_color = type_colors.get(notification_type, type_colors["info"])
-        
-        return f"""
-        QLabel {{
-            background-color: {bg_color};
-            color: {text_color};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {border_color};
-            border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
-            padding: {AppDimensions.PADDING_MEDIUM};
-            font-family: {AppFonts.DEFAULT_FAMILY};
-            font-size: {AppFonts.DEFAULT_SIZE};
-        }}
-        """
+    
     @staticmethod
     def separator(orientation: str = "horizontal") -> str:
         """Windows 10 separator line style"""
@@ -822,17 +837,19 @@ class AppStyles:
                 color: {AppColors.BORDER_LIGHT};
                 background-color: {AppColors.BORDER_LIGHT};
                 max-height: {AppDimensions.HEIGHT_SEPARATOR}px;
+                border: none;
             }}
             """
         else:  # vertical
             return f"""
             QFrame {{
-                color: {AppColors.BORDER_DEFAULT};
-                background-color: {AppColors.BORDER_DEFAULT};
+                color: {AppColors.BORDER_LIGHT};
+                background-color: {AppColors.BORDER_LIGHT};
                 max-width: {AppDimensions.BORDER_WIDTH_STANDARD}px;
-                margin: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
+                border: none;
             }}
             """
+    
     @staticmethod
     def status_label_inline() -> str:
         """Inline status label style for section headers"""
@@ -840,9 +857,10 @@ class AppStyles:
         QLabel {{
             color: {AppColors.TEXT_DISABLED};
             font-style: {AppFonts.ITALIC_STYLE};
-            margin-left: {AppDimensions.PADDING_MEDIUM};
+            margin-left: {AppDimensions.SPACING_MEDIUM}px;
         }}
         """
+    
     @staticmethod
     def port_label() -> str:
         """Port number label style"""
@@ -854,6 +872,7 @@ class AppStyles:
             font-size: {AppFonts.DEFAULT_SIZE};
         }}
         """
+    
     @staticmethod
     def output_port_widget() -> str:
         """Output port widget container style"""
@@ -867,15 +886,17 @@ class AppStyles:
             background-color: {AppColors.BUTTON_HOVER};
         }}
         """
+    
     @staticmethod
     def output_port_widget_pressed() -> str:
         """Output port widget pressed state"""
         return f"""
         OutputPortWidget {{
             background-color: {AppColors.BUTTON_PRESSED};
-            border: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
         }}
         """
+    
     @staticmethod
     def output_port_widget_disabled() -> str:
         """Output port widget disabled state"""
@@ -885,27 +906,23 @@ class AppStyles:
             border-color: {AppColors.BORDER_DISABLED};
         }}
         """
+    
     @staticmethod
     def port_type_indicator(style_type: str = "info") -> str:
-        """Port type indicator label style"""
-        from .theme import ThemeManager  # Local import to avoid circular dependency
-        bg_color = ThemeManager.get_semantic_color(style_type, "background")
-        border_color = ThemeManager.get_semantic_color(style_type, "border")
-        text_color = ThemeManager.get_semantic_color(style_type, "primary")
-        
+        """Port type indicator label style - minimal styling"""
         return f"""
         QLabel {{
-            color: {text_color};
+            color: {AppColors.TEXT_DEFAULT};
             font-style: {AppFonts.ITALIC_STYLE};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.SMALL_SIZE};
             padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-            background-color: {bg_color};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {border_color};
-            border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+            background-color: {AppColors.BACKGROUND_LIGHT};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
             margin-top: {AppDimensions.SPACING_SMALL}px;
         }}
         """
+    
     @staticmethod
     def baud_label() -> str:
         """Baud rate label style"""
@@ -917,6 +934,7 @@ class AppStyles:
             margin-right: {AppDimensions.SPACING_SMALL}px;
         }}
         """
+    
     @staticmethod
     def section_header_label() -> str:
         """Section header label style"""
@@ -927,6 +945,7 @@ class AppStyles:
             margin-right: {AppDimensions.SPACING_SMALL}px;
         }}
         """
+    
     @staticmethod
     def icon_button_hover_danger() -> str:
         """Icon button with danger hover effect"""
@@ -934,9 +953,10 @@ class AppStyles:
         return base + f"""
         QPushButton:hover {{
             background-color: {AppColors.ERROR_BACKGROUND};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ERROR_BORDER};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ERROR_PRIMARY};
         }}
         """
+    
     @staticmethod
     def splitter() -> str:
         """Splitter widget style"""
@@ -947,7 +967,10 @@ class AppStyles:
             height: {AppDimensions.SPACING_SMALL}px;
         }}
         QSplitter::handle:hover {{
-            background-color: {AppColors.BORDER_FOCUS};
+            background-color: {AppColors.SCROLLBAR_THUMB_HOVER};
+        }}
+        QSplitter::handle:pressed {{
+            background-color: {AppColors.SCROLLBAR_THUMB_PRESSED};
         }}
         """
     
@@ -960,22 +983,23 @@ class AppStyles:
             color: {AppColors.TEXT_DEFAULT};
         }}
         """
+    
     @staticmethod
     def textedit_html() -> str:
         """Text edit for HTML content display"""
         return f"""
         QTextEdit {{
             background-color: {AppColors.BACKGROUND_WHITE};
-            border: 1px solid {AppColors.BORDER_DEFAULT};
-            border-radius: 6px;
-            padding: 15px;
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+            padding: 12px;
             font-family: {AppFonts.DEFAULT_FAMILY};
         }}
         QTextEdit:focus {{
-            border: 2px solid {AppColors.BORDER_FOCUS};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
             outline: none;
         }}
         """
+    
     
 class IconManager:
     """Enhanced icon manager with Windows 10 system icon support"""
@@ -1008,15 +1032,11 @@ class IconManager:
         normal_pixmap = IconManager._svg_to_pixmap(svg_data, size)
         icon.addPixmap(normal_pixmap, QIcon.Mode.Normal, QIcon.State.Off)
         
-        # Hover state
-        hover_svg = svg_template.format(color=AppColors.ICON_HOVER)
-        hover_pixmap = IconManager._svg_to_pixmap(hover_svg, size)
-        icon.addPixmap(hover_pixmap, QIcon.Mode.Active, QIcon.State.Off)
+        # Active/Hover state - same as normal in Win10
+        icon.addPixmap(normal_pixmap, QIcon.Mode.Active, QIcon.State.Off)
         
-        # Pressed state
-        pressed_svg = svg_template.format(color=AppColors.ICON_PRESSED)
-        pressed_pixmap = IconManager._svg_to_pixmap(pressed_svg, size)
-        icon.addPixmap(pressed_pixmap, QIcon.Mode.Selected, QIcon.State.Off)
+        # Selected/Pressed state - same as normal in Win10
+        icon.addPixmap(normal_pixmap, QIcon.Mode.Selected, QIcon.State.Off)
         
         # Disabled state
         disabled_svg = svg_template.format(color=AppColors.ICON_DISABLED)
@@ -1205,7 +1225,7 @@ class ThemeManager:
             separator.setFrameShape(QFrame.Shape.HLine)
         else:
             separator.setFrameShape(QFrame.Shape.VLine)
-        separator.setFrameShadow(QFrame.Shadow.Sunken)
+        separator.setFrameShadow(QFrame.Shadow.Plain)
         separator.setStyleSheet(AppStyles.separator(orientation))
         return separator
     
@@ -1376,6 +1396,7 @@ class ThemeManager:
         }
         
         return color_map.get(semantic_type, color_map["info"]).get(element, AppColors.INFO_PRIMARY)
+    
     @staticmethod
     def create_html_content_widget(max_height: int = 350) -> QTextEdit:
         """Create widget for HTML content display"""
@@ -1410,6 +1431,7 @@ class ThemeManager:
             border-bottom: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
+            padding: 2px;
         }}
         
         QMenuBar::item {{
@@ -1419,8 +1441,8 @@ class ThemeManager:
         }}
         
         QMenuBar::item:selected {{
-            background-color: {AppColors.SELECTION_MENU};
-            color: {AppColors.SELECTION_TEXT};
+            background-color: {AppColors.BUTTON_HOVER};
+            color: {AppColors.TEXT_DEFAULT};
         }}
         
         QMenuBar::item:pressed {{
@@ -1438,19 +1460,20 @@ class ThemeManager:
         }}
         
         QMenu::item {{
-            padding: 4px 16px;
-            margin: 1px;
+            padding: 5px 20px 5px 20px;
+            margin: 0px;
+            min-height: {AppDimensions.LIST_ITEM_HEIGHT - 10}px;
         }}
         
         QMenu::item:selected {{
             background-color: {AppColors.SELECTION_MENU};
-            color: {AppColors.SELECTION_TEXT};
+            color: {AppColors.TEXT_DEFAULT};
         }}
         
         QMenu::separator {{
             height: 1px;
             background-color: {AppColors.BORDER_LIGHT};
-            margin: 2px 4px;
+            margin: 5px 10px;
         }}
         
         /* Windows 10 Status Bar */
@@ -1460,6 +1483,7 @@ class ThemeManager:
             border-top: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
+            min-height: 23px;
         }}
         
         QStatusBar::item {{
@@ -1468,6 +1492,7 @@ class ThemeManager:
         """
         
         app.setStyleSheet(global_style)
+
 
 class HTMLTheme:
     """HTML styling using theme colors"""
@@ -1488,37 +1513,36 @@ class HTMLTheme:
                 color: {AppColors.ACCENT_BLUE};
                 text-align: center;
                 margin-bottom: 20px;
-                font-size: 18px;
+                font-size: 16px;
+                font-weight: {AppFonts.BOLD_WEIGHT};
             }}
             h3 {{
-                color: {AppColors.ACCENT_BLUE};
+                color: {AppColors.TEXT_DEFAULT};
                 margin-top: 0;
                 font-size: 14px;
-                font-weight: bold;
+                font-weight: {AppFonts.BOLD_WEIGHT};
             }}
             .center-text {{
                 text-align: center;
                 color: {AppColors.TEXT_DEFAULT};
-                margin-bottom: 25px;
-                font-size: 14px;
+                margin-bottom: 20px;
+                font-size: 13px;
             }}
             .success {{
                 color: {AppColors.SUCCESS_PRIMARY};
-                font-weight: bold;
+                font-weight: {AppFonts.BOLD_WEIGHT};
             }}
             .info-box {{
-                background-color: {AppColors.INFO_BACKGROUND};
+                background-color: {AppColors.BACKGROUND_LIGHT};
                 border-left: 4px solid {AppColors.ACCENT_BLUE};
                 padding: 15px;
                 margin: 15px 0;
-                border-radius: 4px;
             }}
             .warning-box {{
-                background-color: {AppColors.WARNING_BACKGROUND};
+                background-color: {AppColors.BACKGROUND_LIGHT};
                 border-left: 4px solid {AppColors.WARNING_PRIMARY};
                 padding: 15px;
                 margin: 15px 0;
-                border-radius: 4px;
             }}
             .warning-box h3 {{
                 color: {AppColors.WARNING_PRIMARY};
@@ -1527,20 +1551,19 @@ class HTMLTheme:
                 text-align: center;
                 margin-top: 20px;
                 padding: 10px;
-                background-color: {AppColors.INFO_BACKGROUND};
-                border-radius: 4px;
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
             }}
             .footer-box p {{
                 margin: 0;
                 color: {AppColors.TEXT_DEFAULT};
-                font-size: 12px;
+                font-size: 11px;
                 font-style: italic;
             }}
             code {{
                 background: {AppColors.GRAY_200};
-                padding: 2px 6px;
-                border-radius: 3px;
-                font-family: monospace, monospace;
+                padding: 2px 5px;
+                font-family: {AppFonts.CONSOLE.family()}, monospace;
                 font-size: 13px;
             }}
             ul {{

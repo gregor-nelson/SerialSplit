@@ -120,19 +120,19 @@ APP_ICON_SVG = """
 
 
 def load_inter_font():
-    """Load Inter font files and register them with the application"""
+    """Load Poppins font files and register them with the application"""
     font_dir = Path(__file__).parent / "ui" / "fonts"
     
     if not font_dir.exists():
         print("Warning: Font directory not found, using system fonts")
         return False
     
-    # Inter font variants to load
+    # Poppins font variants to load
     font_files = [
-        "Inter-Regular.ttf",
-        "Inter-Bold.ttf", 
-        "Inter-SemiBold.ttf",
-        "Inter-Medium.ttf"
+        "Poppins-Regular.ttf",
+        "Poppins-Bold.ttf", 
+        "Poppins-SemiBold.ttf",
+        "Poppins-Medium.ttf"
     ]
     
     fonts_loaded = 0
@@ -143,7 +143,7 @@ def load_inter_font():
             if font_id != -1:
                 fonts_loaded += 1
                 families = QFontDatabase.applicationFontFamilies(font_id)
-                # print(f"Loaded font: {font_file} -> {families}")
+                print(f"Loaded font: {font_file} -> {families}")
             else:
                 print(f"Failed to load font: {font_file}")
         else:
@@ -203,8 +203,8 @@ def main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False) # Prevent app from quitting when window is closed
     
-    # Load Inter font
-    load_inter_font()
+    # Use Windows 10 system fonts (Segoe UI) - no custom font loading needed
+    # load_inter_font()
     
     # Set application properties
     app.setApplicationName("Hub4com Launcher with Port Scanner & Baud Rate Support")

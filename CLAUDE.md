@@ -14,6 +14,12 @@ This is a Python PyQt6 GUI application called "Serial Port Splitter" that provid
 python3 main.py
 ```
 
+### Installing Dependencies
+```bash
+# Install required packages (no requirements.txt exists currently)
+pip install PyQt6 PyQt6-Svg
+```
+
 ### Building Executable
 ```bash
 # Build using PyInstaller (requires PyInstaller to be installed)
@@ -83,3 +89,12 @@ This application is Windows-specific due to:
 - UI components use a modular theming system with customizable colors and fonts
 - Port detection relies on Windows Registry scanning with special Moxa device handling
 - All subprocess management (hub4com.exe, setupc.exe) includes proper process lifecycle handling
+- No requirements.txt exists - dependencies must be installed manually
+- Testing is manual through the GUI interface - no automated test suite
+
+## Important Architecture Details
+
+- **Process Management**: Hub4comProcess and Com0comProcess classes handle subprocess lifecycle with proper cleanup
+- **Registry Integration**: PortScanner uses winreg with fallback handling for non-Windows environments
+- **Theme System**: Complete theming in `ui/theme/` with Inter font integration and customizable color schemes
+- **System Tray**: App minimizes to tray instead of closing, with full tray menu functionality
