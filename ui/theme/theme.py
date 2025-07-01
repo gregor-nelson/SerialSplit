@@ -144,8 +144,8 @@ class AppFonts:
     """Windows 10 system fonts - exact specifications"""
     # Windows 10 uses Segoe UI as the primary system font
     HEADER = QFont("Segoe UI", 14, QFont.Weight.Bold)
-    CONSOLE = QFont("Consolas", 9)
-    CONSOLE_LARGE = QFont("Consolas", 10)
+    CONSOLE = QFont("monospace", 9)
+    CONSOLE_LARGE = QFont("monospace", 10)
     DEFAULT_FAMILY = "Segoe UI"
     DEFAULT_SIZE = "9pt"      # Standard Windows 10 size
     SMALL_SIZE = "8pt"
@@ -262,22 +262,10 @@ class AppMessages:
     STARTING_HUBCOM = "Starting hub4com routing service..."
     STOPPING_HUBCOM = "Stopping hub4com routing service..."
     
-    # Tooltips
-    PAIR_TOOLTIP_TEMPLATE = """Port A ({port_a}): {params_a}
-Port B ({port_b}): {params_b}
-
-Right-click or use 'Configure Features' to modify settings
-Click 'Help' button for detailed explanations of all features"""
-    
     # Button labels
     BUTTON_ROUTE_MODE = "Route Mode: {mode} ▼"
     BUTTON_PORT_LABEL = "Port {number}:"
     BUTTON_SET_ALL = "Set All:"
-    
-    # Port type indicators
-    PORT_TYPE_MOXA = "🌐 MOXA Network Device - Make sure baud rate matches your source device"
-    PORT_TYPE_PHYSICAL = "🔌 PHYSICAL PORT - Connected to real hardware, verify device baud rate"
-    PORT_TYPE_VIRTUAL = "💻 VIRTUAL PORT - Software-created port for inter-application communication"
 
 
 class AppStyles:
@@ -771,7 +759,7 @@ class AppStyles:
         }}
         QScrollBar:vertical {{
             background-color: {AppColors.SCROLLBAR_BACKGROUND};
-            width: 16px;
+            width: 12px;
             border-radius: 0px;
             border: none;
         }}
@@ -1552,7 +1540,7 @@ class HTMLTheme:
                 background: {AppColors.GRAY_200};
                 padding: 2px 6px;
                 border-radius: 3px;
-                font-family: Consolas, monospace;
+                font-family: monospace, monospace;
                 font-size: 13px;
             }}
             ul {{
@@ -1593,4 +1581,3 @@ class Config:
     QUICK_BAUD_RATES = ["9600", "19200", "38400", "57600", "115200"]
     DEFAULT_BAUD = "115200"
     MIN_OUTPUT_PORTS = AppDimensions.OUTPUT_PORT_MIN_COUNT
-

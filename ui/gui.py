@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
 Main GUI window for Hub4com GUI Launcher
-Contains the primary application interface - Fully themed version
+Contains the primary application interface - Optimized version
 """
 
 import json
 from pathlib import Path
-from typing import Optional, List, Dict, Callable
+from typing import Optional, List, Dict, Callable, Any, Tuple
 from functools import partial
+from dataclasses import dataclass
+from enum import Enum
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
                              QWidget, QLabel, QComboBox, QPushButton, QCheckBox, 
@@ -26,8 +28,11 @@ from ui.theme.theme import (
     ThemeManager, AppStyles, AppFonts, AppDimensions, AppColors, 
     AppMessages, IconManager
 )
-from ui.dialogs import PortScanDialog, Com0ComHelpDialog, PairCreationDialog, ConfigurationSummaryDialog, LaunchDialog
+from ui.dialogs import PortScanDialog, PairCreationDialog, ConfigurationSummaryDialog, LaunchDialog
+from ui.dialogs.help_dialog import HelpManager, HelpTopic
 from ui.widgets import OutputPortWidget
+from ui.windows.command_formatter import CommandFormatter, parse_command_info
+from ui.windows.output_log_formatter import OutputLogFormatter
 
 
 # ============================================================================
@@ -44,21 +49,177 @@ class Config:
 
 
 # ============================================================================
+# INTERNAL HELPER CLASSES
+# ============================================================================
+
+class OperationType(Enum):
+    """Operation types for generic handlers"""
+    CREATE_PAIR = "create"
+    REMOVE_PAIR = "remove"
+    MODIFY_PAIR = "modify"
+    LIST_PAIRS = "list"
+    
+@dataclass
+class ButtonConfig:
+    """Configuration for button creation"""
+    icon_name: str
+    callback: Callable
+    tooltip: str
+    enabled: bool = True
+    reference_name: Optional[str] = None
+
+
+class ThreadRegistry:
+    """Manages all application threads"""
+    def __init__(self):
+        self.threads = {}
+        
+    def register(self, name: str, thread):
+        """Register a thread with a unique name"""
+        self.threads[name] = thread
+        
+    def unregister(self, name: str):
+        """Unregister a thread"""
+        if name in self.threads:
+            del self.threads[name]
+            
+    def stop_all(self, timeout: int = 1000) -> List[str]:
+        """Stop all threads and return list of threads that didn't stop"""
+        failed = []
+        for name, thread in self.threads.items():
+            if thread and thread.isRunning():
+                thread.terminate()
+                if not thread.wait(timeout):
+                    failed.append(name)
+        self.threads.clear()
+        return failed
+
+
+class PortManager:
+    """Manages port-related operations"""
+    @staticmethod
+    def format_port_name(port: str) -> Optional[str]:
+        """Format port name for hub4com"""
+        port = port.upper().strip()
+        
+        if "No COM" in port:
+            return None
+        
+        if port.startswith(('COM', 'CNC')):
+            return f"\\\\.\\{port}"
+        elif port.startswith('\\\\.\\'):
+            return port
+        elif port.isdigit():
+            return f"\\\\.\\COM{port}"
+        else:
+            return f"\\\\.\\{port}"
+    
+    @staticmethod
+    def extract_port_info(text: str) -> Tuple[str, str]:
+        """Extract port names from list item text"""
+        if "[CNCA" in text and "CNCB" in text:
+            bracket_content = text.split("[")[1].split("]")[0]
+            parts = bracket_content.split(" ↔ ")
+            if len(parts) == 2:
+                return parts[0].strip(), parts[1].strip()
+        return "", ""
+
+
+class CommandBuilder:
+    """Builds hub4com commands"""
+    def __init__(self):
+        self.port_manager = PortManager()
+        
+    def build(self, incoming_port: str, incoming_baud: str, 
+              output_configs: List[PortConfig], route_settings: Dict,
+              disable_cts: bool) -> Optional[List[str]]:
+        """Build the complete hub4com command"""
+        cmd = ["hub4com.exe"]
+        
+        if not incoming_port or "No COM" in incoming_port:
+            return None
+            
+        if not output_configs:
+            return None
+            
+        # Add route options
+        self._add_route_options(cmd, len(output_configs), route_settings)
+        
+        # Add CTS option
+        if disable_cts:
+            cmd.append('--octs=off')
+            
+        # Add incoming port
+        cmd.append(f'--baud={incoming_baud}')
+        formatted_incoming = self.port_manager.format_port_name(incoming_port)
+        if not formatted_incoming:
+            return None
+        cmd.append(formatted_incoming)
+        
+        # Add output ports
+        for config in output_configs:
+            cmd.append(f'--baud={config.baud_rate}')
+            formatted_port = self.port_manager.format_port_name(config.port_name)
+            if not formatted_port:
+                return None
+            cmd.append(formatted_port)
+            
+        return cmd
+        
+    def _add_route_options(self, cmd: List[str], num_ports: int, settings: Dict):
+        """Add route options to command"""
+        output_indices = ','.join(str(i + 1) for i in range(num_ports))
+        
+        mode = settings.get('mode', 'one_way')
+        if mode == 'one_way':
+            cmd.append(f'--route=0:{output_indices}')
+        elif mode == 'two_way':
+            cmd.append(f'--bi-route=0:{output_indices}')
+        elif mode == 'full_network':
+            cmd.append('--route=All:All')
+            
+        if settings.get('echo_enabled'):
+            cmd.append('--echo-route=0')
+        if settings.get('flow_control_enabled'):
+            cmd.append(f'--fc-route=0:{output_indices}')
+        if settings.get('disable_default_fc'):
+            cmd.append(f'--no-default-fc-route=0:{output_indices}')
+
+
+# ============================================================================
 # MAIN GUI CLASS
 # ============================================================================
 
 class Hub4comGUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.hub4com_process = None
-        self.port_scanner_thread = None
-        self.scanned_ports = []
-        self.output_port_widgets = []
-        self.com0com_thread = None
-        self.com0com_threads = []
-        self.pending_modifications = 0
-        self.modification_success = True
         
+        # Core components
+        self.thread_registry = ThreadRegistry()
+        self.port_manager = PortManager()
+        self.command_builder = CommandBuilder()
+        self.command_formatter = CommandFormatter()
+        self.output_log_formatter = OutputLogFormatter()
+        
+        # State management
+        self.app_state = {
+            'hub4com_process': None,
+            'scanned_ports': [],
+            'output_port_widgets': [],
+            'route_settings': {
+                'mode': 'two_way',
+                'echo_enabled': False,
+                'flow_control_enabled': False,
+                'disable_default_fc': False
+            },
+            'pending_modifications': 0,
+            'modification_success': True
+        }
+        
+        # UI references dictionary for easy access
+        self.ui_refs = {}
+        
+        # Initialize window
         self.window_config = ResponsiveWindowManager.calculate_main_window_config()
         self._init_ui()
         self._setup_timers()
@@ -83,7 +244,6 @@ class Hub4comGUI(QMainWindow):
         self._add_separator(layout)
         layout.addWidget(self._create_virtual_ports_section())
         layout.addWidget(self._create_configuration_section())
-        layout.addLayout(self._create_control_buttons())
         layout.addWidget(self._create_output_section())
     
     def _setup_window(self):
@@ -113,16 +273,21 @@ class Hub4comGUI(QMainWindow):
     
     def _setup_timers(self):
         """Setup initial timers"""
-        QTimer.singleShot(50, self.update_route_mode_button)
-        QTimer.singleShot(100, self.update_preview)
-        QTimer.singleShot(500, self.initialize_default_configuration)  # Initialize default config early
-        QTimer.singleShot(1000, self._safe_refresh_ports)
-        QTimer.singleShot(1500, self.add_output_port)
-        QTimer.singleShot(2000, self.list_com0com_pairs)
+        timers = [
+            (100, self.update_preview),
+            (500, self.initialize_default_configuration),
+            (1000, self._safe_refresh_ports),
+            (1500, self.add_output_port),
+            (2000, self.list_com0com_pairs)
+        ]
+        
+        for delay, callback in timers:
+            QTimer.singleShot(delay, callback)
     
     # ========================================================================
     # UI HELPER METHODS
     # ========================================================================
+    
     def _create_groupbox_with_layout(self, title: str, layout_class=QVBoxLayout) -> tuple:
         """Create a styled groupbox with layout"""
         group = ThemeManager.create_groupbox(title)
@@ -131,12 +296,30 @@ class Hub4comGUI(QMainWindow):
             layout.setSpacing(AppDimensions.SPACING_MEDIUM)
             ThemeManager.set_widget_margins(layout, "standard")
         return group, layout
+    
+    def _create_icon_button_group(self, buttons: List[ButtonConfig], 
+                                  layout: QHBoxLayout) -> Dict[str, QPushButton]:
+        """Create a group of icon buttons"""
+        created_buttons = {}
         
+        for config in buttons:
+            btn = ThemeManager.create_icon_button(
+                config.icon_name, config.tooltip, "medium"
+            )
+            btn.clicked.connect(config.callback)
+            btn.setEnabled(config.enabled)
+            layout.addWidget(btn)
+            
+            if config.reference_name:
+                created_buttons[config.reference_name] = btn
+                
+        return created_buttons
+    
     def _add_separator(self, layout: QVBoxLayout, orientation: str = "horizontal"):
         """Add a themed separator to layout"""
         separator = ThemeManager.create_separator(orientation)
         layout.addWidget(separator)
-
+    
     def _show_message(self, title: str, message: str, msg_type: str = "info"):
         """Show message box with specified type"""
         msg_funcs = {
@@ -147,16 +330,20 @@ class Hub4comGUI(QMainWindow):
         }
         return msg_funcs.get(msg_type, QMessageBox.information)(self, title, message)
     
-    def _update_status(self, message: str, widget: QLabel = None):
-        """Update status label"""
+    def _update_status(self, message: str, widget: QLabel = None, component: str = None):
+        """Update status label - unified status management"""
         if not widget:
-            widget = getattr(self, 'status_label', None)
+            widget = self.ui_refs.get(f'{component}_status') if component else None
+            if not widget:
+                widget = self.ui_refs.get('status_label')
+        
         if widget:
             widget.setText(message)
     
     # ========================================================================
     # UI SECTION BUILDERS
     # ========================================================================
+    
     def _create_virtual_ports_section(self) -> QGroupBox:
         """Create virtual ports management section"""
         group, layout = self._create_groupbox_with_layout("Com0com Configuration")
@@ -165,57 +352,43 @@ class Hub4comGUI(QMainWindow):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         
-        # Action buttons (refresh/create)
-        action_buttons = [
-            ("refresh", self.list_com0com_pairs, "Refresh port pairs list", True),
-            ("create", self.create_com0com_pair, "Create new virtual port pair", True)
+        # Create all buttons using button group helper
+        button_configs = [
+            ButtonConfig("refresh", self.list_com0com_pairs, "Refresh port pairs list", True),
+            ButtonConfig("create", self.create_com0com_pair, "Create new virtual port pair", True),
+            ButtonConfig("delete", self.remove_com0com_pair, "Delete selected pair", False, "remove_pair_btn"),
+            ButtonConfig("settings", self.show_settings_menu, "Configure selected pair", False, "settings_btn"),
+            ButtonConfig("help", lambda: self._show_help(HelpTopic.COM0COM_SETTINGS), "Help and documentation", True)
         ]
         
-        for icon_name, callback, tooltip, enabled in action_buttons:
-            btn = ThemeManager.create_icon_button(icon_name, tooltip, "medium")
-            btn.clicked.connect(callback)
-            btn.setEnabled(enabled)
-            buttons_layout.addWidget(btn)
+        # Add action buttons
+        action_buttons = self._create_icon_button_group(button_configs[:2], buttons_layout)
         
-        # Vertical separator using theme
+        # Add separator
         buttons_layout.addWidget(ThemeManager.create_separator("vertical"))
         
-        # Management buttons (delete/settings/help)
-        management_buttons = [
-            ("delete", self.remove_com0com_pair, "Delete selected pair", False),
-            ("settings", self.show_settings_menu, "Configure selected pair", False),
-            ("help", self.show_com0com_help, "Help and documentation", True)
-        ]
+        # Add management buttons
+        mgmt_buttons = self._create_icon_button_group(button_configs[2:], buttons_layout)
+        self.ui_refs.update(mgmt_buttons)
         
-        for icon_name, callback, tooltip, enabled in management_buttons:
-            btn = ThemeManager.create_icon_button(icon_name, tooltip, "medium")
-            btn.clicked.connect(callback)
-            btn.setEnabled(enabled)
-            buttons_layout.addWidget(btn)
-            
-            # Store references for buttons we need to access later
-            if icon_name == "delete":
-                self.remove_pair_btn = btn
-            elif icon_name == "settings":
-                self.settings_btn = btn
-        
-        # Status label using theme
-        self.com0com_status = ThemeManager.create_status_label_inline(AppMessages.READY)
-        buttons_layout.addWidget(self.com0com_status)
+        # Status label
+        self.ui_refs['com0com_status'] = ThemeManager.create_status_label_inline(AppMessages.READY)
+        buttons_layout.addWidget(self.ui_refs['com0com_status'])
         buttons_layout.addStretch()
         layout.addLayout(buttons_layout)
         
         # Port pairs list
-        self.port_pairs_list = ThemeManager.create_listwidget()
-        self.port_pairs_list.setMaximumHeight(AppDimensions.HEIGHT_LIST_LARGE)
-        self.port_pairs_list.itemSelectionChanged.connect(self.on_pair_selected)
-        self.port_pairs_list.itemDoubleClicked.connect(self.on_pair_double_clicked)
-        layout.addWidget(self.port_pairs_list)
+        self.ui_refs['port_pairs_list'] = ThemeManager.create_listwidget()
+        self.ui_refs['port_pairs_list'].itemSelectionChanged.connect(self.on_pair_selected)
+        self.ui_refs['port_pairs_list'].itemDoubleClicked.connect(self.on_pair_double_clicked)
+        self.ui_refs['port_pairs_list'].setMaximumHeight(AppDimensions.HEIGHT_LIST_MEDIUM)
+        layout.addWidget(self.ui_refs['port_pairs_list'])
         
-        self.com0com_progress = ThemeManager.create_progress_bar()
-        self.com0com_progress.setRange(0, 100)
-        self.com0com_progress.setVisible(False)
-        layout.addWidget(self.com0com_progress)
+        # Progress bar
+        self.ui_refs['com0com_progress'] = ThemeManager.create_progress_bar()
+        self.ui_refs['com0com_progress'].setRange(0, 100)
+        self.ui_refs['com0com_progress'].setVisible(False)
+        layout.addWidget(self.ui_refs['com0com_progress'])
         
         return group
     
@@ -223,84 +396,52 @@ class Hub4comGUI(QMainWindow):
         """Create hub4com configuration section"""
         group, layout = self._create_groupbox_with_layout("Hub4com Configuration", QGridLayout)
         
-        # Unified control bar - all hub4com controls in one row
+        # Unified control bar
         controls_layout = QHBoxLayout()
         controls_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         
-        # Port scanning buttons
-        scan_buttons = [
-            ("list", self.show_port_scanner, "Scan ports for detailed analysis", True),
-            ("refresh", self.refresh_port_lists, "Refresh port lists", True)
+        # All hub4com control buttons
+        button_configs = [
+            ButtonConfig("list", self.show_port_scanner, "Scan ports for detailed analysis", True),
+            ButtonConfig("refresh", self.refresh_port_lists, "Refresh port lists", True),
+            ButtonConfig("create", self.add_output_port, "Add new output port", True),
+            ButtonConfig("delete", self.remove_all_output_ports, "Remove all output ports", True, "remove_all_ports_btn"),
+            ButtonConfig("settings", self.show_hub4com_settings_menu, "Hub4com configuration settings", True, "hub4com_settings_btn"),
+            ButtonConfig("refresh", self.update_preview, "Update command preview", True),
+            ButtonConfig("play", self.start_hub4com, "Start hub4com routing", True, "start_btn"),
+            ButtonConfig("stop", self.stop_hub4com, "Stop hub4com routing", False, "stop_btn")
         ]
         
-        for icon_name, callback, tooltip, enabled in scan_buttons:
-            btn = ThemeManager.create_icon_button(icon_name, tooltip, "medium")
-            btn.clicked.connect(callback)
-            btn.setEnabled(enabled)
-            controls_layout.addWidget(btn)
+        # Port status label
+        self.ui_refs['port_status_label'] = ThemeManager.create_status_label_inline(AppMessages.SCANNING)
         
-        # Add themed separator
-        controls_layout.addWidget(ThemeManager.create_separator("vertical"))
-        
-        # Port management buttons
-        port_buttons = [
-            ("create", self.add_output_port, "Add new output port", True),
-            ("delete", self.remove_all_output_ports, "Remove all output ports", True)
+        # Create buttons in groups with separators
+        button_groups = [
+            (button_configs[:2], None),  # Scan buttons
+            ([], self.ui_refs['port_status_label']),  # Status label
+            (button_configs[2:4], None),  # Port management
+            (button_configs[4:5], None),  # Settings
+            (button_configs[5:], None),   # Hub4com controls
         ]
         
-        for icon_name, callback, tooltip, enabled in port_buttons:
-            btn = ThemeManager.create_icon_button(icon_name, tooltip, "medium")
-            btn.clicked.connect(callback)
-            btn.setEnabled(enabled)
-            controls_layout.addWidget(btn)
-            
-            if icon_name == "delete":
-                self.remove_all_ports_btn = btn
-        
-        # Add another separator
-        controls_layout.addWidget(ThemeManager.create_separator("vertical"))
-        
-        # Configuration checkboxes
-        self.disable_cts = ThemeManager.create_checkbox("Disable CTS Handshaking")
-        self.disable_cts.setChecked(True)
-        self.disable_cts.stateChanged.connect(self.update_preview)
-        self.disable_cts.setToolTip("Recommended for real COM ports - disables hardware handshaking")
-        controls_layout.addWidget(self.disable_cts)
-        
-        self.sync_baud_rates = ThemeManager.create_checkbox("Sync Baud Rates")
-        self.sync_baud_rates.stateChanged.connect(self.on_sync_baud_rates_changed)
-        self.sync_baud_rates.setToolTip("Set all ports to the same baud rate automatically")
-        controls_layout.addWidget(self.sync_baud_rates)
-        
-        # Route mode dropdown using theme
-        self.route_mode_btn = ThemeManager.create_route_mode_button('one_way', self.show_route_options_menu)
-        controls_layout.addWidget(self.route_mode_btn)
-        
-        # Initialize route settings
-        self.route_settings = {
-            'mode': 'one_way',
-            'echo_enabled': False,
-            'flow_control_enabled': False,
-            'disable_default_fc': False
-        }
-        
-        # Another separator
-        controls_layout.addWidget(ThemeManager.create_separator("vertical"))
-        
-        # Quick baud rate section
-        baud_label = ThemeManager.create_section_header_label(AppMessages.BUTTON_SET_ALL)
-        controls_layout.addWidget(baud_label)
-        
-        for rate in Config.QUICK_BAUD_RATES:
-            btn = ThemeManager.create_quick_baud_button(rate, self.set_all_baud_rates)
-            controls_layout.addWidget(btn)
+        for buttons, widget in button_groups:
+            if buttons:
+                created = self._create_icon_button_group(buttons, controls_layout)
+                self.ui_refs.update(created)
+            if widget:
+                controls_layout.addWidget(widget)
+            if buttons and button_groups.index((buttons, widget)) < len(button_groups) - 1:
+                controls_layout.addWidget(ThemeManager.create_separator("vertical"))
         
         # Status label
-        self.port_status_label = ThemeManager.create_status_label_inline(AppMessages.SCANNING)
-        controls_layout.addWidget(self.port_status_label)
+        self.ui_refs['status_label'] = ThemeManager.create_status_label_inline(AppMessages.READY)
+        controls_layout.addWidget(self.ui_refs['status_label'])
         controls_layout.addStretch()
         
         layout.addLayout(controls_layout, 0, 0, 1, 4)
+        
+        # Initialize hidden settings
+        self._init_hidden_settings()
         
         # Port configuration
         ports_layout = QHBoxLayout()
@@ -311,26 +452,37 @@ class Hub4comGUI(QMainWindow):
         
         return group
     
+    def _init_hidden_settings(self):
+        """Initialize hidden checkbox settings"""
+        self.ui_refs['disable_cts'] = ThemeManager.create_checkbox("Disable CTS Handshaking")
+        self.ui_refs['disable_cts'].setChecked(True)
+        self.ui_refs['disable_cts'].stateChanged.connect(self.update_preview)
+        self.ui_refs['disable_cts'].setVisible(False)
+        
+        self.ui_refs['sync_baud_rates'] = ThemeManager.create_checkbox("Sync Baud Rates")
+        self.ui_refs['sync_baud_rates'].setChecked(True)
+        self.ui_refs['sync_baud_rates'].stateChanged.connect(self.on_sync_baud_rates_changed)
+        self.ui_refs['sync_baud_rates'].setVisible(False)
+    
     def _create_incoming_port_section(self) -> QGroupBox:
         """Create incoming port configuration"""
         group, layout = self._create_groupbox_with_layout("Incoming Port")
         
-        self.incoming_port = ThemeManager.create_combobox(editable=True)
-        self.incoming_port.currentTextChanged.connect(self.update_preview)
-        self.incoming_port.currentTextChanged.connect(self.update_port_type_indicator)
-        layout.addWidget(self.incoming_port)
+        self.ui_refs['incoming_port'] = ThemeManager.create_combobox(editable=True)
+        self.ui_refs['incoming_port'].currentTextChanged.connect(self.update_preview)
+        self.ui_refs['incoming_port'].currentTextChanged.connect(self.update_port_type_indicator)
+        layout.addWidget(self.ui_refs['incoming_port'])
         
         layout.addWidget(ThemeManager.create_label("Baud Rate:"))
         
-        self.incoming_baud = ThemeManager.create_combobox()
-        self._populate_baud_rates(self.incoming_baud)
-        self.incoming_baud.currentTextChanged.connect(self.update_preview)
-        self.incoming_baud.currentTextChanged.connect(self.on_incoming_baud_changed)
-        layout.addWidget(self.incoming_baud)
+        self.ui_refs['incoming_baud'] = ThemeManager.create_combobox()
+        self._populate_baud_rates(self.ui_refs['incoming_baud'])
+        self.ui_refs['incoming_baud'].currentTextChanged.connect(self.update_preview)
+        self.ui_refs['incoming_baud'].currentTextChanged.connect(self.on_incoming_baud_changed)
+        layout.addWidget(self.ui_refs['incoming_baud'])
         
-        # Use themed port type indicator
-        self.incoming_port_type = ThemeManager.create_port_type_indicator()
-        layout.addWidget(self.incoming_port_type)
+        self.ui_refs['incoming_port_type'] = ThemeManager.create_port_type_indicator()
+        layout.addWidget(self.ui_refs['incoming_port_type'])
         
         return group
     
@@ -344,78 +496,44 @@ class Hub4comGUI(QMainWindow):
         self.output_ports_layout.setSpacing(AppDimensions.SPACING_TINY)
         ThemeManager.set_widget_margins(self.output_ports_layout, "none")
         
-        # Scroll area using theme configuration
+        # Scroll area
         output_scroll = QScrollArea()
         ThemeManager.configure_scroll_area(output_scroll, AppDimensions.HEIGHT_TEXT_XLARGE)
         output_scroll.setWidget(self.output_ports_widget)
         layout.addWidget(output_scroll)
         
         return group
-
-    def _create_control_buttons(self) -> QHBoxLayout:
-        """Create unified control buttons bar with inline status and output log"""
-        layout = QHBoxLayout()
-        layout.setSpacing(AppDimensions.SPACING_MEDIUM)
-        layout.setContentsMargins(0, AppDimensions.SPACING_SMALL, 0, AppDimensions.SPACING_SMALL)
-        
-        # Preview control
-        self.preview_btn = ThemeManager.create_icon_button("refresh", "Update command preview", "medium")
-        self.preview_btn.clicked.connect(self.update_preview)
-        layout.addWidget(self.preview_btn)
-        
-        # Separator
-        layout.addWidget(ThemeManager.create_separator("vertical"))
-        
-        # Hub4com controls
-        self.start_btn = ThemeManager.create_icon_button("play", "Start hub4com routing", "medium")
-        self.start_btn.clicked.connect(self.start_hub4com)
-        layout.addWidget(self.start_btn)
-        
-        self.stop_btn = ThemeManager.create_icon_button("stop", "Stop hub4com routing", "medium")
-        self.stop_btn.clicked.connect(self.stop_hub4com)
-        self.stop_btn.setEnabled(False)
-        layout.addWidget(self.stop_btn)
-        
-        # Separator
-        layout.addWidget(ThemeManager.create_separator("vertical"))
-        
-        # Status label
-        self.status_label = ThemeManager.create_status_label_inline(AppMessages.READY)
-        layout.addWidget(self.status_label)
-        
-        layout.addStretch()
-        
-        return layout 
-
+    
     def _create_output_section(self) -> QSplitter:
         """Create horizontal two-pane design with command preview and output log"""
         splitter = ThemeManager.create_splitter(Qt.Orientation.Horizontal)
         
         # Command preview
         preview_group, preview_layout = self._create_groupbox_with_layout("Command Preview")
-        self.command_preview = ThemeManager.create_textedit("console")
-        self.command_preview.setMinimumHeight(AppDimensions.HEIGHT_TEXT_MEDIUM)
-        self.command_preview.setMaximumHeight(AppDimensions.HEIGHT_TEXT_XLARGE)
-        preview_layout.addWidget(self.command_preview)
+        self.ui_refs['command_preview'] = ThemeManager.create_textedit("console")
+        self.ui_refs['command_preview'].setMinimumHeight(AppDimensions.HEIGHT_TEXT_MEDIUM)
+        self.ui_refs['command_preview'].setMaximumHeight(AppDimensions.HEIGHT_TEXT_XLARGE)
+        preview_layout.addWidget(self.ui_refs['command_preview'])
         
-        # Output log (always visible)
+        # Output log
         output_group, output_layout = self._create_groupbox_with_layout("Output Log")
-        self.output_text = ThemeManager.create_textedit("console")
-        self.output_text.setMinimumHeight(AppDimensions.HEIGHT_TEXT_SMALL)
-        self.output_text.setMaximumHeight(AppDimensions.HEIGHT_TEXT_LARGE)
-        output_layout.addWidget(self.output_text)
+        self.ui_refs['output_text'] = ThemeManager.create_textedit("console")
+        self.ui_refs['output_text'].setMinimumHeight(AppDimensions.HEIGHT_TEXT_MEDIUM)
+        self.ui_refs['output_text'].setMaximumHeight(AppDimensions.HEIGHT_TEXT_XLARGE)
+        output_layout.addWidget(self.ui_refs['output_text'])
         
         splitter.addWidget(preview_group)
         splitter.addWidget(output_group)
-        splitter.setSizes([400, 400])  # Equal sizing
+        splitter.setSizes([400, 400])
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 1)
         
         return splitter
+    
     # ========================================================================
     # PORT MANAGEMENT
     # ========================================================================
-
+    
     def _populate_baud_rates(self, combo: QComboBox):
         """Populate combo box with baud rates"""
         for rate in Config.BAUD_RATES:
@@ -424,7 +542,7 @@ class Hub4comGUI(QMainWindow):
     
     def add_output_port(self):
         """Add a new output port configuration"""
-        port_number = len(self.output_port_widgets) + 1
+        port_number = len(self.app_state['output_port_widgets']) + 1
         available_ports = self.get_available_ports()
         
         widget = OutputPortWidget(port_number, available_ports, self)
@@ -433,7 +551,7 @@ class Hub4comGUI(QMainWindow):
         widget.baud_combo.currentTextChanged.connect(self.update_preview)
         widget.port_changed.connect(self.update_preview)
         
-        self.output_port_widgets.append(widget)
+        self.app_state['output_port_widgets'].append(widget)
         self.output_ports_layout.addWidget(widget)
         
         self.renumber_output_ports()
@@ -441,8 +559,8 @@ class Hub4comGUI(QMainWindow):
     
     def remove_output_port(self, widget: OutputPortWidget):
         """Remove an output port configuration"""
-        if len(self.output_port_widgets) > Config.MIN_OUTPUT_PORTS:
-            self.output_port_widgets.remove(widget)
+        if len(self.app_state['output_port_widgets']) > Config.MIN_OUTPUT_PORTS:
+            self.app_state['output_port_widgets'].remove(widget)
             self.output_ports_layout.removeWidget(widget)
             widget.deleteLater()
             self.renumber_output_ports()
@@ -452,14 +570,13 @@ class Hub4comGUI(QMainWindow):
     
     def remove_all_output_ports(self):
         """Remove all output ports except the minimum required"""
-        if len(self.output_port_widgets) <= Config.MIN_OUTPUT_PORTS:
+        if len(self.app_state['output_port_widgets']) <= Config.MIN_OUTPUT_PORTS:
             self._show_message("Cannot Remove All", "At least one output port is required.")
             return
         
-        # Remove all widgets except the first one
-        widgets_to_remove = self.output_port_widgets[Config.MIN_OUTPUT_PORTS:]
+        widgets_to_remove = self.app_state['output_port_widgets'][Config.MIN_OUTPUT_PORTS:]
         for widget in widgets_to_remove:
-            self.output_port_widgets.remove(widget)
+            self.app_state['output_port_widgets'].remove(widget)
             self.output_ports_layout.removeWidget(widget)
             widget.deleteLater()
         
@@ -468,46 +585,30 @@ class Hub4comGUI(QMainWindow):
     
     def renumber_output_ports(self):
         """Update port numbers after add/remove"""
-        for i, widget in enumerate(self.output_port_widgets):
+        for i, widget in enumerate(self.app_state['output_port_widgets']):
             widget.port_number = i + 1
             widget.findChild(QLabel).setText(f"Port {i + 1}:")
     
     def get_available_ports(self) -> List[str]:
         """Get list of available ports"""
-        return [p.port_name for p in self.scanned_ports] if self.scanned_ports else []
-    
-    def format_port_name(self, port: str) -> Optional[str]:
-        """Format port name for hub4com"""
-        port = port.upper().strip()
-        
-        if "No COM" in port:
-            return None
-        
-        if port.startswith(('COM', 'CNC')):
-            return f"\\\\.\\{port}"
-        elif port.startswith('\\\\.\\'):
-            return port
-        elif port.isdigit():
-            return f"\\\\.\\COM{port}"
-        else:
-            return f"\\\\.\\{port}"
+        return [p.port_name for p in self.app_state['scanned_ports']] if self.app_state['scanned_ports'] else []
     
     def set_all_baud_rates(self, rate: str):
         """Set all ports to the same baud rate"""
-        self.incoming_baud.setCurrentText(rate)
-        for widget in self.output_port_widgets:
+        self.ui_refs['incoming_baud'].setCurrentText(rate)
+        for widget in self.app_state['output_port_widgets']:
             widget.baud_combo.setCurrentText(rate)
         self.update_preview()
     
     def on_sync_baud_rates_changed(self):
         """Handle sync baud rates checkbox change"""
-        if self.sync_baud_rates.isChecked():
-            self.set_all_baud_rates(self.incoming_baud.currentText())
+        if self.ui_refs['sync_baud_rates'].isChecked():
+            self.set_all_baud_rates(self.ui_refs['incoming_baud'].currentText())
     
     def on_incoming_baud_changed(self):
         """Handle incoming baud rate change"""
-        if self.sync_baud_rates.isChecked():
-            self.set_all_baud_rates(self.incoming_baud.currentText())
+        if self.ui_refs['sync_baud_rates'].isChecked():
+            self.set_all_baud_rates(self.ui_refs['incoming_baud'].currentText())
     
     # ========================================================================
     # PORT SCANNING
@@ -519,55 +620,58 @@ class Hub4comGUI(QMainWindow):
             self.refresh_port_lists()
         except Exception as e:
             print(f"Error during auto-scan: {e}")
-            self._update_status(AppMessages.NO_DEVICES, self.port_status_label)
+            self._update_status(AppMessages.NO_DEVICES, component='port')
             self._update_port_combos_no_devices()
     
     def show_port_scanner(self):
         """Show the port scanner dialog"""
         dialog = PortScanDialog(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            self.scanned_ports = dialog.ports
+            self.app_state['scanned_ports'] = dialog.ports
             self.refresh_port_lists()
     
     def refresh_port_lists(self):
         """Refresh all port combo boxes with scanned ports"""
-        if self.port_scanner_thread and self.port_scanner_thread.isRunning():
+        if self.thread_registry.threads.get('port_scanner'):
             return
         
         try:
-            self.port_scanner_thread = PortScanner()
-            self.port_scanner_thread.scan_completed.connect(self.on_ports_scanned)
-            self.port_scanner_thread.finished.connect(lambda: setattr(self, 'port_scanner_thread', None))
-            self.port_scanner_thread.start()
+            thread = PortScanner()
+            thread.scan_completed.connect(self.on_ports_scanned)
+            thread.finished.connect(lambda: self.thread_registry.unregister('port_scanner'))
+            self.thread_registry.register('port_scanner', thread)
+            thread.start()
         except Exception as e:
             print(f"Error starting port scan: {e}")
-            self._update_status(AppMessages.NO_DEVICES, self.port_status_label)
+            self._update_status(AppMessages.NO_DEVICES, component='port')
             self._update_port_combos_no_devices()
     
     def _update_port_combos_no_devices(self):
         """Update port combos when no devices are found"""
-        self.incoming_port.clear()
-        self.incoming_port.addItem(AppMessages.NO_DEVICES)
-        self.incoming_port.setEnabled(False)
+        incoming = self.ui_refs['incoming_port']
+        incoming.clear()
+        incoming.addItem(AppMessages.NO_DEVICES)
+        incoming.setEnabled(False)
         
-        for widget in self.output_port_widgets:
+        for widget in self.app_state['output_port_widgets']:
             widget.populate_ports([])
     
     def on_ports_scanned(self, ports):
         """Handle completed port scan for combo boxes"""
-        self.scanned_ports = ports
+        self.app_state['scanned_ports'] = ports
         
         if not ports:
-            self._update_status(AppMessages.NO_DEVICES, self.port_status_label)
+            self._update_status(AppMessages.NO_DEVICES, component='port')
             self._update_port_combos_no_devices()
             return
         
-        self._update_status(f"Found {len(ports)} ports", self.port_status_label)
+        self._update_status(f"Found {len(ports)} ports", component='port')
         
         # Update incoming port combo
-        current_incoming = self.incoming_port.currentText()
-        self.incoming_port.clear()
-        self.incoming_port.setEnabled(True)
+        incoming = self.ui_refs['incoming_port']
+        current_incoming = incoming.currentText()
+        incoming.clear()
+        incoming.setEnabled(True)
         
         for port in ports:
             display_text = port.port_name
@@ -575,220 +679,164 @@ class Hub4comGUI(QMainWindow):
                 display_text += " (Moxa)"
             elif port.port_type.startswith("Virtual"):
                 display_text += f" ({port.port_type.split(' ')[1]})"
-            self.incoming_port.addItem(display_text, port.port_name)
+            incoming.addItem(display_text, port.port_name)
         
         # Restore selection
-        index = self.incoming_port.findData(current_incoming)
+        index = incoming.findData(current_incoming)
         if index >= 0:
-            self.incoming_port.setCurrentIndex(index)
-        elif self.incoming_port.count() > 0:
-            self.incoming_port.setCurrentIndex(0)
+            incoming.setCurrentIndex(index)
+        elif incoming.count() > 0:
+            incoming.setCurrentIndex(0)
         
         # Update output port widgets
-        for widget in self.output_port_widgets:
+        for widget in self.app_state['output_port_widgets']:
             widget.populate_ports_enhanced(ports)
         
         self.update_port_type_indicator()
     
     def update_port_type_indicator(self):
         """Update the port type indicator using theme messages"""
-        current_port = self.incoming_port.currentData()
+        current_port = self.ui_refs['incoming_port'].currentData()
+        indicator = self.ui_refs['incoming_port_type']
+        
         if not current_port:
-            self.incoming_port_type.setText("")
-            self.incoming_port_type.setVisible(False)
+            indicator.setText("")
+            indicator.setVisible(False)
             return
         
-        port_info = next((p for p in self.scanned_ports if p.port_name == current_port), None)
+        port_info = next((p for p in self.app_state['scanned_ports'] if p.port_name == current_port), None)
         if not port_info:
-            self.incoming_port_type.setText("")
-            self.incoming_port_type.setVisible(False)
+            indicator.setText("")
+            indicator.setVisible(False)
             return
         
-        # Use theme messages
+        # Use centralized tooltip system
         if port_info.is_moxa:
-            text = AppMessages.PORT_TYPE_MOXA
+            text = HelpManager.get_tooltip("port_type_moxa")
             style_type = "warning"
         elif port_info.port_type == "Physical":
-            text = AppMessages.PORT_TYPE_PHYSICAL
+            text = HelpManager.get_tooltip("port_type_physical")
             style_type = "success"
         else:
-            text = AppMessages.PORT_TYPE_VIRTUAL
+            text = HelpManager.get_tooltip("port_type_virtual")
             style_type = "info"
         
-        self.incoming_port_type.setText(text)
-        self.incoming_port_type.setStyleSheet(AppStyles.port_type_indicator(style_type))
-        self.incoming_port_type.setVisible(True)
+        indicator.setText(text)
+        indicator.setStyleSheet(AppStyles.port_type_indicator(style_type))
+        indicator.setVisible(True)
+    
     # ========================================================================
     # HUB4COM MANAGEMENT
     # ========================================================================
     
     def build_command(self) -> Optional[List[str]]:
         """Build the hub4com command with baud rate support"""
-        exe_path = "hub4com.exe"
-        cmd = [exe_path]
+        incoming = self.ui_refs['incoming_port'].currentData() or self.ui_refs['incoming_port'].currentText()
+        incoming_baud = self.ui_refs['incoming_baud'].currentText()
         
-        # Get incoming port and baud rate
-        incoming = self.incoming_port.currentData() or self.incoming_port.currentText()
-        incoming_baud = self.incoming_baud.currentText()
-        
-        if not incoming or "No COM" in incoming:
-            return None
-        
-        # Get output ports
+        # Get output configs
         output_configs = []
-        for widget in self.output_port_widgets:
+        for widget in self.app_state['output_port_widgets']:
             config = widget.get_config()
             if config.port_name and "No COM" not in config.port_name:
                 output_configs.append(config)
         
-        if not output_configs:
-            return None
-        
-        # Build route options based on user settings
-        self._add_route_options(cmd, len(output_configs))
-        
-        # Add CTS option
-        if self.disable_cts.isChecked():
-            cmd.append('--octs=off')
-        
-        # Add incoming port
-        cmd.append(f'--baud={incoming_baud}')
-        formatted_incoming = self.format_port_name(incoming)
-        if not formatted_incoming:
-            return None
-        cmd.append(formatted_incoming)
-        
-        # Add output ports
-        for config in output_configs:
-            cmd.append(f'--baud={config.baud_rate}')
-            formatted_port = self.format_port_name(config.port_name)
-            if not formatted_port:
-                return None
-            cmd.append(formatted_port)
-        
-        return cmd
-    
-    def _add_route_options(self, cmd: List[str], num_output_ports: int):
-        """Add route options to command based on current settings"""
-        output_indices = ','.join(str(i + 1) for i in range(num_output_ports))
-        
-        # Basic route mode
-        if self.route_settings['mode'] == 'one_way':
-            # Default: incoming port (0) to all output ports
-            cmd.append(f'--route=0:{output_indices}')
-        elif self.route_settings['mode'] == 'two_way':
-            # Bidirectional: incoming port (0) to all output ports and vice versa
-            cmd.append(f'--bi-route=0:{output_indices}')
-        elif self.route_settings['mode'] == 'full_network':
-            # All ports communicate with all other ports
-            cmd.append('--route=All:All')
-        
-        # Advanced options
-        if self.route_settings['echo_enabled']:
-            # Echo back to source port
-            cmd.append('--echo-route=0')
-        
-        if self.route_settings['flow_control_enabled']:
-            # Enable flow control routing
-            cmd.append(f'--fc-route=0:{output_indices}')
-        
-        if self.route_settings['disable_default_fc']:
-            # Disable default flow control
-            cmd.append(f'--no-default-fc-route=0:{output_indices}')
+        return self.command_builder.build(
+            incoming, incoming_baud, output_configs,
+            self.app_state['route_settings'],
+            self.ui_refs['disable_cts'].isChecked()
+        )
     
     def update_preview(self):
-        """Update the command preview"""
+        """Update the command preview with enhanced formatting"""
         cmd = self.build_command()
+        preview = self.ui_refs['command_preview']
+        
         if not cmd:
-            if not self.scanned_ports:
-                self.command_preview.setPlainText(AppMessages.NO_DEVICES_FULL)
+            if not self.app_state['scanned_ports']:
+                preview.setPlainText(AppMessages.NO_DEVICES_FULL)
             else:
-                self.command_preview.setPlainText("Please select valid ports for routing")
+                preview.setPlainText("Please select valid ports for routing")
             return
         
-        # Build command string
-        command_str = ' '.join(f'"{arg}"' if ' ' in arg else arg for arg in cmd)
-        self.command_preview.setPlainText(command_str)
+        # Gather route information
+        route_info = self._gather_route_info()
         
-        # Add explanation
-        incoming_display = self.incoming_port.currentData() or self.incoming_port.currentText()
-        incoming_baud = self.incoming_baud.currentText()
+        # Use the enhanced formatter
+        self.command_formatter.format_command_preview(preview, cmd, route_info)
+    
+    def _gather_route_info(self) -> Dict:
+        """Gather route information for command preview"""
+        incoming_display = self.ui_refs['incoming_port'].currentData() or self.ui_refs['incoming_port'].currentText()
+        incoming_baud = self.ui_refs['incoming_baud'].currentText()
         
-        explanation = f"\nData Flow & Configuration:\n"
-        
-        # Add route mode explanation
-        mode_descriptions = {
-            'one_way': f"• ROUTING: One-way (FROM {incoming_display} TO all output ports)\n",
-            'two_way': f"• ROUTING: Two-way (BETWEEN {incoming_display} AND all output ports)\n",
-            'full_network': "• ROUTING: Full network (ALL ports communicate with ALL other ports)\n"
-        }
-        explanation += mode_descriptions.get(self.route_settings['mode'], mode_descriptions['one_way'])
-        
-        explanation += f"• INCOMING: {incoming_display} @ {incoming_baud} baud\n"
-        explanation += "• OUTGOING: "
-        
-        output_info = []
-        for widget in self.output_port_widgets:
+        # Collect output port information
+        output_configs = []
+        for widget in self.app_state['output_port_widgets']:
             config = widget.get_config()
             if config.port_name and "No COM" not in config.port_name:
-                output_info.append(f"{config.port_name} @ {config.baud_rate} baud")
+                output_configs.append({
+                    'port': config.port_name,
+                    'baud': config.baud_rate
+                })
         
-        explanation += ", ".join(output_info) + "\n"
-        
-        # Add advanced options status
-        if self.route_settings['echo_enabled']:
-            explanation += "• ECHO: Enabled (data sent back to source)\n"
-        if self.route_settings['flow_control_enabled']:
-            explanation += "• FLOW CONTROL: Enabled (hardware handshaking)\n"
-        if self.route_settings['disable_default_fc']:
-            explanation += "• DEFAULT FLOW CONTROL: Disabled (advanced mode)\n"
-        
-        if self.disable_cts.isChecked():
-            explanation += "• CTS handshaking: DISABLED\n"
-        
-        # Check for baud rate mismatches
-        all_baud_rates = [incoming_baud] + [w.baud_combo.currentText() for w in self.output_port_widgets]
-        if len(set(all_baud_rates)) > 1:
-            explanation += "⚠️  WARNING: Baud rate mismatch detected!\n"
-            explanation += "   Consider using the same baud rate for all ports.\n"
-        
-        self.command_preview.append(explanation)
+        return {
+            'incoming_port': incoming_display,
+            'incoming_baud': incoming_baud,
+            'outgoing_ports': output_configs,
+            'mode': self.app_state['route_settings'].get('mode', 'one_way'),
+            'cts_disabled': self.ui_refs['disable_cts'].isChecked(),
+            'echo_enabled': self.app_state['route_settings'].get('echo_enabled', False),
+            'flow_control_enabled': self.app_state['route_settings'].get('flow_control_enabled', False),
+            'disable_default_fc': self.app_state['route_settings'].get('disable_default_fc', False)
+        }
     
     def start_hub4com(self):
         """Start the hub4com process"""
         cmd = self.build_command()
         if not cmd:
-            if not self.scanned_ports:
+            if not self.app_state['scanned_ports']:
                 self._show_message("No Devices", AppMessages.NO_DEVICES_FULL, "warning")
             else:
                 self._show_message("Error", "Please select valid ports for routing", "warning")
             return
         
-        # Check if hub4com.exe exists
-        if not self._verify_hub4com_exe(cmd):
-            return
-        
-        # Check for Moxa port
-        if not self._check_moxa_port():
-            return
-        
-        # Check for baud rate mismatches
-        if not self._check_baud_rates():
+        # Perform pre-start checks
+        if not self._perform_pre_start_checks(cmd):
             return
         
         # Start process
-        self.start_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
+        self.ui_refs['start_btn'].setEnabled(False)
+        self.ui_refs['stop_btn'].setEnabled(True)
         
-        self.output_text.clear()
+        output_text = self.ui_refs['output_text']
+        self.output_log_formatter.clear(output_text)
+        self.output_log_formatter.format_section_header(output_text, "Starting Hub4com Process")
         self._update_status(AppMessages.STARTING_HUBCOM)
         
-        self.hub4com_process = Hub4comProcess(cmd)
-        self.hub4com_process.output_received.connect(self.on_output_received)
-        self.hub4com_process.process_started.connect(self.on_process_started)
-        self.hub4com_process.process_stopped.connect(self.on_process_stopped)
-        self.hub4com_process.error_occurred.connect(self.on_error_occurred)
-        self.hub4com_process.start()
+        self.app_state['hub4com_process'] = Hub4comProcess(cmd)
+        process = self.app_state['hub4com_process']
+        process.output_received.connect(self.on_hub4com_output)
+        process.process_started.connect(lambda: self._handle_process_event('started'))
+        process.process_stopped.connect(lambda: self._handle_process_event('stopped'))
+        process.error_occurred.connect(lambda msg: self._handle_process_event('error', msg))
+        process.start()
+    
+    def _perform_pre_start_checks(self, cmd: List[str]) -> bool:
+        """Perform all pre-start checks"""
+        # Check hub4com.exe exists
+        if not self._verify_hub4com_exe(cmd):
+            return False
+        
+        # Check for Moxa port
+        if not self._check_moxa_port():
+            return False
+        
+        # Check for baud rate mismatches
+        if not self._check_baud_rates():
+            return False
+        
+        return True
     
     def _verify_hub4com_exe(self, cmd: List[str]) -> bool:
         """Verify hub4com.exe exists"""
@@ -813,10 +861,10 @@ class Hub4comGUI(QMainWindow):
     
     def _check_moxa_port(self) -> bool:
         """Check for Moxa port and give advice"""
-        incoming_port = self.incoming_port.currentData() or self.incoming_port.currentText()
-        port_info = next((p for p in self.scanned_ports if p.port_name == incoming_port), None)
+        incoming_port = self.ui_refs['incoming_port'].currentData() or self.ui_refs['incoming_port'].currentText()
+        port_info = next((p for p in self.app_state['scanned_ports'] if p.port_name == incoming_port), None)
         
-        if port_info and port_info.is_moxa and not self.disable_cts.isChecked():
+        if port_info and port_info.is_moxa and not self.ui_refs['disable_cts'].isChecked():
             reply = QMessageBox.question(
                 self,
                 "Moxa Port Detected",
@@ -824,18 +872,18 @@ class Hub4comGUI(QMainWindow):
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
             if reply == QMessageBox.StandardButton.Yes:
-                self.disable_cts.setChecked(True)
+                self.ui_refs['disable_cts'].setChecked(True)
         return True
     
     def _check_baud_rates(self) -> bool:
         """Check for baud rate mismatches"""
-        all_baud_rates = [self.incoming_baud.currentText()]
-        for widget in self.output_port_widgets:
+        all_baud_rates = [self.ui_refs['incoming_baud'].currentText()]
+        for widget in self.app_state['output_port_widgets']:
             all_baud_rates.append(widget.baud_combo.currentText())
         
         if len(set(all_baud_rates)) > 1:
-            baud_info = f"Incoming: {self.incoming_baud.currentText()}\n"
-            for i, widget in enumerate(self.output_port_widgets):
+            baud_info = f"Incoming: {self.ui_refs['incoming_baud'].currentText()}\n"
+            for i, widget in enumerate(self.app_state['output_port_widgets']):
                 baud_info += f"Output {i+1}: {widget.baud_combo.currentText()}\n"
             
             reply = QMessageBox.question(
@@ -850,45 +898,55 @@ class Hub4comGUI(QMainWindow):
     
     def stop_hub4com(self):
         """Stop the hub4com process"""
-        if self.hub4com_process:
-            self.hub4com_process.stop_process()
+        if self.app_state['hub4com_process']:
+            self.app_state['hub4com_process'].stop_process()
             self._update_status(AppMessages.STOPPING_HUBCOM)
     
-    def on_output_received(self, text: str):
+    def on_hub4com_output(self, text: str):
         """Handle output from hub4com process"""
-        self.output_text.append(text)
+        # Determine log level based on content
+        level = "info"
+        if "error" in text.lower() or "failed" in text.lower():
+            level = "error"
+        elif "warning" in text.lower() or "warn" in text.lower():
+            level = "warning"
+        elif "success" in text.lower() or "started" in text.lower():
+            level = "success"
+        
+        self.output_log_formatter.append_log(self.ui_refs['output_text'], text, level)
     
-    def on_process_started(self):
-        """Handle successful process start"""
-        self._update_status(AppMessages.HUBCOM_RUNNING)
-        self.output_text.append("✓ hub4com started successfully!")
-        self.output_text.append("✓ Data routing is now active between your ports.")
+    def _handle_process_event(self, event_type: str, data: str = None):
+        """Handle hub4com process events"""
+        output_text = self.ui_refs['output_text']
         
-        self.output_text.append(f"✓ Configuration:")
-        incoming_baud = self.incoming_baud.currentText()
-        self.output_text.append(f"  • Incoming: {self.incoming_port.currentText()} @ {incoming_baud} baud")
+        if event_type == 'started':
+            self._update_status(AppMessages.HUBCOM_RUNNING)
+            self.output_log_formatter.append_log(output_text, "hub4com started successfully!", "success")
+            self.output_log_formatter.append_log(output_text, "Data routing is now active between your ports.", "success")
+            
+            # Log configuration
+            self.output_log_formatter.append_log(output_text, "Configuration:", "info")
+            incoming_baud = self.ui_refs['incoming_baud'].currentText()
+            self.output_log_formatter.format_key_value(output_text, "Incoming", 
+                                                      f"{self.ui_refs['incoming_port'].currentText()} @ {incoming_baud} baud")
+            
+            for i, widget in enumerate(self.app_state['output_port_widgets']):
+                config = widget.get_config()
+                self.output_log_formatter.format_key_value(output_text, f"Output {i+1}", 
+                                                          f"{config.port_name} @ {config.baud_rate} baud")
         
-        for i, widget in enumerate(self.output_port_widgets):
-            config = widget.get_config()
-            self.output_text.append(f"  • Output {i+1}: {config.port_name} @ {config.baud_rate} baud")
-    
-    def on_process_stopped(self):
-        """Handle process stop"""
-        self._update_status(AppMessages.HUBCOM_STOPPED)
-        self.output_text.append("\n--- hub4com stopped ---")
+        elif event_type == 'stopped':
+            self._update_status(AppMessages.HUBCOM_STOPPED)
+            self.output_log_formatter.format_section_header(output_text, "hub4com stopped")
+            self.ui_refs['start_btn'].setEnabled(True)
+            self.ui_refs['stop_btn'].setEnabled(False)
         
-        self.start_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
-    
-    def on_error_occurred(self, error_msg: str):
-        """Handle process errors"""
-        self._update_status(AppMessages.ERROR_OCCURRED)
-        self.output_text.append(f"\n❌ ERROR: {error_msg}")
-        
-        self._show_message("Hub4com Error", error_msg, "error")
-        
-        self.start_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
+        elif event_type == 'error':
+            self._update_status(AppMessages.ERROR_OCCURRED)
+            self.output_log_formatter.append_log(output_text, f"ERROR: {data}", "error")
+            self._show_message("Hub4com Error", data, "error")
+            self.ui_refs['start_btn'].setEnabled(True)
+            self.ui_refs['stop_btn'].setEnabled(False)
     
     # ========================================================================
     # COM0COM MANAGEMENT
@@ -898,81 +956,69 @@ class Hub4comGUI(QMainWindow):
         """Initialize application with default COM pair configuration"""
         if not WINREG_AVAILABLE:
             return
-            
-        self._update_status("Initialising virtual COM port configuration...", getattr(self, 'com0com_status', None))
         
-        # Check for existing pairs and create only missing ones
-        self.default_config_thread = Com0comProcess([], "check_and_create_default")
-        self.default_config_thread.command_completed.connect(self._on_default_config_completed)
-        self.default_config_thread.start()
+        self._update_status("Initialising virtual COM port configuration...", component='com0com')
+        
+        thread = Com0comProcess([], "check_and_create_default")
+        thread.command_completed.connect(self._on_default_config_completed)
+        self.thread_registry.register('default_config', thread)
+        thread.start()
     
     def _on_default_config_completed(self, success: bool, output: str):
         """Handle default configuration completion"""
         if success:
-            # Parse the actual created pairs from the output
+            # Parse created/existing pairs
+            import re
             created_pairs = []
             existing_pairs = []
             
-            # Check for newly created pairs
             if "Successfully created new virtual COM port pairs:" in output:
-                # Extract the pairs from the message
-                import re
-                # Match patterns like "COM131<->COM132"
                 pair_matches = re.findall(r'COM\d+<->COM\d+', output)
-                # Convert to the expected format with ↔
                 created_pairs = [pair.replace('<->', '↔') for pair in pair_matches]
-                self._update_status(f"Virtual COM pairs created successfully: {', '.join(created_pairs)}", getattr(self, 'com0com_status', None))
+                self._update_status(f"Virtual COM pairs created successfully: {', '.join(created_pairs)}", component='com0com')
             
-            # Check for existing pairs
             if "Found existing virtual COM port pairs:" in output:
-                # Extract existing pairs
-                import re
                 pair_matches = re.findall(r'COM\d+<->COM\d+', output)
                 existing_pairs = [pair.replace('<->', '↔') for pair in pair_matches]
-                if not created_pairs:  # Only show this message if we didn't create new ones
-                    self._update_status(f"Virtual COM pairs verified: {', '.join(existing_pairs)} ready", getattr(self, 'com0com_status', None))
+                if not created_pairs:
+                    self._update_status(f"Virtual COM pairs verified: {', '.join(existing_pairs)} ready", component='com0com')
             
-            # Store the parsed info for the dialog
+            # Store info for dialog
             self.created_pairs_info = created_pairs
             self.existing_pairs_info = existing_pairs
             
-            # Refresh the pairs list to show newly created pairs
+            # Schedule follow-up actions
             QTimer.singleShot(500, self.list_com0com_pairs)
-            # Pre-populate output widgets with default ports
             QTimer.singleShot(1000, self._populate_default_output_ports)
-            # Show configuration summary
             QTimer.singleShot(1500, self._show_configuration_summary)
         else:
-            self._update_status("Virtual COM pair configuration encountered issues - checking existing pairs", getattr(self, 'com0com_status', None))
+            self._update_status("Virtual COM pair configuration encountered issues - checking existing pairs", component='com0com')
             self.created_pairs_info = []
             self.existing_pairs_info = []
-            # Still try to populate defaults in case pairs already exist
             QTimer.singleShot(1000, self._populate_default_output_ports)
             QTimer.singleShot(1500, self._show_configuration_summary)
-
-
+    
     def _populate_default_output_ports(self):
         """Pre-populate output port widgets with default COM131 and COM141"""
         default_config = DefaultConfig()
         
-        # Ensure we have at least 2 output port widgets
-        while len(self.output_port_widgets) < len(default_config.output_mapping):
+        # Ensure we have enough output port widgets
+        while len(self.app_state['output_port_widgets']) < len(default_config.output_mapping):
             self.add_output_port()
         
         # Set the default ports and baud rates
         for i, port_config in enumerate(default_config.output_mapping):
-            if i < len(self.output_port_widgets):
-                widget = self.output_port_widgets[i]
+            if i < len(self.app_state['output_port_widgets']):
+                widget = self.app_state['output_port_widgets'][i]
+                
                 # Set port name
                 if hasattr(widget, 'port_combo') and widget.port_combo:
-                    # Add the port to combo if not present and select it
                     port_name = port_config["port"]
                     combo = widget.port_combo
                     
-                    # Check if port already exists in combo
+                    # Add if not present and select
                     port_index = combo.findText(port_name)
                     if port_index == -1:
-                        # Add port to combo
                         combo.addItem(port_name)
                         port_index = combo.findText(port_name)
                     
@@ -986,68 +1032,28 @@ class Hub4comGUI(QMainWindow):
                     if baud_index != -1:
                         widget.baud_combo.setCurrentIndex(baud_index)
         
-        # Enable two-way routing by default if route mode button exists
-        if hasattr(self, 'route_mode_btn'):
-            # Set to two-way mode
-            self.is_two_way = True
-            self.update_route_mode_button()
+        # Enable two-way routing by default
+        self.app_state['route_settings']['mode'] = 'two_way'
         
-        # Update status to show configuration is ready
-        self._update_status("Output routing configured: COM131 & COM141 @ 115200 baud, two-way mode enabled", getattr(self, 'com0com_status', None))
-        
-        # Update preview after configuration
+        self._update_status("Output routing configured: COM131 & COM141 @ 115200 baud, two-way mode enabled", component='com0com')
         QTimer.singleShot(200, self.update_preview)
     
     def _show_configuration_summary(self):
         """Show launch dialog to user"""
         try:
-            # Use the parsed pairs info
             created_pairs = getattr(self, 'created_pairs_info', [])
             existing_pairs = getattr(self, 'existing_pairs_info', [])
             
-            # Debug logging
-            print(f"DEBUG: Showing launch dialog with created_pairs: {created_pairs}, existing_pairs: {existing_pairs}")
-            
-            # Import LaunchDialog here to avoid any potential circular import issues
             from ui.dialogs.launch_dialog import LaunchDialog
-            
-            # Show the launch dialog
             dialog = LaunchDialog(
                 parent=self,
                 created_pairs=created_pairs,
                 existing_pairs=existing_pairs
             )
             dialog.exec()
-            
-        except ImportError as e:
-            print(f"Import error in _show_configuration_summary: {e}")
-            # Try alternative import path
-            try:
-                from ui.dialogs import LaunchDialog
-                dialog = LaunchDialog(
-                    parent=self,
-                    created_pairs=created_pairs if 'created_pairs' in locals() else [],
-                    existing_pairs=existing_pairs if 'existing_pairs' in locals() else []
-                )
-                dialog.exec()
-            except Exception as e2:
-                print(f"Alternative import also failed: {e2}")
-                # Fallback in case dialog fails
-                self._show_message(
-                    "Configuration Summary",
-                    "Virtual COM port configuration completed successfully.\n\n"
-                    "• COM131↔COM132 and COM141↔COM142 pairs are ready\n"
-                    "• Output routing: COM131 & COM141 @ 115200 baud\n"
-                    "• Connect external applications to COM132 & COM142",
-                    "info"
-                )
         except Exception as e:
-            # Log the actual error for debugging
             print(f"Error in _show_configuration_summary: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-            
-            # Fallback in case dialog fails
+            # Fallback message
             self._show_message(
                 "Configuration Summary",
                 "Virtual COM port configuration completed successfully.\n\n"
@@ -1056,25 +1062,84 @@ class Hub4comGUI(QMainWindow):
                 "• Connect external applications to COM132 & COM142",
                 "info"
             )
-            
+    
     def list_com0com_pairs(self):
         """List all com0com port pairs"""
-        self._update_status(AppMessages.LISTING_PAIRS, self.com0com_status)
-        self.port_pairs_list.clear()
+        self._update_status(AppMessages.LISTING_PAIRS, component='com0com')
+        self.ui_refs['port_pairs_list'].clear()
         
-        self.com0com_thread = Com0comProcess(["list"])
-        self.com0com_thread.command_completed.connect(self.on_list_completed)
-        self.com0com_thread.start()
+        thread = Com0comProcess(["list"])
+        thread.command_completed.connect(lambda s, o: self._handle_com0com_operation(s, o, OperationType.LIST_PAIRS))
+        self.thread_registry.register('com0com_list', thread)
+        thread.start()
     
-    def on_list_completed(self, success: bool, output: str):
-        """Handle list command completion"""
-        if not success:
-            self._update_status("Failed to list pairs", self.com0com_status)
-            self._show_message("Error", f"Failed to list com0com pairs:\n{output}", "warning")
+    def create_com0com_pair(self):
+        """Create a new com0com port pair"""
+        accepted, cmd_args = PairCreationDialog.create_port_pair(self)
+        
+        if accepted and cmd_args:
+            self._update_status(AppMessages.CREATING_PAIR, component='com0com')
+            
+            thread = Com0comProcess(cmd_args)
+            thread.command_completed.connect(lambda s, o: self._handle_com0com_operation(s, o, OperationType.CREATE_PAIR))
+            self.thread_registry.register('com0com_create', thread)
+            thread.start()
+    
+    def remove_com0com_pair(self):
+        """Remove selected com0com port pair"""
+        current_item = self.ui_refs['port_pairs_list'].currentItem()
+        if not current_item:
             return
         
-        pairs = self._parse_com0com_output(output)
-        self._populate_pairs_list(pairs)
+        text = current_item.text()
+        if "CNCA" in text:
+            pair_num = text.split("CNCA")[1].split()[0]
+            
+            reply = QMessageBox.question(
+                self,
+                "Confirm Removal",
+                f"Remove virtual port pair CNCA{pair_num} ↔ CNCB{pair_num}?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                self._update_status(AppMessages.REMOVING_PAIR, component='com0com')
+                
+                thread = Com0comProcess(["remove", pair_num])
+                thread.command_completed.connect(lambda s, o: self._handle_com0com_operation(s, o, OperationType.REMOVE_PAIR))
+                self.thread_registry.register('com0com_remove', thread)
+                thread.start()
+    
+    def _handle_com0com_operation(self, success: bool, output: str, operation: OperationType):
+        """Generic handler for com0com operations"""
+        if operation == OperationType.LIST_PAIRS:
+            if success:
+                pairs = self._parse_com0com_output(output)
+                self._populate_pairs_list(pairs)
+            else:
+                self._update_status("Failed to list pairs", component='com0com')
+                self._show_message("Error", f"Failed to list com0com pairs:\n{output}", "warning")
+        
+        else:
+            operation_messages = {
+                OperationType.CREATE_PAIR: ("create", AppMessages.PORT_PAIR_CREATED, "Virtual port pair created successfully!"),
+                OperationType.REMOVE_PAIR: ("remove", AppMessages.PORT_PAIR_REMOVED, None),
+                OperationType.MODIFY_PAIR: ("modify", "Properties modified successfully", None)
+            }
+            
+            op_name, status_msg, info_msg = operation_messages.get(operation, ("", "", None))
+            
+            if success:
+                if status_msg:
+                    self._update_status(status_msg, component='com0com')
+                if info_msg:
+                    self._show_message("Success", info_msg)
+                
+                self.list_com0com_pairs()
+                self.refresh_port_lists()
+            else:
+                self._update_status(f"Failed to {op_name} port pair", component='com0com')
+                self._show_message("Error", f"Failed to {op_name} port pair:\n{output}", "error")
     
     def _parse_com0com_output(self, output: str) -> Dict:
         """Parse com0com list output"""
@@ -1104,17 +1169,18 @@ class Hub4comGUI(QMainWindow):
     
     def _populate_pairs_list(self, pairs: Dict):
         """Populate the pairs list widget"""
-        self.port_pairs_list.clear()
+        list_widget = self.ui_refs['port_pairs_list']
+        list_widget.clear()
         
         if not pairs:
-            self._update_status("No port pairs configured", self.com0com_status)
+            self._update_status("No port pairs configured", component='com0com')
             no_pairs_item = QListWidgetItem(
                 "No virtual port pairs found yet.\n\n"
                 "💡 Click 'Create New Pair' to create your first pair of connected virtual ports.\n"
                 "This allows two applications to communicate through simulated serial ports."
             )
             no_pairs_item.setBackground(ThemeManager.get_accent_color('pair_info'))
-            self.port_pairs_list.addItem(no_pairs_item)
+            list_widget.addItem(no_pairs_item)
             return
         
         for pair_num, ports in sorted(pairs.items()):
@@ -1122,7 +1188,7 @@ class Hub4comGUI(QMainWindow):
                 self._add_pair_to_list(pair_num, ports)
         
         count = len(pairs)
-        self._update_status(f"Found {count} port pair{'s' if count != 1 else ''}", self.com0com_status)
+        self._update_status(f"Found {count} port pair{'s' if count != 1 else ''}", component='com0com')
     
     def _add_pair_to_list(self, pair_num: str, ports: Dict):
         """Add a single pair to the list"""
@@ -1145,7 +1211,7 @@ class Hub4comGUI(QMainWindow):
         
         # Create list item
         item = QListWidgetItem(main_text)
-        tooltip = AppMessages.PAIR_TOOLTIP_TEMPLATE.format(
+        tooltip = HelpManager.get_tooltip("pair_tooltip",
             port_a=port_a, 
             params_a=params_a or 'Standard settings (no special features)',
             port_b=port_b, 
@@ -1156,7 +1222,7 @@ class Hub4comGUI(QMainWindow):
         if status_indicators:
             item.setBackground(ThemeManager.get_accent_color('pair_highlight'))
         
-        self.port_pairs_list.addItem(item)
+        self.ui_refs['port_pairs_list'].addItem(item)
     
     def _extract_actual_port_name(self, virtual_name: str, params: str) -> str:
         """Extract the actual COM port name from parameters"""
@@ -1180,81 +1246,24 @@ class Hub4comGUI(QMainWindow):
         indicators = []
         params = params_a + " " + params_b
         
-        if "EmuBR=yes" in params:
-            indicators.append("Baud Rate Timing")
-        if "EmuOverrun=yes" in params:
-            indicators.append("Buffer Overrun")
-        if "ExclusiveMode=yes" in params:
-            indicators.append("Exclusive Mode")
-        if "PlugInMode=yes" in params:
-            indicators.append("Plug-In Mode")
+        indicators_map = {
+            "EmuBR=yes": "Baud Rate Timing",
+            "EmuOverrun=yes": "Buffer Overrun",
+            "ExclusiveMode=yes": "Exclusive Mode",
+            "PlugInMode=yes": "Plug-In Mode"
+        }
+        
+        for param, name in indicators_map.items():
+            if param in params:
+                indicators.append(name)
         
         return indicators
     
-    def create_com0com_pair(self):
-        """Create a new com0com port pair"""
-        accepted, cmd_args = PairCreationDialog.create_port_pair(self)
-        
-        if accepted and cmd_args:
-            self._update_status(AppMessages.CREATING_PAIR, self.com0com_status)
-            
-            self.com0com_thread = Com0comProcess(cmd_args)
-            self.com0com_thread.command_completed.connect(
-                lambda s, o: self._handle_com0com_result(s, o, "create")
-            )
-            self.com0com_thread.start()
-    
-    def remove_com0com_pair(self):
-        """Remove selected com0com port pair"""
-        current_item = self.port_pairs_list.currentItem()
-        if not current_item:
-            return
-        
-        text = current_item.text()
-        if "CNCA" in text:
-            pair_num = text.split("CNCA")[1].split()[0]
-            
-            reply = QMessageBox.question(
-                self,
-                "Confirm Removal",
-                f"Remove virtual port pair CNCA{pair_num} ↔ CNCB{pair_num}?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-            )
-            
-            if reply == QMessageBox.StandardButton.Yes:
-                self._update_status(AppMessages.REMOVING_PAIR, self.com0com_status)
-                
-                self.com0com_thread = Com0comProcess(["remove", pair_num])
-                self.com0com_thread.command_completed.connect(
-                    lambda s, o: self._handle_com0com_result(s, o, "remove")
-                )
-                self.com0com_thread.start()
-    
-    def _handle_com0com_result(self, success: bool, output: str, operation: str):
-        """Generic handler for com0com operations"""
-        if success:
-            messages = {
-                "create": (AppMessages.PORT_PAIR_CREATED, "Virtual port pair created successfully!"),
-                "remove": (AppMessages.PORT_PAIR_REMOVED, None)
-            }
-            status_msg, info_msg = messages.get(operation, (None, None))
-            
-            if status_msg:
-                self._update_status(status_msg, self.com0com_status)
-            if info_msg:
-                self._show_message("Success", info_msg)
-            
-            self.list_com0com_pairs()
-            self.refresh_port_lists()
-        else:
-            self._update_status(f"Failed to {operation} port pair", self.com0com_status)
-            self._show_message("Error", f"Failed to {operation} port pair:\n{output}", "error")
-    
     def on_pair_selected(self):
         """Handle port pair selection"""
-        has_selection = self.port_pairs_list.currentItem() is not None
-        self.remove_pair_btn.setEnabled(has_selection)
-        self.settings_btn.setEnabled(has_selection)
+        has_selection = self.ui_refs['port_pairs_list'].currentItem() is not None
+        self.ui_refs['remove_pair_btn'].setEnabled(has_selection)
+        self.ui_refs['settings_btn'].setEnabled(has_selection)
     
     def on_pair_double_clicked(self, item: QListWidgetItem):
         """Handle double-click on port pair"""
@@ -1316,35 +1325,25 @@ class Hub4comGUI(QMainWindow):
         layout.addLayout(button_layout)
         
         return dialog
-
+    
     def show_settings_menu(self):
         """Show dynamic settings menu for selected pair"""
-        current_item = self.port_pairs_list.currentItem()
+        current_item = self.ui_refs['port_pairs_list'].currentItem()
         if not current_item or "No virtual port pairs found" in current_item.text():
             return
         
-        # Parse port names
+        # Parse port names and settings
         item_text = current_item.text()
-        port_a, port_b = self._parse_port_names_from_item(item_text)
+        port_a, port_b = self.port_manager.extract_port_info(item_text)
         
         if not port_a or not port_b:
             return
         
-        # Parse current settings
         current_settings = self._parse_current_settings(current_item.toolTip())
         
-        # Create menu
+        # Create and show menu
         menu = self._create_settings_menu(port_a, port_b, current_settings)
-        menu.exec(self.settings_btn.mapToGlobal(self.settings_btn.rect().bottomLeft()))
-    
-    def _parse_port_names_from_item(self, item_text: str) -> tuple:
-        """Parse port names from list item text"""
-        if "[CNCA" in item_text and "CNCB" in item_text:
-            bracket_content = item_text.split("[")[1].split("]")[0]
-            parts = bracket_content.split(" ↔ ")
-            if len(parts) == 2:
-                return parts[0].strip(), parts[1].strip()
-        return "", ""
+        menu.exec(self.ui_refs['settings_btn'].mapToGlobal(self.ui_refs['settings_btn'].rect().bottomLeft()))
     
     def _parse_current_settings(self, tooltip_text: str) -> Dict[str, str]:
         """Parse current settings from tooltip text"""
@@ -1370,10 +1369,6 @@ class Hub4comGUI(QMainWindow):
         header_action.setEnabled(False)
         menu.addSeparator()
         
-        # Help option
-        menu.addAction("? What do these settings do?", self.show_com0com_help)
-        menu.addSeparator()
-        
         # Settings options
         settings_config = [
             ("EmuBR", "Baud Rate Timing"),
@@ -1383,7 +1378,7 @@ class Hub4comGUI(QMainWindow):
         ]
         
         for param, display_name in settings_config:
-            status = "" if current_settings.get(param) == "yes" else ""
+            status = "☑" if current_settings.get(param) == "yes" else "☐"
             menu.addAction(f"{display_name}: {status}").setEnabled(False)
             
             if current_settings.get(param) == "yes":
@@ -1394,202 +1389,154 @@ class Hub4comGUI(QMainWindow):
                              partial(self.quick_modify_pair, param, "yes"))
             menu.addSeparator()
         
+        menu.addAction("Help", lambda: self._show_help(HelpTopic.COM0COM_SETTINGS))
         return menu
     
     def quick_modify_pair(self, param: str, value: str):
         """Quick modify a parameter for selected pair"""
-        current_item = self.port_pairs_list.currentItem()
+        current_item = self.ui_refs['port_pairs_list'].currentItem()
         if not current_item:
             return
         
-        port_a, port_b = self._parse_port_names_from_item(current_item.text())
+        port_a, port_b = self.port_manager.extract_port_info(current_item.text())
         if not port_a or not port_b:
             return
         
-        self._update_status(f"Setting {param}={value} for {port_a} ↔ {port_b}...", self.com0com_status)
+        self._update_status(f"Setting {param}={value} for {port_a} ↔ {port_b}...", component='com0com')
         
         # Modify both ports
-        self.pending_modifications = 2
-        self.modification_success = True
+        self.app_state['pending_modifications'] = 2
+        self.app_state['modification_success'] = True
         
+        thread_count = 0
         for port in [port_a, port_b]:
             thread = Com0comProcess(["change", port, f"{param}={value}"])
             thread.command_completed.connect(self.on_modify_completed)
-            thread.finished.connect(lambda t=thread: self._cleanup_thread(t))
-            self.com0com_threads.append(thread)
+            self.thread_registry.register(f'com0com_modify_{thread_count}', thread)
+            thread_count += 1
             thread.start()
     
     def on_modify_completed(self, success: bool, output: str):
         """Handle modify command completion"""
-        self.pending_modifications -= 1
+        self.app_state['pending_modifications'] -= 1
         if not success:
-            self.modification_success = False
+            self.app_state['modification_success'] = False
         
-        if self.pending_modifications == 0:
-            if self.modification_success:
-                self._update_status("Properties modified successfully", self.com0com_status)
+        if self.app_state['pending_modifications'] == 0:
+            if self.app_state['modification_success']:
+                self._update_status("Properties modified successfully", component='com0com')
                 QTimer.singleShot(500, self.list_com0com_pairs)
             else:
-                self._update_status("Failed to modify properties", self.com0com_status)
+                self._update_status("Failed to modify properties", component='com0com')
                 self._show_message("Error", "Some modifications failed", "warning")
     
-    def _cleanup_thread(self, thread):
-        """Remove thread reference after completion"""
-        if thread in self.com0com_threads:
-            self.com0com_threads.remove(thread)
+    # ========================================================================
+    # MENU MANAGEMENT
+    # ========================================================================
     
-    def show_com0com_help(self):
-        """Show comprehensive help dialog for COM0COM settings"""
-        dialog = Com0ComHelpDialog(self)
-        dialog.exec()
+    def show_hub4com_settings_menu(self):
+        """Show consolidated hub4com settings menu"""
+        menu = self._create_hub4com_menu()
+        menu.exec(self.ui_refs['hub4com_settings_btn'].mapToGlobal(
+            self.ui_refs['hub4com_settings_btn'].rect().bottomLeft()))
+    
+    def _create_hub4com_menu(self) -> QMenu:
+        """Create hub4com settings menu"""
+        menu = QMenu(self)
+        settings = self.app_state['route_settings']
+        
+        # Header
+        menu.addAction("⚙️ Hub4com Settings").setEnabled(False)
+        menu.addSeparator()
+        
+        # Route Configuration
+        menu.addAction("Route Configuration").setEnabled(False)
+        
+        # Route mode options
+        route_modes = [
+            ('one_way', "One-Way Splitting"),
+            ('two_way', "Two-Way Communication"),
+            ('full_network', "Full Network Mode")
+        ]
+        
+        for mode, label in route_modes:
+            check = "☑" if settings['mode'] == mode else "☐"
+            action = menu.addAction(f"{check} {label}")
+            action.triggered.connect(lambda checked, m=mode: self.set_route_mode(m))
+        
+        menu.addSeparator()
+        
+        # Advanced Routing
+        menu.addAction("Advanced Routing").setEnabled(False)
+        
+        advanced_options = [
+            ('echo_enabled', "Echo Back to Source", self.toggle_route_setting),
+            ('flow_control_enabled', "Enable Flow Control", self.toggle_route_setting),
+            ('disable_default_fc', "Disable Default Flow Control", self.toggle_route_setting)
+        ]
+        
+        for key, label, callback in advanced_options:
+            check = "☑" if settings.get(key) else "☐"
+            action = menu.addAction(f"{check} {label}")
+            action.triggered.connect(lambda checked, k=key: callback(k))
+        
+        menu.addSeparator()
+        
+        # Port Settings
+        menu.addAction("Port Settings").setEnabled(False)
+        
+        port_options = [
+            (self.ui_refs['disable_cts'], "Disable CTS Handshaking"),
+            (self.ui_refs['sync_baud_rates'], "Sync Baud Rates")
+        ]
+        
+        for checkbox, label in port_options:
+            check = "☑" if checkbox.isChecked() else "☐"
+            action = menu.addAction(f"{check} {label}")
+            action.triggered.connect(lambda: checkbox.setChecked(not checkbox.isChecked()))
+        
+        menu.addSeparator()
+        
+        # Baud rate submenu
+        baud_menu = menu.addMenu("Set All Baud Rates ▶")
+        self._create_baud_rate_menu(baud_menu)
+        
+        menu.addSeparator()
+        menu.addAction("Help", lambda: self._show_help(HelpTopic.HUB4COM_ROUTES))
+        
+        return menu
+    
+    def _create_baud_rate_menu(self, menu: QMenu):
+        """Create baud rate submenu"""
+        for rate in Config.QUICK_BAUD_RATES:
+            action = menu.addAction(f"{rate} baud")
+            action.triggered.connect(lambda checked, r=rate: self.set_all_baud_rates(r))
+        
+        menu.addSeparator()
+        all_rates_submenu = menu.addMenu("All Baud Rates")
+        
+        for rate in Config.BAUD_RATES:
+            if rate not in Config.QUICK_BAUD_RATES:
+                action = all_rates_submenu.addAction(f"{rate} baud")
+                action.triggered.connect(lambda checked, r=rate: self.set_all_baud_rates(r))
     
     # ========================================================================
     # ROUTE OPTIONS MANAGEMENT
     # ========================================================================
     
-    def show_route_options_menu(self):
-        """Show route options configuration menu"""
-        menu = QMenu(self)
-        
-        # Header
-        header_action = menu.addAction("Route Mode Configuration")
-        header_action.setEnabled(False)
-        menu.addSeparator()
-        
-        # Basic modes section
-        basic_header = menu.addAction("Basic Modes")
-        basic_header.setEnabled(False)
-        
-        # One-way mode
-        one_way_action = menu.addAction("    ☑ One-Way Splitting" if self.route_settings['mode'] == 'one_way' else "    ☐ One-Way Splitting")
-        one_way_action.triggered.connect(lambda: self.set_route_mode('one_way'))
-        one_way_action.setToolTip("Send data from incoming port to all outgoing ports only")
-        
-        # Two-way mode
-        two_way_action = menu.addAction("    ☑ Two-Way Communication" if self.route_settings['mode'] == 'two_way' else "    ☐ Two-Way Communication")
-        two_way_action.triggered.connect(lambda: self.set_route_mode('two_way'))
-        two_way_action.setToolTip("Allow data to flow both ways between incoming and outgoing ports")
-        
-        # Full network mode
-        network_action = menu.addAction("    ☑ Full Network Mode" if self.route_settings['mode'] == 'full_network' else "    ☐ Full Network Mode")
-        network_action.triggered.connect(lambda: self.set_route_mode('full_network'))
-        network_action.setToolTip("All ports can communicate with each other (like a network hub)")
-        
-        menu.addSeparator()
-        
-        # Advanced options section
-        advanced_header = menu.addAction("Advanced Modes")
-        advanced_header.setEnabled(False)
-        
-        # Echo option
-        echo_status = "☑" if self.route_settings['echo_enabled'] else "☐"
-        echo_action = menu.addAction(f"    {echo_status} Echo Back to Source")
-        echo_action.triggered.connect(self.toggle_echo_mode)
-        echo_action.setToolTip("Send incoming data back to the same port (for testing)")
-        
-        # Flow control option
-        fc_status = "☑" if self.route_settings['flow_control_enabled'] else "☐"
-        fc_action = menu.addAction(f"    {fc_status} Enable Flow Control")
-        fc_action.triggered.connect(self.toggle_flow_control)
-        fc_action.setToolTip("Use hardware handshaking to prevent data loss")
-        
-        # Disable default flow control option
-        disable_fc_status = "☑" if self.route_settings['disable_default_fc'] else "☐"
-        disable_fc_action = menu.addAction(f"    {disable_fc_status} Disable Default Flow Control")
-        disable_fc_action.triggered.connect(self.toggle_disable_default_fc)
-        disable_fc_action.setToolTip("Turn off automatic flow control (advanced users only)")
-        
-        menu.addSeparator()
-        
-        # Help option
-        help_action = menu.addAction("Help")
-        help_action.triggered.connect(self.show_route_help)
-        
-        # Show menu
-        menu.exec(self.route_mode_btn.mapToGlobal(self.route_mode_btn.rect().bottomLeft()))
-    
     def set_route_mode(self, mode: str):
         """Set the route mode and update UI"""
-        self.route_settings['mode'] = mode
-        self.update_route_mode_button()
+        self.app_state['route_settings']['mode'] = mode
         self.update_preview()
     
-    def toggle_echo_mode(self):
-        """Toggle echo mode setting"""
-        self.route_settings['echo_enabled'] = not self.route_settings['echo_enabled']
+    def toggle_route_setting(self, setting_key: str):
+        """Toggle a route setting"""
+        self.app_state['route_settings'][setting_key] = not self.app_state['route_settings'][setting_key]
         self.update_preview()
     
-    def toggle_flow_control(self):
-        """Toggle flow control setting"""
-        self.route_settings['flow_control_enabled'] = not self.route_settings['flow_control_enabled']
-        self.update_preview()
-    
-    def toggle_disable_default_fc(self):
-        """Toggle disable default flow control setting"""
-        self.route_settings['disable_default_fc'] = not self.route_settings['disable_default_fc']
-        self.update_preview()
-    
-    def update_route_mode_button(self):
-        """Update route mode button text using theme messages"""
-        mode_names = {
-            'one_way': 'One-Way',
-            'two_way': 'Two-Way', 
-            'full_network': 'Full Network'
-        }
-        mode_name = mode_names.get(self.route_settings['mode'], 'One-Way')
-        self.route_mode_btn.setText(AppMessages.BUTTON_ROUTE_MODE.format(mode=mode_name))
-    
-    def show_route_help(self):
-        """Show route options help dialog"""
-        help_text = """
-HUB4COM Route Mode Guide
-
-    Basic Modes:
-
-• One-Way Splitting (Default)
-  Data flows FROM incoming port TO all outgoing ports only.
-  Example: GPS device → Multiple navigation apps
-  
-• Two-Way Communication  
-  Data flows both ways between incoming and outgoing ports.
-  Example: Terminal program ↔ Serial device
-  
-• Full Network Mode
-  All ports can talk to all other ports (like a network hub).
-  Example: Multiple devices all communicating with each other
-
-    Advanced Options:
-
-• Echo Back to Source
-  Sends received data back to the same port it came from.
-  Good for testing and debugging serial applications.
-  
-• Enable Flow Control
-  Uses RTS/CTS handshaking to prevent data loss.
-  Enable when devices support hardware flow control.
-  
-• Disable Default Flow Control
-  Turns off automatic flow control management.
-  Only for advanced users who need custom flow control.
-
-   Recommendations:
-- Start with "One-Way Splitting" for most applications
-- Use "Two-Way Communication" when devices need to respond
-- Enable "Flow Control" only if both devices support it
-- Leave advanced options OFF unless you have specific needs
-        """
-        
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Route Options Help")
-        dialog.setMinimumSize(600, 500)
-        
-        layout = QVBoxLayout(dialog)
-        
-        help_display = ThemeManager.create_textedit("console_large")
-        help_display.setReadOnly(True)
-        help_display.setPlainText(help_text.strip())
-        layout.addWidget(help_display)        
-        dialog.exec()
+    def _show_help(self, topic: HelpTopic):
+        """Show help dialog for specified topic"""
+        HelpManager.show_help(topic, self)
     
     # ========================================================================
     # APPLICATION LIFECYCLE
@@ -1598,26 +1545,13 @@ HUB4COM Route Mode Guide
     def closeEvent(self, event):
         """Handle window close event"""
         # Stop all threads
-        threads_to_stop = []
+        failed_threads = self.thread_registry.stop_all()
         
-        if self.port_scanner_thread and self.port_scanner_thread.isRunning():
-            threads_to_stop.append((self.port_scanner_thread, "port scanner"))
-        
-        if self.com0com_thread and self.com0com_thread.isRunning():
-            threads_to_stop.append((self.com0com_thread, "COM0COM"))
-        
-        for thread in self.com0com_threads:
-            if thread.isRunning():
-                threads_to_stop.append((thread, "COM0COM operation"))
-        
-        # Stop threads
-        for thread, name in threads_to_stop:
-            thread.terminate()
-            if not thread.wait(1000):
-                print(f"Warning: {name} thread did not stop gracefully")
+        if failed_threads:
+            print(f"Warning: The following threads did not stop gracefully: {', '.join(failed_threads)}")
         
         # Handle hub4com process
-        if self.hub4com_process and self.hub4com_process.isRunning():
+        if self.app_state['hub4com_process'] and self.app_state['hub4com_process'].isRunning():
             reply = QMessageBox.question(
                 self,
                 "Close Application",
@@ -1627,8 +1561,8 @@ HUB4COM Route Mode Guide
             
             if reply == QMessageBox.StandardButton.Yes:
                 self.stop_hub4com()
-                if self.hub4com_process:
-                    self.hub4com_process.wait(3000)
+                if self.app_state['hub4com_process']:
+                    self.app_state['hub4com_process'].wait(3000)
                 event.accept()
             elif reply == QMessageBox.StandardButton.No:
                 event.accept()

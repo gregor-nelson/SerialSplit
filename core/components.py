@@ -299,7 +299,7 @@ class PortScanner(QThread):
             )
         
         # Check for other virtual port patterns
-        elif any(pattern in device_name.lower() for pattern in ["vspe", "virtual", "vspd"]):
+        elif any(pattern in device_name.lower() for pattern in ["com0com", "virtual", "vspd"]):
             return SerialPortInfo(
                 port_name=port_name,
                 device_name=device_name,

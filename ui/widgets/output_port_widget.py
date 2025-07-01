@@ -14,6 +14,7 @@ from ui.theme.theme import (
     ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts, 
     AppMessages, Config
 )
+from ui.dialogs.help_dialog import HelpManager
 
 
 class OutputPortWidget(QWidget):
@@ -131,7 +132,7 @@ class OutputPortWidget(QWidget):
             if port.is_moxa:
                 self.port_combo.setItemData(
                     index, 
-                    ThemeManager.get_accent_color('orange'), 
+                    ThemeManager.get_accent_color('blue'), 
                     Qt.ItemDataRole.ForegroundRole
                 )
             elif port.port_type == "Physical":
@@ -143,7 +144,7 @@ class OutputPortWidget(QWidget):
             else:  # Virtual
                 self.port_combo.setItemData(
                     index, 
-                    ThemeManager.get_accent_color('blue'), 
+                    ThemeManager.get_accent_color('orange'), 
                     Qt.ItemDataRole.ForegroundRole
                 )
         
@@ -187,15 +188,15 @@ class OutputPortWidget(QWidget):
         if port_info:
             self.port_type_label.setVisible(True)
             
-            # Use theme messages and apply appropriate style
+            # Use centralized tooltip system and apply appropriate style
             if port_info.is_moxa:
-                self.port_type_label.setText(AppMessages.PORT_TYPE_MOXA)
-                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("warning"))
+                self.port_type_label.setText(HelpManager.get_tooltip("port_type_moxa"))
+                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("c"))
             elif port_info.port_type == "Physical":
-                self.port_type_label.setText(AppMessages.PORT_TYPE_PHYSICAL)
+                self.port_type_label.setText(HelpManager.get_tooltip("port_type_physical"))
                 self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("success"))
             else:
-                self.port_type_label.setText(AppMessages.PORT_TYPE_VIRTUAL)
+                self.port_type_label.setText(HelpManager.get_tooltip("port_type_virtual"))
                 self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("info"))
         else:
             self.port_type_label.setVisible(False)

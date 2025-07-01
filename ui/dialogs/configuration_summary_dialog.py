@@ -107,7 +107,7 @@ class ConfigurationSummaryDialog(QDialog):
         </ul>
         
         <h4>Data Flow Diagram:</h4>
-        <div style="background-color: {AppColors.GRAY_50}; border: 1px solid {AppColors.BORDER_LIGHT}; padding: 10px; font-family: 'Consolas', monospace; font-size: 9pt; text-align: center; margin: 10px 0;">
+        <div style="background-color: {AppColors.GRAY_50}; border: 1px solid {AppColors.BORDER_LIGHT}; padding: 10px; font-family: '{AppFonts.DEFAULT_FAMILY}', monospace; font-size: 9pt; text-align: center; margin: 10px 0;">
             [Application A] ↔ COM132 ↔ COM131 ↔ Hub4com ↔ COM141 ↔ COM142 ↔ [Application B]
             <br><br>
             <i>Bidirectional Data Flow | Error Handling | Automatic Reconnection</i>

@@ -52,7 +52,7 @@ class PortScanDialog(QDialog):
         
         # Create refresh button with custom SVG icon
         self.scan_btn = ThemeManager.create_icon_button(
-            "refresh", 
+            "document_search", 
             "Scan for available serial ports",
             "medium"
         )
