@@ -413,12 +413,12 @@ class Hub4comGUI(QMainWindow):
         ]
         
         # Port status label
-        self.ui_refs['port_status_label'] = ThemeManager.create_status_label_inline(AppMessages.SCANNING)
+        self.ui_refs['port_status'] = ThemeManager.create_status_label_inline(AppMessages.SCANNING)
         
         # Create buttons in groups with separators
         button_groups = [
             (button_configs[:2], None),  # Scan buttons
-            ([], self.ui_refs['port_status_label']),  # Status label
+            ([], self.ui_refs['port_status']),  # Status label
             (button_configs[2:4], None),  # Port management
             (button_configs[4:5], None),  # Settings
             (button_configs[5:], None),   # Hub4com controls
@@ -674,11 +674,22 @@ class Hub4comGUI(QMainWindow):
         incoming.setEnabled(True)
         
         for port in ports:
+            # Create enhanced display text with status indicator
             display_text = port.port_name
+            
+            # Add device type and status information
             if port.is_moxa:
-                display_text += " (Moxa)"
+                display_text += "  •  Moxa Device"
+                if port.device_name and port.device_name != "Unknown":
+                    display_text += f"  •  {port.device_name}"
             elif port.port_type.startswith("Virtual"):
-                display_text += f" ({port.port_type.split(' ')[1]})"
+                virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
+                display_text += f"  •  {virtual_type} Port"
+            else:
+                display_text += "  •  Hardware Port"
+                if port.device_name and port.device_name != "Unknown":
+                    display_text += f"  •  {port.device_name}"
+            
             incoming.addItem(display_text, port.port_name)
         
         # Restore selection
@@ -710,16 +721,16 @@ class Hub4comGUI(QMainWindow):
             indicator.setVisible(False)
             return
         
-        # Use centralized tooltip system
+        # Use centralized tooltip system with enhanced status indicators
         if port_info.is_moxa:
             text = HelpManager.get_tooltip("port_type_moxa")
-            style_type = "warning"
+            style_type = "moxa"
         elif port_info.port_type == "Physical":
             text = HelpManager.get_tooltip("port_type_physical")
-            style_type = "success"
+            style_type = "available"
         else:
             text = HelpManager.get_tooltip("port_type_virtual")
-            style_type = "info"
+            style_type = "virtual"
         
         indicator.setText(text)
         indicator.setStyleSheet(AppStyles.port_type_indicator(style_type))
@@ -1039,8 +1050,16 @@ class Hub4comGUI(QMainWindow):
         QTimer.singleShot(200, self.update_preview)
     
     def _show_configuration_summary(self):
-        """Show launch dialog to user"""
+        """Show launch dialog to user if enabled in settings"""
         try:
+            # Check if launch dialog should be shown
+            from core.components import SettingsManager
+            settings_manager = SettingsManager()
+            
+            if not settings_manager.get_show_launch_dialog():
+                # Dialog is disabled, skip showing it
+                return
+            
             created_pairs = getattr(self, 'created_pairs_info', [])
             existing_pairs = getattr(self, 'existing_pairs_info', [])
             

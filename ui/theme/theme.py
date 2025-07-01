@@ -213,6 +213,7 @@ class AppDimensions:
     HEIGHT_TEXT_MEDIUM = 120
     HEIGHT_TEXT_LARGE = 180
     HEIGHT_TEXT_XLARGE = 200
+    HEIGHT_LIST_SMALL = 110             # Compact list for typical 4-item usage
     HEIGHT_LIST_MEDIUM = 150
     HEIGHT_LIST_LARGE = 180
     HEIGHT_PROGRESS = 18                # Corrected progress bar height
@@ -494,9 +495,14 @@ class AppStyles:
         QComboBox QAbstractItemView::item {{
             min-height: {AppDimensions.LIST_ITEM_HEIGHT}px;
             padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
+            border-bottom: 1px solid {AppColors.BORDER_LIGHT};
         }}
         QComboBox QAbstractItemView::item:hover {{
             background-color: {AppColors.SELECTION_MENU};
+        }}
+        QComboBox QAbstractItemView::item:selected {{
+            background-color: {AppColors.SELECTION_BG};
+            color: {AppColors.SELECTION_TEXT};
         }}
         """
     
@@ -909,17 +915,30 @@ class AppStyles:
     
     @staticmethod
     def port_type_indicator(style_type: str = "info") -> str:
-        """Port type indicator label style - minimal styling"""
+        """Enhanced port type indicator with status colors and better styling"""
+        status_colors = {
+            "available": AppColors.ACCENT_GREEN,
+            "in_use": AppColors.WARNING_PRIMARY,
+            "unavailable": AppColors.ERROR_PRIMARY,
+            "virtual": AppColors.ACCENT_BLUE,
+            "moxa": AppColors.ACCENT_PURPLE,
+            "info": AppColors.TEXT_DEFAULT
+        }
+        
+        border_color = status_colors.get(style_type, AppColors.BORDER_DEFAULT)
+        text_color = status_colors.get(style_type, AppColors.TEXT_DEFAULT)
+        
         return f"""
         QLabel {{
-            color: {AppColors.TEXT_DEFAULT};
-            font-style: {AppFonts.ITALIC_STYLE};
+            color: {text_color};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.SMALL_SIZE};
+            font-weight: {AppFonts.NORMAL_WEIGHT};
             padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-            background-color: {AppColors.BACKGROUND_LIGHT};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
-            margin-top: {AppDimensions.SPACING_SMALL}px;
+            background-color: {AppColors.BACKGROUND_WHITE};
+            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {border_color};
+            border-left: 3px solid {border_color};
+            margin: {AppDimensions.SPACING_SMALL}px 0px;
         }}
         """
     

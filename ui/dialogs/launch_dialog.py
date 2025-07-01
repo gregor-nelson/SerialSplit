@@ -12,7 +12,7 @@ from PyQt6.QtGui import QFont
 
 from ui.theme.theme import (ThemeManager, AppStyles, AppFonts, AppDimensions, 
                            AppColors, HTMLTheme)
-from core.components import DefaultConfig
+from core.components import DefaultConfig, SettingsManager
 
 
 class LaunchDialog(QDialog):
@@ -23,6 +23,7 @@ class LaunchDialog(QDialog):
         self.created_pairs = created_pairs or []
         self.existing_pairs = existing_pairs or []
         self.default_config = DefaultConfig()
+        self.settings_manager = SettingsManager()
         
         # Set window flags to prevent threading issues
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.Window)
@@ -185,6 +186,15 @@ class LaunchDialog(QDialog):
     def should_show_again(self):
         """Return whether this dialog should be shown again"""
         return not self.dont_show_checkbox.isChecked()
+    
+    def accept(self):
+        """Override accept to save checkbox state before closing"""
+        # Save the checkbox state to settings
+        show_dialog = self.should_show_again()
+        self.settings_manager.set_show_launch_dialog(show_dialog)
+        
+        # Call parent accept
+        super().accept()
     
     def closeEvent(self, event):
         """Handle dialog close event with proper resource cleanup"""

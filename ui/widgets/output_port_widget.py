@@ -118,21 +118,31 @@ class OutputPortWidget(QWidget):
         
         # Add scanned ports with enhanced display formatting
         for port in ports:
-            display_text = f"{port.port_name}"
+            # Create enhanced display text with status indicator
+            display_text = port.port_name
+            
+            # Add device type and status information
             if port.is_moxa:
-                display_text += " (Moxa)"
+                display_text += "  •  Moxa Device"
+                if port.device_name and port.device_name != "Unknown":
+                    display_text += f"  •  {port.device_name}"
             elif port.port_type.startswith("Virtual"):
-                display_text += f" ({port.port_type.split(' ')[1]})"
+                virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
+                display_text += f"  •  {virtual_type} Port"
+            else:
+                display_text += "  •  Hardware Port"
+                if port.device_name and port.device_name != "Unknown":
+                    display_text += f"  •  {port.device_name}"
             
             # Add item with custom data
             self.port_combo.addItem(display_text, port.port_name)
             
-            # Color code based on port type using theme colors
+            # Color code based on port type using enhanced theme colors
             index = self.port_combo.count() - 1
             if port.is_moxa:
                 self.port_combo.setItemData(
                     index, 
-                    ThemeManager.get_accent_color('blue'), 
+                    ThemeManager.get_accent_color('purple'), 
                     Qt.ItemDataRole.ForegroundRole
                 )
             elif port.port_type == "Physical":
@@ -144,7 +154,7 @@ class OutputPortWidget(QWidget):
             else:  # Virtual
                 self.port_combo.setItemData(
                     index, 
-                    ThemeManager.get_accent_color('orange'), 
+                    ThemeManager.get_accent_color('blue'), 
                     Qt.ItemDataRole.ForegroundRole
                 )
         
@@ -188,16 +198,16 @@ class OutputPortWidget(QWidget):
         if port_info:
             self.port_type_label.setVisible(True)
             
-            # Use centralized tooltip system and apply appropriate style
+            # Use centralized tooltip system with enhanced status indicators
             if port_info.is_moxa:
                 self.port_type_label.setText(HelpManager.get_tooltip("port_type_moxa"))
-                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("c"))
+                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("moxa"))
             elif port_info.port_type == "Physical":
                 self.port_type_label.setText(HelpManager.get_tooltip("port_type_physical"))
-                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("success"))
+                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("available"))
             else:
                 self.port_type_label.setText(HelpManager.get_tooltip("port_type_virtual"))
-                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("info"))
+                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("virtual"))
         else:
             self.port_type_label.setVisible(False)
     

@@ -17,7 +17,7 @@ except ImportError:
     WINREG_AVAILABLE = False
     print("Warning: winreg module not available. Port scanning will be limited.")
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal, QSettings
 from PyQt6.QtWidgets import QApplication
 
 
@@ -54,7 +54,22 @@ class Com0comPortPair:
     port_b_params: Dict[str, str]
 
 
-@dataclass
+class SettingsManager:
+    """Manages application settings using QSettings for cross-platform persistence"""
+    
+    def __init__(self):
+        self.settings = QSettings("SerialSplit", "Hub4com")
+    
+    def get_show_launch_dialog(self):
+        """Get whether to show launch dialog on startup (default: True)"""
+        return self.settings.value("ui/show_launch_dialog", True, type=bool)
+    
+    def set_show_launch_dialog(self, show_dialog):
+        """Set whether to show launch dialog on startup"""
+        self.settings.setValue("ui/show_launch_dialog", show_dialog)
+        self.settings.sync()
+
+
 class DefaultConfig:
     """Default COM pairs and settings to create on application launch"""
     # Default pairs to create: CNCA31<->CNCB31 (COM131<->COM132) and CNCA41<->CNCB41 (COM141<->COM142)
