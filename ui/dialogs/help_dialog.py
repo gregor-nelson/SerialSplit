@@ -1611,9 +1611,9 @@ class HelpManager:
         """Get formatted tooltip text"""
         tooltips = {
             "pair_tooltip": "Port A ({port_a}): {params_a}\nPort B ({port_b}): {params_b}\n\nRight-click or use 'Configure Features' to modify settings\nClick 'Help' button for detailed explanations of all features",
-            "port_type_moxa": "MOXA Network Device - Make sure baud rate matches your source device",
-            "port_type_physical": "PHYSICAL PORT - Connected to real hardware, verify device baud rate",
-            "port_type_virtual": "VIRTUAL PORT - Software-created port for inter-application communication"
+            "port_type_moxa": "Moxa Network Device",
+            "port_type_physical": "Physical Device",
+            "port_type_virtual": "Virtual Device"
         }
         template = tooltips.get(tooltip_type, "")
         return template.format(**kwargs)

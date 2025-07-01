@@ -921,7 +921,7 @@ class AppStyles:
             "in_use": AppColors.WARNING_PRIMARY,
             "unavailable": AppColors.ERROR_PRIMARY,
             "virtual": AppColors.ACCENT_BLUE,
-            "moxa": AppColors.ACCENT_PURPLE,
+            "moxa": AppColors.ACCENT_ORANGE,
             "info": AppColors.TEXT_DEFAULT
         }
         

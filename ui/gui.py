@@ -17,8 +17,9 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
                              QMessageBox, QProgressBar, QFrame, QSplitter,
                              QTabWidget, QScrollArea, QListWidget, QListWidgetItem, 
                              QAbstractItemView, QMenu, QDialog)
-from PyQt6.QtCore import QTimer, Qt, QSize
-from PyQt6.QtGui import QFont, QIcon, QColor, QAction
+from PyQt6.QtCore import QTimer, Qt, QSize, QByteArray
+from PyQt6.QtGui import QFont, QIcon, QColor, QAction, QPainter, QPixmap
+from PyQt6.QtSvg import QSvgRenderer
 
 from core.components import (
     ResponsiveWindowManager, SerialPortInfo, PortScanner, Hub4comProcess,
@@ -46,7 +47,6 @@ class Config:
     QUICK_BAUD_RATES = ["9600", "19200", "38400", "57600", "115200"]
     DEFAULT_BAUD = "115200"
     MIN_OUTPUT_PORTS = 1
-
 
 # ============================================================================
 # INTERNAL HELPER CLASSES
@@ -236,16 +236,21 @@ class Hub4comGUI(QMainWindow):
         # Create main layout
         central_widget = self._create_central_widget()
         layout = QVBoxLayout(central_widget)
-        layout.setSpacing(AppDimensions.SPACING_MEDIUM)
+        layout.setSpacing(0)
         margins = ThemeManager.get_standard_margins()
         layout.setContentsMargins(*margins)
         
-        # Add sections
-        self._add_separator(layout)
-        layout.addWidget(self._create_virtual_ports_section())
-        layout.addWidget(self._create_configuration_section())
-        layout.addWidget(self._create_output_section())
-    
+        # Main vertical splitter for all sections
+        main_splitter = QSplitter(Qt.Orientation.Vertical)
+        main_splitter.addWidget(self._create_virtual_ports_section())
+        main_splitter.addWidget(self._create_configuration_section())
+        main_splitter.addWidget(self._create_output_section())
+        main_splitter.setSizes([200, 400, 400])  # Virtual:21.7%, Config:43.3%, Output:35%
+        main_splitter.setStretchFactor(0, 1)   # Virtual ports (smallest)
+        main_splitter.setStretchFactor(1, 2)  # Configuration (largest) 
+        main_splitter.setStretchFactor(2, 2)   # Output (middle)
+        layout.addWidget(main_splitter)
+        
     def _setup_window(self):
         """Configure window geometry"""
         self.setGeometry(
@@ -315,6 +320,27 @@ class Hub4comGUI(QMainWindow):
                 
         return created_buttons
     
+    def checkbox_icon(self, checked: bool) -> QIcon:
+        """Generate Windows 10 style checkbox icon"""
+        if checked:
+            svg = '''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="15" height="15" fill="white" stroke="#999" stroke-width="1"/>
+                <rect x="2" y="2" width="12" height="12" fill="#0078D4"/>
+                <path d="M4 8l2 2 6-6" stroke="white" stroke-width="1" fill="none" stroke-linecap="round"/>
+            </svg>'''
+        else:
+            svg = '''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="15" height="15" fill="white" stroke="#999" stroke-width="1"/>
+            </svg>'''
+        
+        renderer = QSvgRenderer(QByteArray(svg.encode()))
+        pixmap = QPixmap(16, 16)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        renderer.render(painter)
+        painter.end()
+        return QIcon(pixmap)
+
     def _add_separator(self, layout: QVBoxLayout, orientation: str = "horizontal"):
         """Add a themed separator to layout"""
         separator = ThemeManager.create_separator(orientation)
@@ -375,7 +401,10 @@ class Hub4comGUI(QMainWindow):
         self.ui_refs['com0com_status'] = ThemeManager.create_status_label_inline(AppMessages.READY)
         buttons_layout.addWidget(self.ui_refs['com0com_status'])
         buttons_layout.addStretch()
-        layout.addLayout(buttons_layout)
+        buttons_container = QWidget()
+        buttons_container.setLayout(buttons_layout)
+        buttons_container.setFixedHeight(50)
+        layout.addWidget(buttons_container)
         
         # Port pairs list
         self.ui_refs['port_pairs_list'] = ThemeManager.create_listwidget()
@@ -437,21 +466,25 @@ class Hub4comGUI(QMainWindow):
         self.ui_refs['status_label'] = ThemeManager.create_status_label_inline(AppMessages.READY)
         controls_layout.addWidget(self.ui_refs['status_label'])
         controls_layout.addStretch()
-        
-        layout.addLayout(controls_layout, 0, 0, 1, 4)
+        controls_container = QWidget()
+        controls_container.setLayout(controls_layout)
+        controls_container.setFixedHeight(50)
+        layout.addWidget(controls_container, 0, 0, 1, 4)
         
         # Initialize hidden settings
         self._init_hidden_settings()
         
-        # Port configuration
-        ports_layout = QHBoxLayout()
-        ports_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
-        ports_layout.addWidget(self._create_incoming_port_section())
-        ports_layout.addWidget(self._create_outgoing_ports_section())
-        layout.addLayout(ports_layout, 1, 0, 1, 4)
+        # Port configuration with splitter
+        ports_splitter = QSplitter(Qt.Orientation.Horizontal)
+        ports_splitter.addWidget(self._create_incoming_port_section())
+        ports_splitter.addWidget(self._create_outgoing_ports_section())
+        ports_splitter.setSizes([240, 560])  # 40/60 split for 800px total
+        ports_splitter.setStretchFactor(0, 3)  # 40%
+        ports_splitter.setStretchFactor(1, 7)  # 60%
+        layout.addWidget(ports_splitter, 1, 0, 1, 4)
         
         return group
-    
+
     def _init_hidden_settings(self):
         """Initialize hidden checkbox settings"""
         self.ui_refs['disable_cts'] = ThemeManager.create_checkbox("Disable CTS Handshaking")
@@ -1195,7 +1228,7 @@ class Hub4comGUI(QMainWindow):
             self._update_status("No port pairs configured", component='com0com')
             no_pairs_item = QListWidgetItem(
                 "No virtual port pairs found yet.\n\n"
-                "💡 Click 'Create New Pair' to create your first pair of connected virtual ports.\n"
+                "Click 'Create New Pair' to create your first pair of connected virtual ports.\n"
                 "This allows two applications to communicate through simulated serial ports."
             )
             no_pairs_item.setBackground(ThemeManager.get_accent_color('pair_info'))
@@ -1388,7 +1421,7 @@ class Hub4comGUI(QMainWindow):
         header_action.setEnabled(False)
         menu.addSeparator()
         
-        # Settings options
+        # Settings with proper Windows 10 checkboxes
         settings_config = [
             ("EmuBR", "Baud Rate Timing"),
             ("EmuOverrun", "Buffer Overrun Protection"),
@@ -1397,20 +1430,16 @@ class Hub4comGUI(QMainWindow):
         ]
         
         for param, display_name in settings_config:
-            status = "☑" if current_settings.get(param) == "yes" else "☐"
-            menu.addAction(f"{display_name}: {status}").setEnabled(False)
+            is_enabled = current_settings.get(param) == "yes"
+            new_value = "no" if is_enabled else "yes"
             
-            if current_settings.get(param) == "yes":
-                menu.addAction(f"☑ {display_name}", 
-                             partial(self.quick_modify_pair, param, "no"))
-            else:
-                menu.addAction(f"☐ {display_name}", 
-                             partial(self.quick_modify_pair, param, "yes"))
-            menu.addSeparator()
+            menu.addAction(self.checkbox_icon(is_enabled), display_name, 
+                        partial(self.quick_modify_pair, param, new_value))
         
+        menu.addSeparator()
         menu.addAction("Help", lambda: self._show_help(HelpTopic.COM0COM_SETTINGS))
         return menu
-    
+
     def quick_modify_pair(self, param: str, value: str):
         """Quick modify a parameter for selected pair"""
         current_item = self.ui_refs['port_pairs_list'].currentItem()
