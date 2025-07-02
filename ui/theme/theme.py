@@ -246,6 +246,16 @@ class AppDimensions:
     # === OUTPUT PORT WIDGET SPECIFICS ===
     OUTPUT_PORT_MIN_COUNT = 1          # Minimum number of output ports
 
+     # === NOTIFICATION ELEMENT HEIGHTS ===
+    HEIGHT_STATUS_LABEL = 25           # Fixed height for status labels
+    HEIGHT_PORT_TYPE_INDICATOR = 30    # Fixed height for port type indicators
+    HEIGHT_NOTIFICATION = 25           # General notification element height
+    HEIGHT_INLINE_STATUS = 20          # Inline status text height
+    
+    # === CONTROL BAR HEIGHTS ===
+    HEIGHT_CONTROL_BAR = 50            # Fixed height for control button bars
+    HEIGHT_BUTTON_CONTAINER = 45       # Button container height
+
 
 class AppMessages:
     """Centralized messages for consistency"""
@@ -939,6 +949,8 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {border_color};
             border-left: 3px solid {border_color};
             margin: {AppDimensions.SPACING_SMALL}px 0px;
+            max-height: {AppDimensions.HEIGHT_PORT_TYPE_INDICATOR}px;
+            min-height: {AppDimensions.HEIGHT_PORT_TYPE_INDICATOR}px;
         }}
         """
     

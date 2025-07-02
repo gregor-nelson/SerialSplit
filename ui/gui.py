@@ -545,14 +545,12 @@ class Hub4comGUI(QMainWindow):
         preview_group, preview_layout = self._create_groupbox_with_layout("Command Preview")
         self.ui_refs['command_preview'] = ThemeManager.create_textedit("console")
         self.ui_refs['command_preview'].setMinimumHeight(AppDimensions.HEIGHT_TEXT_MEDIUM)
-        self.ui_refs['command_preview'].setMaximumHeight(AppDimensions.HEIGHT_TEXT_XLARGE)
         preview_layout.addWidget(self.ui_refs['command_preview'])
         
         # Output log
         output_group, output_layout = self._create_groupbox_with_layout("Output Log")
         self.ui_refs['output_text'] = ThemeManager.create_textedit("console")
         self.ui_refs['output_text'].setMinimumHeight(AppDimensions.HEIGHT_TEXT_MEDIUM)
-        self.ui_refs['output_text'].setMaximumHeight(AppDimensions.HEIGHT_TEXT_XLARGE)
         output_layout.addWidget(self.ui_refs['output_text'])
         
         splitter.addWidget(preview_group)
