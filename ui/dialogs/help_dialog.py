@@ -5,18 +5,16 @@ Implements Windows Settings-style navigation with search and modern UI
 """
 
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, 
-                             QPushButton, QWidget, QLineEdit, QSplitter,
+                              QWidget,
                              QListWidget, QListWidgetItem, QLabel, QFrame,
-                             QScrollArea, QApplication)
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QPropertyAnimation, QRect, QEasingCurve
-from PyQt6.QtGui import QIcon, QTextDocument, QTextCursor
+                             QApplication)
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtGui import QTextDocument, QTextCursor, QColor
 from enum import Enum
 import os
 from typing import Dict, List, Optional, Tuple
-
-from ui.theme.theme import (ThemeManager, AppStyles, AppFonts, AppDimensions, 
-                           AppColors, HTMLTheme, AppMessages)
-
+from ui.theme.theme import (AppDimensions, ThemeManager,AppFonts, 
+                           AppColors, HTMLTheme)
 
 class HelpTopic(Enum):
     """Enumeration of all available help topics"""
@@ -96,8 +94,8 @@ class SearchHighlighter:
         
         # Setup highlight format
         format = cursor.charFormat()
-        format.setBackground(AppColors.ACCENT_YELLOW)
-        format.setForeground(AppColors.TEXT_DEFAULT)
+        format.setBackground(QColor(AppColors.ACCENT_YELLOW))
+        format.setForeground(QColor(AppColors.TEXT_DEFAULT))
         
         # Find and highlight all occurrences
         while not cursor.isNull() and not cursor.atEnd():
@@ -306,632 +304,634 @@ class HelpContentRegistry:
     # Content generation methods (enhanced versions)
     @staticmethod
     def _get_quick_start_content() -> str:
-        """Enhanced quick start content"""
-        return f"""
-{HTMLTheme.get_styles()}
-<h2>Quick Start Guide</h2>
+            """Enhanced quick start content"""
+            return f"""
+        {HTMLTheme.get_styles()}
+        <h2>Quick Start Guide</h2>
 
-<div class="info-box">
-<h3>Welcome to Serial Port Splitter!</h3>
-<p>This guide will get you up and running in just a few minutes. Follow these simple steps to start splitting your serial data.</p>
-</div>
+        <div class="info-box">
+        <h3>Welcome to Serial Port Splitter!</h3>
+        <p>This guide will enable operation in just a few minutes. Follow these straightforward steps to begin splitting serial data.</p>
+        </div>
 
-<h3>Step 1: Create Virtual Port Pairs</h3>
-<p>Virtual port pairs are the foundation of serial port splitting. Here's how to create them:</p>
-<ol>
-    <li>Click the <b>"Create New Pair"</b> button in the Virtual Ports section</li>
-    <li>The system will automatically assign port numbers (e.g., COM3 ↔ COM4)</li>
-    <li>Note these port numbers - you'll need them for your applications</li>
-</ol>
+        <h3>Step 1: Create Virtual Port Pairs</h3>
+        <p>Virtual port pairs are the foundation of serial port splitting. Here's how to create them:</p>
+        <ol>
+            <li>Click the <b>"Create New Pair"</b> button in the Virtual Ports section</li>
+            <li>The system will automatically assign port numbers (e.g., COM3 ↔ COM4)</li>
+            <li>Note these port numbers - these will be required for applications</li>
+            <li><b>Important:</b> Applications should connect to the "other side" of the pair from the data source (if this utility uses COM3 as the source, applications connect to COM4)</li>
+        </ol>
 
-<h3>Step 2: Select Your Data Source</h3>
-<p>Choose where your serial data is coming from:</p>
-<ul>
-    <li><b>Physical Port:</b> A real COM port connected to hardware</li>
-    <li><b>MOXA Device:</b> Network-attached serial device</li>
-    <li><b>Virtual Port:</b> One side of a virtual port pair</li>
-</ul>
+        <h3>Step 2: Select Data Source</h3>
+        <p>Select the serial data source:</p>
+        <ul>
+            <li><b>Physical Port:</b> A real COM port connected to hardware</li>
+            <li><b>MOXA Device:</b> Network-attached serial device</li>
+            <li><b>Virtual Port:</b> One side of a virtual port pair</li>
+        </ul>
 
-<h3>Step 3: Add Output Destinations</h3>
-<p>Add ports where you want the data to be sent:</p>
-<ol>
-    <li>Click <b>"Add Output Port"</b> for each destination</li>
-    <li>Select the appropriate COM port from the dropdown</li>
-    <li>Set the baud rate to match your application's requirements</li>
-</ol>
+        <h3>Step 3: Add Output Destinations</h3>
+        <p>Add ports to which data should be sent:</p>
+        <ol>
+            <li>Click <b>"Add Output Port"</b> for each destination</li>
+            <li>Select the appropriate COM port from the dropdown</li>
+            <li>Set the baud rate to match application requirements</li>
+        </ol>
 
-<h3>Step 4: Configure and Start</h3>
-<ol>
-    <li>Choose your routing mode (usually "One-Way" for basic splitting)</li>
-    <li>Verify all baud rates are correct</li>
-    <li>Click <b>"Start Routing"</b> to begin data flow</li>
-</ol>
+        <h3>Step 4: Configure and Start</h3>
+        <ol>
+            <li>Choose your routing mode (usually "One-Way" for basic splitting)</li>
+            <li>Verify all baud rates are correct</li>
+            <li>Click <b>"Start Routing"</b> to begin data flow</li>
+        </ol>
 
-<div class="footer-box">
-<p><b>Pro Tip:</b> Use the "Set All" button to quickly set the same baud rate for all output ports!</p>
-</div>
-"""
+        <div class="footer-box">
+        <p><b>Tip:</b> Use the "Set All" button to quickly apply the same baud rate to all output ports!</p>
+        </div>
+        """
     
     @staticmethod
     def _get_first_setup_content() -> str:
         """First time setup content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>First Time Setup</h2>
+    {HTMLTheme.get_styles()}
+    <h2>First Time Setup</h2>
 
-<div class="info-box">
-<h3>Initial Configuration</h3>
-<p>Let's ensure everything is properly configured for your first use.</p>
-</div>
+    <div class="info-box">
+    <h3>Initial Configuration</h3>
+    <p>Ensure everything is properly configured for initial use.</p>
+    </div>
 
-<h3>Prerequisites Check</h3>
-<ul>
-    <li>Windows 10 or later</li>
-    <li>Administrator privileges (for driver installation)</li>
-    <li>COM0COM driver installed</li>
-    <li>Your serial device connected</li>
-</ul>
+    <h3>Prerequisites Check</h3>
+    <ul>
+        <li>Windows 10 or later</li>
+        <li>Administrator privileges (for driver installation)</li>
+        <li>COM0COM driver installed</li>
+        <li>Serial device connected</li>
+    </ul>
 
-<h3>Driver Installation</h3>
-<p>The COM0COM driver should be installed automatically when you first run the application. If you encounter issues:</p>
-<ol>
-    <li>Close the application</li>
-    <li>Right-click the application and select "Run as Administrator"</li>
-    <li>The driver installation will complete automatically</li>
-</ol>
+    <h3>Driver Installation</h3>
+    <p>The COM0COM driver should be installed automatically when the application is first run. If issues are encountered:</p>
+    <ol>
+        <li>Close the application</li>
+        <li>Right-click the application and select "Run as Administrator"</li>
+        <li>The driver installation will complete automatically</li>
+    </ol>
 
-<h3>Verify Installation</h3>
-<p>To confirm everything is working:</p>
-<ol>
-    <li>Click "Refresh Ports" - you should see available COM ports</li>
-    <li>Create a test virtual pair</li>
-    <li>The new ports should appear in the port lists</li>
-</ol>
+    <h3>Verify Installation</h3>
+    <p>To confirm everything is working:</p>
+    <ol>
+        <li>Click "Refresh Ports" - available COM ports should be visible</li>
+        <li>Create a test virtual pair</li>
+        <li>The new ports should appear in the port lists</li>
+    </ol>
 
-<div class="warning-box">
-<h3>Windows Security</h3>
-<p>Windows may show a security warning for the unsigned driver. This is normal - click "Install anyway" to proceed.</p>
-</div>
-"""
-    
+    <div class="warning-box">
+    <h3>Windows Security</h3>
+    <p>Windows may show a security warning for the unsigned driver. This is normal - click "Install anyway" to proceed.</p>
+    </div>
+    """
+
     @staticmethod
     def _get_port_pairs_content() -> str:
         """Port pairs management content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>🔌 Managing Virtual Port Pairs</h2>
+    {HTMLTheme.get_styles()}
+    <h2>Managing Virtual Port Pairs</h2>
 
-<h3>Understanding Port Pairs</h3>
-<p>Virtual port pairs are two COM ports connected by a virtual null-modem cable. Data written to one port instantly appears on the other.</p>
+    <h3>Understanding Port Pairs</h3>
+    <p>Virtual port pairs are two COM ports connected by a virtual null-modem cable. Data written to one port instantly appears on the other.</p>
 
-<div class="info-box">
-<p><b>Example:</b> COM3 ⇄ COM4 means anything sent to COM3 appears on COM4, and vice versa.</p>
-</div>
+    <div class="info-box">
+    <p><b>Example:</b> COM3 ⇄ COM4 means anything sent to COM3 appears on COM4, and vice versa.</p>
+    </div>
 
-<h3>Creating Port Pairs</h3>
-<ol>
-    <li>Click <b>"Create New Pair"</b> in the Virtual Ports section</li>
-    <li>The system automatically assigns the next available port numbers</li>
-    <li>Port names follow the pattern: CNCA0/CNCB0, CNCA1/CNCB1, etc.</li>
-</ol>
+    <h3>Creating Port Pairs</h3>
+    <ol>
+        <li>Click <b>"Create New Pair"</b> in the Virtual Ports section</li>
+        <li>The system automatically assigns the next available port numbers</li>
+        <li>Port names follow the pattern: CNCA0/CNCB0, CNCA1/CNCB1, etc.</li>
+    </ol>
 
-<h3>Managing Existing Pairs</h3>
-<ul>
-    <li><b>View Details:</b> Double-click any pair to see advanced settings</li>
-    <li><b>Configure Features:</b> Right-click to access emulation options</li>
-    <li><b>Remove Pairs:</b> Select and click "Remove Selected Pair"</li>
-</ul>
+    <h3>Managing Existing Pairs</h3>
+    <ul>
+        <li><b>View Details:</b> Double-click any pair to see advanced settings</li>
+        <li><b>Configure Features:</b> Right-click to access emulation options</li>
+        <li><b>Remove Pairs:</b> Select and click "Remove Selected Pair"</li>
+    </ul>
 
-<h3>Best Practices</h3>
-<ul>
-    <li>Create only the pairs you need - each uses system resources</li>
-    <li>Document which applications use which ports</li>
-    <li>Remove unused pairs to keep the list manageable</li>
-    <li>Restart applications after creating new pairs</li>
-</ul>
+    <h3>Best Practices</h3>
+    <ul>
+        <li>Create only the pairs needed - each uses system resources</li>
+        <li>Document which applications use which ports</li>
+        <li>Remove unused pairs to keep the list manageable</li>
+        <li>Restart applications after creating new pairs</li>
+    </ul>
 
-<div class="footer-box">
-<p><b>Note:</b> Port numbers are assigned by Windows and may change after system restarts.</p>
-</div>
-"""
-    
+    <div class="footer-box">
+    <p><b>Note:</b> Port numbers are assigned by Windows and may change after system restarts.</p>
+    </div>
+    """
+
     @staticmethod
     def _get_routing_modes_content() -> str:
         """Routing modes detailed content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>Understanding Routing Modes</h2>
+    {HTMLTheme.get_styles()}
+    <h2>Understanding Routing Modes</h2>
 
-<h3>Available Routing Modes</h3>
+    <h3>Available Routing Modes</h3>
 
-<div class="info-box">
-<h3>One-Way Splitting (Default)</h3>
-<p><b>Data Flow:</b> Incoming Port → All Output Ports<br>
-<b>Use Case:</b> Broadcasting data from one source to multiple receivers<br>
-<b>Example:</b> GPS device sending location to multiple navigation applications</p>
-</div>
+    <div class="info-box">
+    <h3>One-Way Splitting (Default)</h3>
+    <p><b>Data Flow:</b> Incoming Port → All Output Ports<br>
+    <b>Use Case:</b> Broadcasting data from one source to multiple receivers<br>
+    <b>Example:</b> GPS device sending location to multiple navigation applications</p>
+    </div>
 
-<div class="info-box">
-<h3>Two-Way Communication</h3>
-<p><b>Data Flow:</b> Bidirectional between incoming and output ports<br>
-<b>Use Case:</b> When applications need to send commands back to the device<br>
-<b>Example:</b> Terminal program communicating with a modem</p>
-</div>
+    <div class="info-box">
+    <h3>Two-Way Communication</h3>
+    <p><b>Data Flow:</b> Bidirectional between incoming and output ports<br>
+    <b>Use Case:</b> When applications need to send commands back to the device<br>
+    <b>Example:</b> Terminal program communicating with a modem</p>
+    </div>
 
-<div class="info-box">
-<h3>Full Network Mode</h3>
-<p><b>Data Flow:</b> All ports can communicate with all other ports<br>
-<b>Use Case:</b> Creating a virtual serial network<br>
-<b>Example:</b> Multiple devices/applications all intercommunicating</p>
-</div>
+    <div class="info-box">
+    <h3>Full Network Mode</h3>
+    <p><b>Data Flow:</b> All ports can communicate with all other ports<br>
+    <b>Use Case:</b> Creating a virtual serial network<br>
+    <b>Example:</b> Multiple devices/applications all intercommunicating</p>
+    </div>
 
-<h3>Choosing the Right Mode</h3>
-<table style="width: 100%; border-collapse: collapse;">
-<tr style="background-color: {AppColors.BACKGROUND_LIGHT};">
-    <th style="padding: 8px; text-align: left;">Scenario</th>
-    <th style="padding: 8px; text-align: left;">Recommended Mode</th>
-</tr>
-<tr>
-    <td style="padding: 8px;">Simple data logging/monitoring</td>
-    <td style="padding: 8px;">One-Way</td>
-</tr>
-<tr>
-    <td style="padding: 8px;">Device control with feedback</td>
-    <td style="padding: 8px;">Two-Way</td>
-</tr>
-<tr>
-    <td style="padding: 8px;">Multi-device simulation</td>
-    <td style="padding: 8px;">Full Network</td>
-</tr>
-</table>
+    <h3>Choosing the Right Mode</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+    <tr style="background-color: {AppColors.BACKGROUND_LIGHT};">
+        <th style="padding: 8px; text-align: left;">Scenario</th>
+        <th style="padding: 8px; text-align: left;">Recommended Mode</th>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">Simple data logging/monitoring</td>
+        <td style="padding: 8px;">One-Way</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">Device control with feedback</td>
+        <td style="padding: 8px;">Two-Way</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">Multi-device simulation</td>
+        <td style="padding: 8px;">Full Network</td>
+    </tr>
+    </table>
 
-<div class="warning-box">
-<h3>Performance Note</h3>
-<p>Full Network mode uses more CPU resources. Use only when necessary.</p>
-</div>
-"""
-    
+    <div class="warning-box">
+    <h3>Performance Note</h3>
+    <p>Full Network mode uses more CPU resources. Use only when necessary.</p>
+    </div>
+    """
+
     @staticmethod
     def _get_flow_control_content() -> str:
         """Flow control detailed content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>Flow Control Settings</h2>
+    {HTMLTheme.get_styles()}
+    <h2>Flow Control Settings</h2>
 
-<h3>What is Flow Control?</h3>
-<p>Flow control prevents data loss by coordinating when devices can send data. It's like traffic lights for serial communication.</p>
+    <h3>What is Flow Control?</h3>
+    <p>Flow control prevents data loss by coordinating when devices can send data. It functions like traffic lights for serial communication.</p>
 
-<h3>Hardware Flow Control (RTS/CTS)</h3>
-<div class="info-box">
-<p><b>RTS (Request To Send):</b> Sender signals it wants to transmit<br>
-<b>CTS (Clear To Send):</b> Receiver signals it's ready to receive</p>
-</div>
+    <h3>Hardware Flow Control (RTS/CTS)</h3>
+    <div class="info-box">
+    <p><b>RTS (Request To Send):</b> Sender signals it wants to transmit<br>
+    <b>CTS (Clear To Send):</b> Receiver signals it's ready to receive</p>
+    </div>
 
-<h3>When to Enable Flow Control</h3>
-<ul>
-    <li>High-speed data transfers (>38400 baud)</li>
-    <li>Large data volumes</li>
-    <li>When devices explicitly support it</li>
-    <li>Experiencing data loss or corruption</li>
-</ul>
+    <h3>When to Enable Flow Control</h3>
+    <ul>
+        <li>High-speed data transfers (>38400 baud)</li>
+        <li>Large data volumes</li>
+        <li>When devices explicitly support it</li>
+        <li>Experiencing data loss or corruption</li>
+    </ul>
 
-<h3>When NOT to Use Flow Control</h3>
-<ul>
-    <li>Simple, low-speed connections</li>
-    <li>Devices that don't support it</li>
-    <li>When using 3-wire connections (TX, RX, GND only)</li>
-</ul>
+    <h3>When NOT to Use Flow Control</h3>
+    <ul>
+        <li>Simple, low-speed connections</li>
+        <li>Devices that don't support it</li>
+        <li>When using 3-wire connections (TX, RX, GND only)</li>
+    </ul>
 
-<h3>Configuration Options</h3>
-<ol>
-    <li><b>Enable CTS Handshaking:</b> Standard flow control</li>
-    <li><b>Disable Default Flow Control:</b> For custom implementations</li>
-    <li><b>Echo Mode:</b> Special testing mode (not for normal use)</li>
-</ol>
+    <h3>Configuration Options</h3>
+    <ol>
+        <li><b>Enable CTS Handshaking:</b> Standard flow control</li>
+        <li><b>Disable Default Flow Control:</b> For custom implementations</li>
+        <li><b>Echo Mode:</b> Special testing mode (not for normal use)</li>
+    </ol>
 
-<div class="warning-box">
-<h3>Important</h3>
-<p>Both devices must support and be configured for the same flow control method!</p>
-</div>
-"""
-    
+    <div class="warning-box">
+    <h3>Important</h3>
+    <p>Both devices must support and be configured for the same flow control method!</p>
+    </div>
+    """
+
     @staticmethod
     def _get_baud_rates_content() -> str:
         """Baud rate configuration content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>Baud Rate Configuration</h2>
+    {HTMLTheme.get_styles()}
+    <h2>Baud Rate Configuration</h2>
 
-<h3>Understanding Baud Rates</h3>
-<p>Baud rate is the speed of serial communication, measured in bits per second (bps).</p>
+    <h3>Understanding Baud Rates</h3>
+    <p>Baud rate is the speed of serial communication, measured in bits per second (bps).</p>
 
-<h3>Common Baud Rates</h3>
-<table style="width: 100%; border-collapse: collapse;">
-<tr style="background-color: {AppColors.BACKGROUND_LIGHT};">
-    <th style="padding: 8px;">Baud Rate</th>
-    <th style="padding: 8px;">Typical Use</th>
-    <th style="padding: 8px;">Notes</th>
-</tr>
-<tr>
-    <td style="padding: 8px;">9600</td>
-    <td style="padding: 8px;">GPS, Arduino</td>
-    <td style="padding: 8px;">Most compatible, slower</td>
-</tr>
-<tr>
-    <td style="padding: 8px;">19200</td>
-    <td style="padding: 8px;">Industrial devices</td>
-    <td style="padding: 8px;">Good balance</td>
-</tr>
-<tr>
-    <td style="padding: 8px;">38400</td>
-    <td style="padding: 8px;">Modems</td>
-    <td style="padding: 8px;">Medium speed</td>
-</tr>
-<tr>
-    <td style="padding: 8px;">57600</td>
-    <td style="padding: 8px;">Embedded systems</td>
-    <td style="padding: 8px;">Higher speed</td>
-</tr>
-<tr>
-    <td style="padding: 8px;">115200</td>
-    <td style="padding: 8px;">Modern devices</td>
-    <td style="padding: 8px;">Fast, common default</td>
-</tr>
-</table>
+    <h3>Common Baud Rates</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+    <tr style="background-color: {AppColors.BACKGROUND_LIGHT};">
+        <th style="padding: 8px;">Baud Rate</th>
+        <th style="padding: 8px;">Typical Use</th>
+        <th style="padding: 8px;">Notes</th>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">9600</td>
+        <td style="padding: 8px;">GPS, Arduino</td>
+        <td style="padding: 8px;">Most compatible, slower</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">19200</td>
+        <td style="padding: 8px;">Industrial devices</td>
+        <td style="padding: 8px;">Good balance</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">38400</td>
+        <td style="padding: 8px;">Modems</td>
+        <td style="padding: 8px;">Medium speed</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">57600</td>
+        <td style="padding: 8px;">Embedded systems</td>
+        <td style="padding: 8px;">Higher speed</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">115200</td>
+        <td style="padding: 8px;">Modern devices</td>
+        <td style="padding: 8px;">Fast, common default</td>
+    </tr>
+    </table>
 
-<h3>Important Rules</h3>
-<div class="warning-box">
-<p><b>The baud rate MUST match your source device!</b><br>
-Mismatched baud rates result in garbage characters or no communication.</p>
-</div>
+    <h3>Important Rules</h3>
+    <div class="warning-box">
+    <p><b>The baud rate MUST match the source device!</b><br>
+    Mismatched baud rates result in garbage characters or no communication.</p>
+    </div>
 
-<h3>Quick Tips</h3>
-<ul>
-    <li>Check your device manual for the correct baud rate</li>
-    <li>Start with 9600 if unsure - it's the most compatible</li>
-    <li>Use "Set All" to quickly match all output ports</li>
-    <li>Higher rates need better cable quality</li>
-</ul>
-"""
-    
+    <h3>Quick Tips</h3>
+    <ul>
+        <li>Check device manual for the correct baud rate</li>
+        <li>Start with 9600 if uncertain - it's the most compatible</li>
+        <li>Use "Set All" to quickly match all output ports</li>
+        <li>Higher rates need better cable quality</li>
+    </ul>
+    """
+
     @staticmethod
     def _get_advanced_settings_content() -> str:
         """Advanced settings content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>Advanced Settings</h2>
+    {HTMLTheme.get_styles()}
+    <h2>Advanced Settings</h2>
 
-<div class="warning-box">
-<h3>Expert Users Only</h3>
-<p>These settings can affect system stability. Change only if you understand the implications.</p>
-</div>
+    <div class="warning-box">
+    <h3>Expert Users Only</h3>
+    <p>These settings can affect system stability. Change only when the implications are understood.</p>
+    </div>
 
-<h3>COM0COM Emulation Features</h3>
+    <h3>COM0COM Emulation Features</h3>
 
-<h4>Baud Rate Emulation (EmuBR)</h4>
-<ul>
-    <li>Simulates physical port timing</li>
-    <li>Useful for testing timing-sensitive applications</li>
-    <li>Reduces performance - disable for maximum speed</li>
-</ul>
+    <h4>Baud Rate Emulation (EmuBR)</h4>
+    <ul>
+        <li>Simulates physical port timing</li>
+        <li>Useful for testing timing-sensitive applications</li>
+        <li>Reduces performance - disable for maximum speed</li>
+    </ul>
 
-<h4>Buffer Overrun Emulation</h4>
-<ul>
-    <li>Simulates hardware buffer limitations</li>
-    <li>Tests application error handling</li>
-    <li>Can cause data loss - use only for testing</li>
-</ul>
+    <h4>Buffer Overrun Emulation</h4>
+    <ul>
+        <li>Simulates hardware buffer limitations</li>
+        <li>Tests application error handling</li>
+        <li>Can cause data loss - use only for testing</li>
+    </ul>
 
-<h4>Exclusive Mode</h4>
-<ul>
-    <li>Hides port until paired port is opened</li>
-    <li>Prevents accidental connections</li>
-    <li>May confuse some applications</li>
-</ul>
+    <h4>Exclusive Mode</h4>
+    <ul>
+        <li>Hides port until paired port is opened</li>
+        <li>Prevents accidental connections</li>
+        <li>May confuse some applications</li>
+    </ul>
 
-<h4>Plug-In Mode</h4>
-<ul>
-    <li>Dynamic port creation/removal</li>
-    <li>Advanced scenario only</li>
-    <li>Not compatible with all applications</li>
-</ul>
+    <h4>Plug-In Mode</h4>
+    <ul>
+        <li>Dynamic port creation/removal</li>
+        <li>Advanced scenario only</li>
+        <li>Not compatible with all applications</li>
+    </ul>
 
-<h3>HUB4COM Advanced Options</h3>
-<ul>
-    <li><b>Custom Routes:</b> Use command line for complex routing</li>
-    <li><b>Filters:</b> Apply data transformations</li>
-    <li><b>Logging:</b> Enable for debugging</li>
-</ul>
+    <h3>HUB4COM Advanced Options</h3>
+    <ul>
+        <li><b>Custom Routes:</b> Use command line for complex routing</li>
+        <li><b>Filters:</b> Apply data transformations</li>
+        <li><b>Logging:</b> Enable for debugging</li>
+    </ul>
 
-<div class="footer-box">
-<p>See the Command Reference section for detailed command-line options.</p>
-</div>
-"""
-    
+    <div class="footer-box">
+    <p>See the Command Reference section for detailed command-line options.</p>
+    </div>
+    """
+
     @staticmethod
     def _get_command_line_content() -> str:
         """Command line usage content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>Command Line Usage</h2>
+    {HTMLTheme.get_styles()}
+    <h2>Command Line Usage</h2>
 
-<h3>Running from Command Line</h3>
-<p>The Serial Port Splitter can be controlled via command line for automation.</p>
+    <h3>Running from Command Line</h3>
+    <p>The Serial Port Splitter can be controlled via command line for automation.</p>
 
-<h3>Basic Commands</h3>
-<div style="background-color: {AppColors.GRAY_100}; padding: 10px; font-family: monospace;">
-# List all ports<br>
-hub4com.exe --list<br><br>
+    <h3>Basic Commands</h3>
+    <div style="background-color: {AppColors.GRAY_100}; padding: 10px; font-family: monospace;">
+    # List all ports<br>
+    hub4com.exe --list<br><br>
 
-# Simple one-way split<br>
-hub4com.exe COM1 COM3 COM4<br><br>
+    # Simple one-way split<br>
+    hub4com.exe COM1 COM3 COM4<br><br>
 
-# Two-way communication<br>
-hub4com.exe --bi-route=0:1 COM1 COM3
-</div>
+    # Two-way communication<br>
+    hub4com.exe --bi-route=0:1 COM1 COM3
+    </div>
 
-<h3>COM0COM Commands</h3>
-<div style="background-color: {AppColors.GRAY_100}; padding: 10px; font-family: monospace;">
-# List virtual pairs<br>
-setupc.exe list<br><br>
+    <h3>COM0COM Commands</h3>
+    <div style="background-color: {AppColors.GRAY_100}; padding: 10px; font-family: monospace;">
+    # List virtual pairs<br>
+    setupc.exe list<br><br>
 
-# Create new pair<br>
-setupc.exe install PortName=COM10 PortName=COM11<br><br>
+    # Create new pair<br>
+    setupc.exe install PortName=COM10 PortName=COM11<br><br>
 
-# Remove pair<br>
-setupc.exe remove CNCA0
-</div>
+    # Remove pair<br>
+    setupc.exe remove CNCA0
+    </div>
 
-<h3>Automation Examples</h3>
-<h4>Batch File for Startup</h4>
-<div style="background-color: {AppColors.GRAY_100}; padding: 10px; font-family: monospace;">
-@echo off<br>
-echo Starting Serial Port Splitter...<br>
-start hub4com.exe --load=config.txt<br>
-echo Routing started!
-</div>
+    <h3>Automation Examples</h3>
+    <h4>Batch File for Startup</h4>
+    <div style="background-color: {AppColors.GRAY_100}; padding: 10px; font-family: monospace;">
+    @echo off<br>
+    echo Starting Serial Port Splitter...<br>
+    start hub4com.exe --load=config.txt<br>
+    echo Routing started!
+    </div>
 
-<h4>PowerShell Script</h4>
-<div style="background-color: {AppColors.GRAY_100}; padding: 10px; font-family: monospace;">
-# Check if port exists<br>
-$ports = [System.IO.Ports.SerialPort]::getportnames()<br>
-if ($ports -contains "COM3") 
-&nbp;&nbsp;Start-Process "hub4com.exe" -ArgumentList "COM3 COM10 COM11"<br>
-</div>
-"""
-    
+    <h4>PowerShell Script</h4>
+    <div style="background-color: {AppColors.GRAY_100}; padding: 10px; font-family: monospace;">
+    # Check if port exists<br>
+    $ports = [System.IO.Ports.SerialPort]::getportnames()<br>
+    if ($ports -contains "COM3") <br>
+    &nbsp;&nbsp;Start-Process "hub4com.exe" -ArgumentList "COM3 COM10 COM11"<br>
+    </div>
+    """
+
     @staticmethod
     def _get_common_issues_content() -> str:
         """Common issues and solutions content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>Common Issues & Solutions</h2>
+    {HTMLTheme.get_styles()}
+    <h2>Common Issues & Solutions</h2>
 
-<h3>"Access Denied" Error</h3>
-<div class="info-box">
-<b>Cause:</b> Port is already in use<br>
-<b>Solution:</b>
-<ol>
-    <li>Close all applications using the port</li>
-    <li>Check Task Manager for hidden processes</li>
-    <li>Restart the application</li>
-</ol>
-</div>
+    <h3>"Access Denied" Error</h3>
+    <div class="info-box">
+    <b>Cause:</b> Port is already in use<br>
+    <b>Solution:</b>
+    <ol>
+        <li>Close all applications using the port</li>
+        <li>Check Task Manager for hidden processes</li>
+        <li>Restart the application</li>
+    </ol>
+    </div>
 
-<h3>"Port Not Found"</h3>
-<div class="info-box">
-<b>Cause:</b> Port doesn't exist or driver issue<br>
-<b>Solution:</b>
-<ol>
-    <li>Click "Refresh Ports"</li>
-    <li>Check Device Manager for the port</li>
-    <li>Reinstall COM0COM driver if virtual ports missing</li>
-</ol>
-</div>
+    <h3>"Port Not Found"</h3>
+    <div class="info-box">
+    <b>Cause:</b> Port doesn't exist or driver issue<br>
+    <b>Solution:</b>
+    <ol>
+        <li>Click "Refresh Ports"</li>
+        <li>Check Device Manager for the port</li>
+        <li>Reinstall COM0COM driver if virtual ports missing</li>
+    </ol>
+    </div>
 
-<h3>No Data Received</h3>
-<div class="info-box">
-<b>Cause:</b> Multiple possible causes<br>
-<b>Solution:</b>
-<ol>
-    <li>Verify source device is sending data</li>
-    <li>Check baud rate matches exactly</li>
-    <li>Test with a terminal program first</li>
-    <li>Verify cable connections (for physical ports)</li>
-</ol>
-</div>
+    <h3>No Data Received</h3>
+    <div class="info-box">
+    <b>Cause:</b> Multiple possible causes<br>
+    <b>Solution:</b>
+    <ol>
+        <li>Verify source device is sending data</li>
+        <li>Check baud rate matches exactly</li>
+        <li>Test with a terminal program first</li>
+        <li>Verify cable connections (for physical ports)</li>
+    </ol>
+    </div>
 
-<h3>Garbage Characters</h3>
-<div class="info-box">
-<b>Cause:</b> Baud rate mismatch<br>
-<b>Solution:</b>
-<ol>
-    <li>Double-check source device baud rate</li>
-    <li>Try common rates: 9600, 19200, 115200</li>
-    <li>Check data bits, parity, stop bits settings</li>
-</ol>
-</div>
+    <h3>Garbage Characters</h3>
+    <div class="info-box">
+    <b>Cause:</b> Baud rate mismatch<br>
+    <b>Solution:</b>
+    <ol>
+        <li>Double-check source device baud rate</li>
+        <li>Try common rates: 9600, 19200, 115200</li>
+        <li>Check data bits, parity, stop bits settings</li>
+    </ol>
+    </div>
 
-<h3>Application Can't Open Port</h3>
-<div class="info-box">
-<b>Cause:</b> Port permissions or visibility<br>
-<b>Solution:</b>
-<ol>
-    <li>Run application as Administrator</li>
-    <li>Disable Exclusive Mode in port settings</li>
-    <li>Restart the application after creating ports</li>
-</ol>
-</div>
-"""
-    
+    <h3>Application Can't Open Port</h3>
+    <div class="info-box">
+    <b>Cause:</b> Port permissions or visibility<br>
+    <b>Solution:</b>
+    <ol>
+        <li>Run application as Administrator</li>
+        <li>Disable Exclusive Mode in port settings</li>
+        <li>Restart the application after creating ports</li>
+    </ol>
+    </div>
+    """
+
     @staticmethod
     def _get_error_messages_content() -> str:
         """Error messages guide content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>Error Messages Guide</h2>
+    {HTMLTheme.get_styles()}
+    <h2>Error Messages Guide</h2>
 
-<h3>Understanding Error Messages</h3>
-<p>This guide explains common error messages and their solutions.</p>
+    <h3>Understanding Error Messages</h3>
+    <p>This guide explains common error messages and their solutions.</p>
 
-<h3>Critical Errors</h3>
+    <h3>Critical Errors</h3>
 
-<div class="warning-box">
-<h4>"Failed to start hub4com.exe"</h4>
-<p><b>Meaning:</b> The routing engine couldn't start<br>
-<b>Action:</b> Ensure hub4com.exe is in the application folder</p>
-</div>
+    <div class="warning-box">
+    <h4>"Failed to start hub4com.exe"</h4>
+    <p><b>Meaning:</b> The routing engine couldn't start<br>
+    <b>Action:</b> Ensure hub4com.exe is in the application folder</p>
+    </div>
 
-<div class="warning-box">
-<h4>"COM0COM driver not installed"</h4>
-<p><b>Meaning:</b> Virtual port driver is missing<br>
-<b>Action:</b> Restart app as Administrator for auto-installation</p>
-</div>
+    <div class="warning-box">
+    <h4>"COM0COM driver not installed"</h4>
+    <p><b>Meaning:</b> Virtual port driver is missing<br>
+    <b>Action:</b> Restart app as Administrator for auto-installation</p>
+    </div>
 
-<h3>Warning Messages</h3>
+    <h3>Warning Messages</h3>
 
-<div class="info-box">
-<h4>"Port already in use"</h4>
-<p><b>Meaning:</b> Another application is using this port<br>
-<b>Action:</b> Choose a different port or close the other app</p>
-</div>
+    <div class="info-box">
+    <h4>"Port already in use"</h4>
+    <p><b>Meaning:</b> Another application is using this port<br>
+    <b>Action:</b> Choose a different port or close the other app</p>
+    </div>
 
-<div class="info-box">
-<h4>"Baud rate mismatch detected"</h4>
-<p><b>Meaning:</b> Output ports have different baud rates<br>
-<b>Action:</b> Use "Set All" to synchronize rates</p>
-</div>
+    <div class="info-box">
+    <h4>"Baud rate mismatch detected"</h4>
+    <p><b>Meaning:</b> Output ports have different baud rates<br>
+    <b>Action:</b> Use "Set All" to synchronise rates</p>
+    </div>
 
-<h3>Informational Messages</h3>
-<ul>
-    <li><b>"Routing started successfully"</b> - Normal operation</li>
-    <li><b>"Port scan complete"</b> - Refresh finished</li>
-    <li><b>"Virtual pair created"</b> - New ports available</li>
-</ul>
+    <h3>Informational Messages</h3>
+    <ul>
+        <li><b>"Routing started successfully"</b> - Normal operation</li>
+        <li><b>"Port scan complete"</b> - Refresh finished</li>
+        <li><b>"Virtual pair created"</b> - New ports available</li>
+    </ul>
 
-<h3>Getting Help</h3>
-<p>If you encounter an error not listed here:</p>
-<ol>
-    <li>Note the exact error message</li>
-    <li>Check the application log file</li>
-    <li>Try the troubleshooting steps in Quick Tips</li>
-</ol>
-"""
-    
-    # Keep existing content methods
+    <h3>Getting Help</h3>
+    <p>If an error not listed here is encountered:</p>
+    <ol>
+        <li>Note the exact error message</li>
+        <li>Check the application log file</li>
+        <li>Try the troubleshooting steps in Quick Tips</li>
+    </ol>
+    """
+
     @staticmethod
     def _get_com0com_settings_content() -> str:
         """Get COM0COM settings help content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>COM0COM Virtual Serial Port Settings Guide</h2>
-<h3>Overview</h3>
-<p>The COM0COM driver facilitates the creation of virtual serial port pairs. These pairs are interconnected by a virtual null-modem cable, meaning any data written to one port in a pair is instantaneously received by the other. This guide details the configuration settings available for these port pairs.</p>
+    {HTMLTheme.get_styles()}
+    <h2>COM0COM Virtual Serial Port Settings Guide</h2>
+    <h3>Overview</h3>
+    <p>The COM0COM driver facilitates the creation of virtual serial port pairs. These pairs are interconnected by a virtual null-modem cable, meaning any data written to one port in a pair is instantaneously received by the other. This guide details the configuration settings available for these port pairs.</p>
 
-<h3>Port Display Format</h3>
-<p>Port pairs are displayed using the following convention:</p>
-<p style="margin-left: 20px;"><b>COM3 ⇄ COM4 [CNCA0 ⇄ CNCB0] [Features: Baud Rate Emulation]</b></p>
-<ul>
-    <li><b>COM3 ⇄ COM4</b>: These are the system-level port names that will be visible to and used by your applications.</li>
-    <li><b>[CNCA0 ⇄ CNCB0]</b>: These are the internal driver names for the virtual port pair.</li>
-    <li><b>[Features: ...]</b>: This section indicates which special emulation features are currently enabled for the port pair.</li>
-</ul>
+    <h3>Port Display Format</h3>
+    <p>Port pairs are displayed using the following convention:</p>
+    <p style="margin-left: 20px;"><b>COM3 ⇄ COM4 [CNCA0 ⇄ CNCB0] [Features: Baud Rate Emulation]</b></p>
+    <ul>
+        <li><b>COM3 ⇄ COM4</b>: These are the system-level port names that will be visible to and used by applications.</li>
+        <li><b>[CNCA0 ⇄ CNCB0]</b>: These are the internal driver names for the virtual port pair.</li>
+        <li><b>[Features: ...]</b>: This section indicates which special emulation features are currently enabled for the port pair.</li>
+    </ul>
 
-<h3>Configuration Settings</h3>
-<p>The following settings control the behavior of the virtual serial ports to simulate physical hardware characteristics.</p>
+    <h3>Configuration Settings</h3>
+    <p>The following settings control the behaviour of the virtual serial ports to simulate physical hardware characteristics.</p>
 
-<h4>Baud Rate Emulation (EmuBR)</h4>
-<p><b>Functionality:</b> This setting emulates the transmission timing of a physical serial port.
-<br><b>Default State (Disabled):</b> Data transfer occurs instantaneously, limited only by system performance.
-<br><b>Enabled State:</b> Data transfer is throttled to match the baud rate specified by the connecting application (e.g., 9600 bps, 115200 bps).
-<br><b>Recommended Use:</b> Enable this feature when developing or testing applications that are sensitive to serial port timing and require realistic transfer speeds.</p>
+    <h4>Baud Rate Emulation (EmuBR)</h4>
+    <p><b>Functionality:</b> This setting emulates the transmission timing of a physical serial port.
+    <br><b>Default State (Disabled):</b> Data transfer occurs instantaneously, limited only by system performance.
+    <br><b>Enabled State:</b> Data transfer is throttled to match the baud rate specified by the connecting application (e.g., 9600 bps, 115200 bps).
+    <br><b>Recommended Use:</b> Enable this feature when developing or testing applications that are sensitive to serial port timing and require realistic transfer speeds.</p>
 
-<h4>Buffer Overrun Emulation (EmuOverrun)</h4>
-<p><b>Functionality:</b> This setting simulates the finite buffer capacity of a physical serial port.
-<br><b>Default State (Disabled):</b> The driver uses extensive buffering to prevent data loss.
-<br><b>Enabled State:</b> The port will drop data if the receiving application does not read it from the buffer quickly enough, simulating a hardware buffer overrun.
-<br><b>Recommended Use:</b> Enable this feature specifically for testing an application's ability to handle data loss and error conditions.</p>
+    <h4>Buffer Overrun Emulation (EmuOverrun)</h4>
+    <p><b>Functionality:</b> This setting simulates the finite buffer capacity of a physical serial port.
+    <br><b>Default State (Disabled):</b> The driver uses extensive buffering to prevent data loss.
+    <br><b>Enabled State:</b> The port will drop data if the receiving application does not read it from the buffer quickly enough, simulating a hardware buffer overrun.
+    <br><b>Recommended Use:</b> Enable this feature specifically for testing an application's ability to handle data loss and error conditions.</p>
 
-<h4>Exclusive Access Mode (ExclusiveMode)</h4>
-<p><b>Functionality:</b> This setting controls the system-level visibility of the ports.
-<br><b>Default State (Disabled):</b> Both ports in a pair are persistently visible in Device Manager and are available to all applications.
-<br><b>Enabled State:</b> A port remains hidden from the system until its corresponding paired port is opened by an application.
-<br><b>Recommended Use:</b> Enable this mode to prevent applications from accessing or listing a port until its counterpart is actively in use.</p>
+    <h4>Exclusive Access Mode (ExclusiveMode)</h4>
+    <p><b>Functionality:</b> This setting controls the system-level visibility of the ports.
+    <br><b>Default State (Disabled):</b> Both ports in a pair are persistently visible in Device Manager and are available to all applications.
+    <br><b>Enabled State:</b> A port remains hidden from the system until its corresponding paired port is opened by an application.
+    <br><b>Recommended Use:</b> Enable this mode to prevent applications from accessing or listing a port until its counterpart is actively in use.</p>
 
-<h4>Plug-In Mode (PlugInMode)</h4>
-<p><b>Functionality:</b> This setting enables the dynamic enumeration and removal of a port from the system.
-<br><b>Default State (Disabled):</b> The port is permanently registered in Device Manager.
-<br><b>Enabled State:</b> The port is created and appears in Device Manager only when its paired port is opened, and it is removed when the paired port is closed.
-<br><b>Recommended Use:</b> Enable this for advanced scenarios requiring dynamic port management based on application activity.</p>
+    <h4>Plug-In Mode (PlugInMode)</h4>
+    <p><b>Functionality:</b> This setting enables the dynamic enumeration and removal of a port from the system.
+    <br><b>Default State (Disabled):</b> The port is permanently registered in Device Manager.
+    <br><b>Enabled State:</b> The port is created and appears in Device Manager only when its paired port is opened, and it is removed when the paired port is closed.
+    <br><b>Recommended Use:</b> Enable this for advanced scenarios requiring dynamic port management based on application activity.</p>
 
-<h3>Setup Recommendations</h3>
+    <h3>Setup Recommendations</h3>
 
-<h4>Standard Configuration (General Data Transfer)</h4>
-<ul>
-    <li>For maximum performance and reliability in standard application-to-application communication, it is recommended to leave all emulation settings disabled.</li>
-</ul>
+    <h4>Standard Configuration (General Data Transfer)</h4>
+    <ul>
+        <li>For maximum performance and reliability in standard application-to-application communication, it is recommended to leave all emulation settings disabled.</li>
+    </ul>
 
-<h4>Development and Testing Configuration</h4>
-<ul>
-    <li>Enable <b>Baud Rate Emulation</b> to validate application behavior with realistic serial communication speeds.</li>
-    <li>Enable <b>Buffer Overrun Emulation</b> to test an application's error and data loss handling logic.</li>
-</ul>
+    <h4>Development and Testing Configuration</h4>
+    <ul>
+        <li>Enable <b>Baud Rate Emulation</b> to validate application behaviour with realistic serial communication speeds.</li>
+        <li>Enable <b>Buffer Overrun Emulation</b> to test an application's error and data loss handling logic.</li>
+    </ul>
 
-<h3>Important Considerations</h3>
-<ul>
-    <li>Configuration changes are applied to the driver immediately and do not require a system restart.</li>
-    <li>Settings are applied symmetrically to both ports within a virtual pair.</li>
-    <li>To ensure new settings are recognized, applications may need to close and reopen the serial port connection.</li>
-    <li>The default configuration (all features disabled) is the most stable and suitable for the majority of use cases.</li>
-</ul>
+    <h3>Important Considerations</h3>
+    <ul>
+        <li>Configuration changes are applied to the driver immediately and do not require a system restart.</li>
+        <li>Settings are applied symmetrically to both ports within a virtual pair.</li>
+        <li>To ensure new settings are recognised, applications may need to close and reopen the serial port connection.</li>
+        <li>The default configuration (all features disabled) is the most stable and suitable for the majority of use cases.</li>
+    </ul>
 
-<p><i>Note: For more detailed technical information, you may double-click any port pair in the list.</i></p>
-"""
-    
+    <p><i>Note: For more detailed technical information, double-click any port pair in the list.</i></p>
+    """
+
     @staticmethod
     def _get_hub4com_routes_content() -> str:
         """Get HUB4COM route options help content"""
         return f"""
-{HTMLTheme.get_styles()}
-<h2>HUB4COM Route Mode Guide</h2>
+    {HTMLTheme.get_styles()}
+    <h2>HUB4COM Route Mode Guide</h2>
 
-<h3>Basic Modes:</h3>
+    <h3>Basic Modes:</h3>
 
-<h4>• One-Way Splitting (Default)</h4>
-<p>Data flows FROM incoming port TO all outgoing ports only.<br>
-<b>Example:</b> GPS device → Multiple navigation apps</p>
+    <h4>• One-Way Splitting (Default)</h4>
+    <p>Data flows FROM incoming port TO all outgoing ports only.<br>
+    <b>Example:</b> GPS device → Multiple navigation apps</p>
 
-<h4>• Two-Way Communication</h4>
-<p>Data flows both ways between incoming and outgoing ports.<br>
-<b>Example:</b> Terminal program ↔ Serial device</p>
+    <h4>• Two-Way Communication</h4>
+    <p>Data flows both ways between incoming and outgoing ports.<br>
+    <b>Example:</b> Terminal program ↔ Serial device</p>
 
-<h4>• Full Network Mode</h4>
-<p>All ports can talk to all other ports (like a network hub).<br>
-<b>Example:</b> Multiple devices all communicating with each other</p>
+    <h4>• Full Network Mode</h4>
+    <p>All ports can talk to all other ports (like a network hub).<br>
+    <b>Example:</b> Multiple devices all communicating with each other</p>
 
-<h3>Advanced Options:</h3>
+    <h3>Advanced Options:</h3>
 
-<h4>• Echo Back to Source</h4>
-<p>Sends received data back to the same port it came from.<br>
-<b>Good for:</b> Testing and debugging serial applications.</p>
+    <h4>• Echo Back to Source</h4>
+    <p>Sends received data back to the same port it came from.<br>
+    <b>Good for:</b> Testing and debugging serial applications.</p>
 
-<h4>• Enable Flow Control</h4>
-<p>Uses RTS/CTS handshaking to prevent data loss.<br>
-<b>Enable when:</b> Devices support hardware flow control.</p>
+    <h4>• Enable Flow Control</h4>
+    <p>Uses RTS/CTS handshaking to prevent data loss.<br>
+    <b>Enable when:</b> Devices support hardware flow control.</p>
 
-<h4>• Disable Default Flow Control</h4>
-<p>Turns off automatic flow control management.<br>
-<b>Only for:</b> Advanced users who need custom flow control.</p>
+    <h4>• Disable Default Flow Control</h4>
+    <p>Turns off automatic flow control management.<br>
+    <b>Only for:</b> Advanced users who need custom flow control.</p>
 
-<h3>Recommendations:</h3>
-<ul>
-    <li>Start with "One-Way Splitting" for most applications</li>
-    <li>Use "Two-Way Communication" when devices need to respond</li>
-    <li>Enable "Flow Control" only if both devices support it</li>
-    <li>Leave advanced options OFF unless you have specific needs</li>
-</ul>
-"""
-    
+    <h3>Recommendations:</h3>
+    <ul>
+        <li>Start with "One-Way Splitting" for most applications</li>
+        <li>Use "Two-Way Communication" when devices need to respond</li>
+        <li>Enable "Flow Control" only if both devices support it</li>
+        <li>Leave advanced options OFF unless there are specific needs</li>
+    </ul>
+    """
+
+
+
     @staticmethod
     def _get_hub4com_reference_content() -> str:
         """Get HUB4COM command reference content"""
@@ -1189,7 +1189,7 @@ class SearchResultsWidget(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.Popup)
-        self.setMaximumHeight(200)
+        self.setMaximumHeight(240)
         self.itemClicked.connect(self._on_item_clicked)
         
         # Apply styling
@@ -1200,7 +1200,7 @@ class SearchResultsWidget(QListWidget):
                 outline: none;
             }}
             QListWidget::item {{
-                padding: 8px;
+                padding: {AppDimensions.PADDING_MEDIUM};
                 border-bottom: 1px solid {AppColors.BORDER_LIGHT};
             }}
             QListWidget::item:hover {{
@@ -1259,7 +1259,7 @@ class UnifiedHelpDialog(QDialog):
     def create_header_section(self) -> QWidget:
         """Create header with breadcrumb and search"""
         header = QWidget()
-        header.setFixedHeight(60)
+        header.setFixedHeight(64)
         header.setStyleSheet(f"""
             QWidget {{
                 background-color: {AppColors.BACKGROUND_WHITE};
@@ -1285,7 +1285,7 @@ class UnifiedHelpDialog(QDialog):
         # Search box
         self.search_box = ThemeManager.create_lineedit()
         self.search_box.setPlaceholderText("Search help topics...")
-        self.search_box.setMaximumWidth(300)
+        self.search_box.setMaximumWidth(200)
         self.search_box.textChanged.connect(self.on_search_text_changed)
         layout.addWidget(self.search_box)
         
@@ -1325,8 +1325,8 @@ class UnifiedHelpDialog(QDialog):
     def create_navigation_panel(self) -> QWidget:
         """Create Windows Settings style navigation panel"""
         nav_widget = QWidget()
-        nav_widget.setMinimumWidth(250)
-        nav_widget.setMaximumWidth(350)
+        nav_widget.setMinimumWidth(240)
+        nav_widget.setMaximumWidth(320)
         nav_widget.setStyleSheet(f"""
             QWidget {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
@@ -1350,10 +1350,10 @@ class UnifiedHelpDialog(QDialog):
                 border: none;
                 outline: none;
                 font-family: {AppFonts.DEFAULT_FAMILY};
-                font-size: 10pt;
+                font-size: {AppFonts.DEFAULT_SIZE};
             }}
             QListWidget::item {{
-                padding: 12px 16px;
+                padding: {AppDimensions.PADDING_LARGE} {AppDimensions.PADDING_LARGE};
                 border: none;
                 color: {AppColors.TEXT_DEFAULT};
             }}
@@ -1369,7 +1369,7 @@ class UnifiedHelpDialog(QDialog):
             QListWidget::item:disabled {{
                 color: {AppColors.TEXT_DISABLED};
                 font-weight: bold;
-                padding: 16px 12px 8px 12px;
+                padding: {AppDimensions.PADDING_LARGE} {AppDimensions.PADDING_LARGE} {AppDimensions.PADDING_MEDIUM} {AppDimensions.PADDING_LARGE};
                 background-color: transparent;
             }}
         """)
