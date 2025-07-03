@@ -108,6 +108,15 @@ class AppIcons:
     </svg>
     """
 
+    ERROR_CROSS = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style error cross -->
+        <path d="M4 4l8 8M12 4l-8 8" 
+              stroke="{color}" stroke-width="2" 
+              stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    """
+
     MONITOR = """
 <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
     <!-- Windows 10 style monitoring/chart icon -->

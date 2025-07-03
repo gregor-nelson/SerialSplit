@@ -147,9 +147,8 @@ class EnhancedPortInfoWidget(QWidget):
         
     def init_ui(self):
         """Initialize the responsive UI layout"""
-        # Main container with optimized constraints for slider utilization
+        # Main container with flexible constraints for responsive scaling
         self.setMinimumHeight(40)
-        self.setMinimumWidth(200)  # Minimum width to prevent <30% allocation
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         # Main vertical layout for header + chart
@@ -158,11 +157,11 @@ class EnhancedPortInfoWidget(QWidget):
         layout.setSpacing(0)
         # Remove top alignment to allow chart to expand fully
         
-        # Info panel (header row) - fixed width container
+        # Info panel (header row) - flexible width container
         self.info_panel = QWidget()
         self.info_panel.setVisible(False)
         self.info_panel.setFixedHeight(28)  # Fixed height for header
-        self.info_panel.setMinimumWidth(200)  # Ensure consistent width
+        self.info_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.info_panel.setStyleSheet(f"""
             QWidget {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
@@ -205,7 +204,7 @@ class EnhancedPortInfoWidget(QWidget):
                 border: none;
             }}
         """)
-        self.port_label.setMinimumWidth(200)
+        self.port_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         port_section.addWidget(self.port_label)
         
         # Set status indicator height to match port label font height
@@ -359,7 +358,7 @@ class EnhancedPortInfoWidget(QWidget):
         self.chart_container = QWidget()
         self.chart_container.setVisible(False)
         self.chart_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.chart_container.setMinimumWidth(200)  # Match header width
+        self.chart_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         chart_layout = QVBoxLayout(self.chart_container)
         chart_layout.setContentsMargins(AppDimensions.SPACING_MEDIUM, AppDimensions.SPACING_SMALL, AppDimensions.SPACING_MEDIUM, AppDimensions.SPACING_SMALL)
@@ -373,7 +372,7 @@ class EnhancedPortInfoWidget(QWidget):
         # Invisible spacer to maintain consistent width when chart is hidden
         self.chart_spacer = QWidget()
         self.chart_spacer.setVisible(True)  # Always visible to maintain width
-        self.chart_spacer.setMinimumWidth(200)  # Match container width
+        # Remove minimum width constraint for flexible scaling
         self.chart_spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         layout.addWidget(self.chart_spacer)
     
@@ -491,9 +490,9 @@ class EnhancedPortInfoWidget(QWidget):
             self.time_label.setVisible(True)
             self.chart_spacer.setVisible(False)  # Hide spacer when chart is active
         
-        # Ensure chart expands to fill available space
-        self.chart_container.setMaximumHeight(720)
-        self.data_chart.setMaximumHeight(720)
+        # Allow chart to expand to fill available space without height limits
+        self.chart_container.setMaximumHeight(16777215)  # QWIDGETSIZE_MAX
+        self.data_chart.setMaximumHeight(16777215)  # QWIDGETSIZE_MAX
         self.update_timer.start(250)  # Update chart 4x per second
     
     def stop_monitoring(self):

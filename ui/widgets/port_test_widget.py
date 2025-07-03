@@ -7,14 +7,92 @@ Integrates with main GUI port selection (no internal dropdown)
 from typing import Optional
 
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QPushButton, QTextEdit, QFrame, QScrollArea)
+                             QPushButton, QTextEdit, QFrame, QScrollArea, QSizePolicy, QGridLayout)
 from PyQt6.QtCore import Qt, QThread, pyqtSlot, pyqtSignal, QTimer
+from PyQt6.QtGui import QTransform, QPainter, QResizeEvent
 
 from core.core import SerialPortInfo, SerialPortTester
 from ui.theme.theme import (
     ThemeManager, AppDimensions, AppColors, AppFonts
 )
 from ui.theme.icons.icons import AppIcons
+
+
+class AnimatedSpinnerWidget(QLabel):
+    """Animated spinner widget that rotates continuously"""
+    
+    def __init__(self, color: str, size: int = 18):
+        super().__init__()
+        self.color = color
+        self.size = size
+        self.rotation_angle = 0
+        
+        # Create the base icon without animation
+        from ui.theme.theme import IconManager
+        
+        # Use a simpler spinner SVG without animation for manual rotation
+        spinner_svg = f"""
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="6" 
+                    fill="none" stroke="{color}" stroke-width="2" 
+                    stroke-linecap="round" stroke-dasharray="28" 
+                    stroke-dashoffset="28" opacity="0.3"/>
+            <circle cx="8" cy="8" r="6" 
+                    fill="none" stroke="{color}" stroke-width="2" 
+                    stroke-linecap="round" stroke-dasharray="8" 
+                    stroke-dashoffset="0"/>
+        </svg>
+        """
+        
+        self.base_icon = IconManager.create_svg_icon(
+            spinner_svg,
+            color,
+            IconManager.get_scaled_size(size)
+        )
+        
+        # Setup widget properties
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setFixedSize(24, 24)
+        
+        # Setup animation timer
+        self.animation_timer = QTimer()
+        self.animation_timer.timeout.connect(self._rotate_icon)
+        self.animation_timer.start(50)  # 50ms = 20 FPS
+        
+        # Initial render
+        self._update_pixmap()
+    
+    def _rotate_icon(self):
+        """Rotate the icon by 18 degrees (360/20 for smooth animation)"""
+        self.rotation_angle = (self.rotation_angle + 18) % 360
+        self._update_pixmap()
+    
+    def _update_pixmap(self):
+        """Update the pixmap with rotation applied"""
+        # Get the base pixmap
+        base_pixmap = self.base_icon.pixmap(self.size, self.size)
+        
+        # Create transform for rotation
+        transform = QTransform()
+        transform.translate(self.size / 2, self.size / 2)
+        transform.rotate(self.rotation_angle)
+        transform.translate(-self.size / 2, -self.size / 2)
+        
+        # Apply rotation
+        rotated_pixmap = base_pixmap.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+        
+        # Set the pixmap
+        self.setPixmap(rotated_pixmap)
+    
+    def stop_animation(self):
+        """Stop the spinning animation"""
+        if self.animation_timer.isActive():
+            self.animation_timer.stop()
+    
+    def start_animation(self):
+        """Start the spinning animation"""
+        if not self.animation_timer.isActive():
+            self.animation_timer.start(50)
 
 
 class PortTestWorker(QThread):
@@ -45,6 +123,13 @@ class SerialPortTestWidget(QWidget):
         self.loading_timer = QTimer()
         self.loading_timer.setSingleShot(True)
         self.loading_timer.timeout.connect(self._start_actual_test)
+        self.active_spinners = []  # Track active animated spinners for cleanup
+        
+        # Layout responsiveness  
+        self.min_width_for_two_columns = 400  # Minimum width to enable two-column layout (reduced from 600)
+        self.is_two_column_layout = True  # Start with two-column as default for 50/50 mode
+        self.results_widgets = []  # Track result widgets for layout switching
+        self.widget_types = []  # Track widget types (status, property) for layout decisions
         
         self.init_ui()
     
@@ -84,7 +169,7 @@ class SerialPortTestWidget(QWidget):
                 border: none;
             }}
         """)
-        self.port_label.setMinimumWidth(200)
+        self.port_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         
         # Set status indicator height to match port label font height
         label_font_metrics = self.port_label.fontMetrics()
@@ -147,20 +232,135 @@ class SerialPortTestWidget(QWidget):
             }}
         """)
         
-        # Results container widget
+        # Results container widget with grid layout for responsiveness
         self.results_widget = QWidget()
-        self.results_layout = QVBoxLayout(self.results_widget)
+        self.results_layout = QGridLayout(self.results_widget)
         self.results_layout.setContentsMargins(
-            AppDimensions.SPACING_MEDIUM,
-            AppDimensions.SPACING_MEDIUM,
-            AppDimensions.SPACING_MEDIUM,
-            AppDimensions.SPACING_MEDIUM
+            AppDimensions.SPACING_SMALL,
+            AppDimensions.SPACING_SMALL,
+            AppDimensions.SPACING_SMALL,
+            AppDimensions.SPACING_SMALL
         )
-        self.results_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
+        self.results_layout.setSpacing(AppDimensions.SPACING_SMALL)
         self.results_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
+        # Set equal column stretching for two-column mode
+        self.results_layout.setColumnStretch(0, 1)
+        self.results_layout.setColumnStretch(1, 1)
         
         self.results_scroll.setWidget(self.results_widget)
         main_layout.addWidget(self.results_scroll)
+    
+    def resizeEvent(self, event: QResizeEvent):
+        """Handle widget resize to switch between single and two-column layouts"""
+        super().resizeEvent(event)
+        self._update_layout_based_on_width()
+    
+    def _update_layout_based_on_width(self):
+        """Switch between single and two-column layouts based on available width"""
+        current_width = self.width()
+        should_use_two_columns = current_width >= self.min_width_for_two_columns
+        
+        if should_use_two_columns != self.is_two_column_layout:
+            self.is_two_column_layout = should_use_two_columns
+            self._rearrange_existing_widgets()
+    
+    def _rearrange_existing_widgets(self):
+        """Rearrange existing widgets without rebuilding layout"""
+        if not self.results_widgets:
+            return
+        
+        # Remove all widgets from grid positions (but don't delete them)
+        for widget in self.results_widgets:
+            self.results_layout.removeWidget(widget)
+        
+        # Re-add widgets in the appropriate arrangement
+        current_row = 0
+        property_widgets_in_row = 0
+        
+        for i, (widget, widget_type) in enumerate(zip(self.results_widgets, self.widget_types)):
+            if self.is_two_column_layout:
+                if widget_type == "status":
+                    # Status widgets span entire row
+                    if property_widgets_in_row > 0:
+                        current_row += 1  # Move to next row if we had property widgets
+                        property_widgets_in_row = 0
+                    self.results_layout.addWidget(widget, current_row, 0, 1, 2)  # Span both columns
+                    current_row += 1
+                else:  # property widget
+                    # Property widgets use columns
+                    col = property_widgets_in_row % 2
+                    if col == 0 and property_widgets_in_row > 0:
+                        current_row += 1
+                    self.results_layout.addWidget(widget, current_row, col)
+                    property_widgets_in_row += 1
+                    if col == 1:  # Completed a row
+                        current_row += 1
+                        property_widgets_in_row = 0
+            else:
+                # Single-column arrangement (all in column 0, spanning both columns)
+                self.results_layout.addWidget(widget, i, 0, 1, 2)
+    
+    def _add_result_widget(self, widget: QWidget, widget_type: str = "property"):
+        """Add a widget to results with responsive layout support
+        
+        Args:
+            widget: The widget to add
+            widget_type: Either 'status' (spans full row) or 'property' (uses columns)
+        """
+        self.results_widgets.append(widget)
+        self.widget_types.append(widget_type)
+        
+        # Calculate position based on existing widgets
+        if self.is_two_column_layout:
+            if widget_type == "status":
+                # Status widgets span entire row
+                current_row = self._calculate_next_status_row()
+                self.results_layout.addWidget(widget, current_row, 0, 1, 2)  # Span both columns
+            else:  # property widget
+                row, col = self._calculate_next_property_position()
+                self.results_layout.addWidget(widget, row, col)
+        else:
+            # Single-column arrangement (all widgets span both columns)
+            widget_index = len(self.results_widgets) - 1
+            self.results_layout.addWidget(widget, widget_index, 0, 1, 2)
+    
+    def _calculate_next_status_row(self) -> int:
+        """Calculate the next available row for a status widget"""
+        if not self.results_widgets:
+            return 0
+        
+        # Count property widgets that aren't paired (to see if we need an extra row)
+        property_count = sum(1 for t in self.widget_types[:-1] if t == "property")
+        status_count = sum(1 for t in self.widget_types[:-1] if t == "status")
+        
+        # Each status takes 1 row, each pair of properties takes 1 row
+        used_rows = status_count + (property_count + 1) // 2
+        return used_rows
+    
+    def _calculate_next_property_position(self) -> tuple:
+        """Calculate the next position (row, col) for a property widget"""
+        # Count widgets before this one
+        property_widgets_before = 0
+        current_row = 0
+        
+        for widget_type in self.widget_types[:-1]:  # Exclude the current widget
+            if widget_type == "status":
+                if property_widgets_before % 2 == 1:  # Odd number, incomplete row
+                    current_row += 1  # Complete the row
+                current_row += 1  # Status takes its own row
+                property_widgets_before = 0  # Reset property count for new section
+            else:  # property
+                property_widgets_before += 1
+                if property_widgets_before % 2 == 0:  # Completed a pair
+                    current_row += 1
+        
+        # Calculate position for the new property widget
+        col = property_widgets_before % 2
+        if col == 0 and property_widgets_before > 0:
+            current_row += 1
+            
+        return current_row, col
     
     def _update_test_button_icon(self, is_testing: bool):
         """Update test button icon matching monitor widget style"""
@@ -308,6 +508,16 @@ class SerialPortTestWidget(QWidget):
     
     def _clear_results(self):
         """Clear all results from the display"""
+        # Stop all active spinners before clearing
+        for spinner in self.active_spinners:
+            if spinner and hasattr(spinner, 'stop_animation'):
+                spinner.stop_animation()
+        self.active_spinners.clear()
+        
+        # Clear tracked widgets and types
+        self.results_widgets.clear()
+        self.widget_types.clear()
+        
         # Clear all widgets from results layout
         while self.results_layout.count():
             child = self.results_layout.takeAt(0)
@@ -322,11 +532,11 @@ class SerialPortTestWidget(QWidget):
         # Create loading message card with animated spinner
         loading_card = self._create_status_card(
             "spinner", 
-            "Initializing Test...",
-            "Preparing port diagnostics",
+            "Starting Test...",
+            "Preparing diagnostics",
             AppColors.ACCENT_BLUE
         )
-        self.results_layout.addWidget(loading_card)
+        self._add_result_widget(loading_card, "status")
     
     def _show_testing_message(self):
         """Show testing in progress message"""
@@ -335,12 +545,12 @@ class SerialPortTestWidget(QWidget):
         
         # Create testing message card
         testing_card = self._create_status_card(
-            "●", 
-            f"Testing port {self.current_port_name}...",
-            "Running comprehensive port diagnostics",
+            "spinner", 
+            "Testing Port...",
+            "Running checks",
             AppColors.WARNING_PRIMARY
         )
-        self.results_layout.addWidget(testing_card)
+        self._add_result_widget(testing_card, "status")
         
         # Create progress info
         progress_text = [
@@ -351,7 +561,7 @@ class SerialPortTestWidget(QWidget):
         ]
         
         progress_card = self._create_info_card("Test Progress", progress_text)
-        self.results_layout.addWidget(progress_card)
+        self._add_result_widget(progress_card, "property")
     
     def _create_status_card(self, icon: str, title: str, subtitle: str, color: str) -> QWidget:
         """Create a large status header card"""
@@ -372,20 +582,34 @@ class SerialPortTestWidget(QWidget):
         )
         layout.setSpacing(AppDimensions.SPACING_LARGE)
         
-        # Status icon - use SVG for loading spinner, text for others
+        # Status icon - use animated spinner or SVG for custom icons, text for fallback
         if icon == "spinner":
+            # Use animated spinner widget
+            icon_label = AnimatedSpinnerWidget(color, 18)
+            # Track spinner for cleanup
+            if hasattr(self, 'active_spinners'):
+                self.active_spinners.append(icon_label)
+        elif icon in ["success", "error"]:
             from ui.theme.theme import IconManager
             
             icon_label = QLabel()
-            spinner_icon = IconManager.create_svg_icon(
-                AppIcons.SPINNER,
+            
+            # Map icon types to SVG definitions
+            icon_mapping = {
+                "success": AppIcons.CHECKBOX_CHECK,
+                "error": AppIcons.ERROR_CROSS
+            }
+            
+            svg_icon = IconManager.create_svg_icon(
+                icon_mapping[icon],
                 color,
                 IconManager.get_scaled_size(18)
             )
-            icon_label.setPixmap(spinner_icon.pixmap(18, 18))
+            icon_label.setPixmap(svg_icon.pixmap(18, 18))
             icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             icon_label.setFixedSize(24, 24)
         else:
+            # Fallback for text icons
             icon_label = QLabel(icon)
             icon_label.setStyleSheet(f"""
                 QLabel {{
@@ -572,12 +796,12 @@ class SerialPortTestWidget(QWidget):
             self._update_status_indicator("success")
             # Create success status card
             status_card = self._create_status_card(
-                "✓", 
+                "success", 
                 message,
                 "All diagnostics completed successfully",
                 AppColors.SUCCESS_PRIMARY
             )
-            self.results_layout.addWidget(status_card)
+            self._add_result_widget(status_card, "status")
             
             # Parse and display detailed results
             formatted_results = self.tester.format_test_results(results)
@@ -587,12 +811,12 @@ class SerialPortTestWidget(QWidget):
             # Create error status card
             error_msg = details.get('error', 'Unknown error')
             status_card = self._create_status_card(
-                "✗", 
+                "error", 
                 message,
                 f"Error: {error_msg}",
                 AppColors.ERROR_PRIMARY
             )
-            self.results_layout.addWidget(status_card)
+            self._add_result_widget(status_card, "status")
     
     def _parse_and_display_results(self, formatted_results: str):
         """Parse formatted results and create property cards"""
@@ -610,7 +834,7 @@ class SerialPortTestWidget(QWidget):
                 # Save previous section if exists
                 if current_section and current_properties:
                     card = self._create_property_card(current_section, current_properties)
-                    self.results_layout.addWidget(card)
+                    self._add_result_widget(card, "property")
                 
                 # Start new section
                 current_section = line[:-1]  # Remove the colon
@@ -623,7 +847,7 @@ class SerialPortTestWidget(QWidget):
         # Add the last section
         if current_section and current_properties:
             card = self._create_property_card(current_section, current_properties)
-            self.results_layout.addWidget(card)
+            self._add_result_widget(card, "property")
     
     def _show_error_message(self, error_msg: str):
         """Show error message in results area"""
@@ -631,9 +855,9 @@ class SerialPortTestWidget(QWidget):
         self._clear_results()
         
         error_card = self._create_status_card(
-            "✗", 
+            "error", 
             "Test Failed",
             error_msg,
             AppColors.ERROR_PRIMARY
         )
-        self.results_layout.addWidget(error_card)
+        self._add_result_widget(error_card, "status")

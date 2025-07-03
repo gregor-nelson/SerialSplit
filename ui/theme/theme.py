@@ -245,6 +245,7 @@ class AppDimensions:
     
     # === OUTPUT PORT WIDGET SPECIFICS ===
     OUTPUT_PORT_MIN_COUNT = 1          # Minimum number of output ports
+    HEIGHT_OUTPUT_PORT_WIDGET = 80     # Fixed height for output port widgets
 
      # === NOTIFICATION ELEMENT HEIGHTS ===
     HEIGHT_STATUS_LABEL = 25           # Fixed height for status labels

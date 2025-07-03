@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
                              QTextEdit, QFileDialog, QGroupBox, QGridLayout,
                              QMessageBox, QProgressBar, QFrame, QSplitter,
                              QTabWidget, QScrollArea, QListWidget, QListWidgetItem, 
-                             QAbstractItemView, QMenu, QDialog)
+                             QAbstractItemView, QMenu, QDialog, QSizePolicy)
 from PyQt6.QtCore import QTimer, Qt, QSize, QByteArray
 from PyQt6.QtGui import QFont, QIcon, QColor, QAction, QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
@@ -476,9 +476,10 @@ class Hub4comGUI(QMainWindow):
         ports_splitter = QSplitter(Qt.Orientation.Horizontal)
         ports_splitter.addWidget(self._create_incoming_port_section())
         ports_splitter.addWidget(self._create_outgoing_ports_section())
+        ports_splitter.setSizes([400, 400])  # 50/50 split on launch
         ports_splitter.setChildrenCollapsible(False)  # Prevent collapse
-        ports_splitter.setStretchFactor(0, 2)  # Incoming: proportional scaling
-        ports_splitter.setStretchFactor(1, 3)  # Outgoing: proportional scaling
+        ports_splitter.setStretchFactor(0, 1)  # Incoming: equal scaling
+        ports_splitter.setStretchFactor(1, 1)  # Outgoing: equal scaling
         layout.addWidget(ports_splitter, 1, 0, 1, 4)
         
         return group
@@ -502,6 +503,7 @@ class Hub4comGUI(QMainWindow):
         self.ui_refs['incoming_port'] = ThemeManager.create_combobox(editable=True)
         self.ui_refs['incoming_port'].currentTextChanged.connect(self.update_preview)
         self.ui_refs['incoming_port'].currentTextChanged.connect(self.update_port_type_indicator)
+        self.ui_refs['incoming_port'].setFixedHeight(AppDimensions.COMBOBOX_HEIGHT)
         layout.addWidget(self.ui_refs['incoming_port'])
         
         layout.addWidget(ThemeManager.create_label("Baud Rate:"))
@@ -510,11 +512,13 @@ class Hub4comGUI(QMainWindow):
         self._populate_baud_rates(self.ui_refs['incoming_baud'])
         self.ui_refs['incoming_baud'].currentTextChanged.connect(self.update_preview)
         self.ui_refs['incoming_baud'].currentTextChanged.connect(self.on_incoming_baud_changed)
+        self.ui_refs['incoming_baud'].setFixedHeight(AppDimensions.COMBOBOX_HEIGHT)
         layout.addWidget(self.ui_refs['incoming_baud'])
         
-        # Port manager widget with monitor and test tabs
+        # Port manager widget with monitor and test tabs - allow it to expand
         self.port_manager_widget = SerialPortManagerWidget()
-        layout.addWidget(self.port_manager_widget)
+        self.port_manager_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        layout.addWidget(self.port_manager_widget, 1)  # Give it stretch factor
         
         return group
     
@@ -1500,7 +1504,7 @@ class Hub4comGUI(QMainWindow):
         settings = self.app_state['route_settings']
         
         # Header
-        menu.addAction("⚙️ Hub4com Settings").setEnabled(False)
+        menu.addAction("Hub4com Settings").setEnabled(False)
         menu.addSeparator()
         
         # Route Configuration

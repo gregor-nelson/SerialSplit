@@ -6,7 +6,7 @@ All styles and dimensions extracted to global theme system
 
 from typing import List, Optional
 
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox, QPushButton, QFrame
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox, QPushButton, QFrame, QSizePolicy
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.core import PortConfig, SerialPortInfo
@@ -30,9 +30,9 @@ class OutputPortWidget(QWidget):
         # Apply widget styling from theme
         self.setStyleSheet(AppStyles.output_port_widget())
         
-        # Set fixed height to maintain consistent element sizes
-        self.setFixedHeight(AppDimensions.HEIGHT_OUTPUT_PORT_WIDGET)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        # Set dynamic height with minimum constraints for consistency
+        self.setMinimumHeight(AppDimensions.COMBOBOX_HEIGHT * 2 + AppDimensions.HEIGHT_PORT_TYPE_INDICATOR + AppDimensions.SPACING_SMALL * 3 + AppDimensions.MARGIN_CONTROL[1] * 2)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         self.init_ui(available_ports)
     
@@ -57,6 +57,7 @@ class OutputPortWidget(QWidget):
         self.port_combo.currentTextChanged.connect(self.port_changed.emit)
         self.port_combo.currentTextChanged.connect(self.update_port_type_indicator)
         self.port_combo.setMinimumWidth(AppDimensions.COMBOBOX_MIN_WIDTH)
+        self.port_combo.setFixedHeight(AppDimensions.COMBOBOX_HEIGHT)
         layout.addWidget(self.port_combo, 2)  # Give it more stretch
         
         # Separator using theme
@@ -70,6 +71,7 @@ class OutputPortWidget(QWidget):
         self.populate_baud_rates(Config.DEFAULT_BAUD)
         self.baud_combo.currentTextChanged.connect(self.port_changed.emit)
         self.baud_combo.setFixedWidth(AppDimensions.WIDTH_BAUD_COMBO)
+        self.baud_combo.setFixedHeight(AppDimensions.COMBOBOX_HEIGHT)
         layout.addWidget(self.baud_combo)
         
         # Remove button with theme-based styling
@@ -79,7 +81,6 @@ class OutputPortWidget(QWidget):
             "small"
         )
         # Apply danger hover style
-        current_style = self.remove_btn.styleSheet()
         self.remove_btn.setStyleSheet(AppStyles.icon_button_hover_danger())
         layout.addWidget(self.remove_btn)
         
