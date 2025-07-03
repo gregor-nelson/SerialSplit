@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QTextEdit, QFrame)
 from PyQt6.QtCore import Qt, QThread, pyqtSlot, pyqtSignal
 
-from core.components import SerialPortInfo, SerialPortTester
+from core.core import SerialPortInfo, SerialPortTester
 from ui.theme.theme import (
     ThemeManager, AppDimensions, AppColors, AppFonts
 )

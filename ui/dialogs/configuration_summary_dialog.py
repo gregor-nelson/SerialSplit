@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, QPushB
 from PyQt6.QtCore import Qt
 
 from ui.theme.theme import ThemeManager, AppStyles, AppFonts, AppDimensions, AppColors
-from core.components import DefaultConfig
+from core.core import DefaultConfig
 
 
 class ConfigurationSummaryDialog(QDialog):

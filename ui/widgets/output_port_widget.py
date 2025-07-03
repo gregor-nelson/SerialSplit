@@ -9,7 +9,7 @@ from typing import List, Optional
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox, QPushButton, QFrame
 from PyQt6.QtCore import Qt, pyqtSignal
 
-from core.components import PortConfig, SerialPortInfo
+from core.core import PortConfig, SerialPortInfo
 from ui.theme.theme import (
     ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts, 
     AppMessages, Config

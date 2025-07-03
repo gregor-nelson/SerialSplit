@@ -12,7 +12,7 @@ from PyQt6.QtGui import QFont
 
 from ui.theme.theme import (ThemeManager, AppStyles, AppFonts, AppDimensions, 
                            AppColors, HTMLTheme)
-from core.components import DefaultConfig, SettingsManager
+from core.core import DefaultConfig, SettingsManager
 
 
 class LaunchDialog(QDialog):

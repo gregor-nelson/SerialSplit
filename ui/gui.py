@@ -21,7 +21,7 @@ from PyQt6.QtCore import QTimer, Qt, QSize, QByteArray
 from PyQt6.QtGui import QFont, QIcon, QColor, QAction, QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
 
-from core.components import (
+from core.core import (
     ResponsiveWindowManager, SerialPortInfo, PortScanner, Hub4comProcess,
     WINREG_AVAILABLE, PortConfig, Com0comProcess, DefaultConfig
 )
@@ -1081,7 +1081,7 @@ class Hub4comGUI(QMainWindow):
         """Show launch dialog to user if enabled in settings"""
         try:
             # Check if launch dialog should be shown
-            from core.components import SettingsManager
+            from core.core import SettingsManager
             settings_manager = SettingsManager()
             
             if not settings_manager.get_show_launch_dialog():

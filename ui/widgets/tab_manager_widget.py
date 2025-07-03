@@ -9,7 +9,7 @@ from typing import Optional
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTabWidget
 from PyQt6.QtCore import pyqtSlot
 
-from core.components import SerialPortInfo
+from core.core import SerialPortInfo
 from ui.widgets.port_monitor_widget import EnhancedPortInfoWidget
 from ui.widgets.port_test_widget import SerialPortTestWidget
 from ui.theme.theme import (

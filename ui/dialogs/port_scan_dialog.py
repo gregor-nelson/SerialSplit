@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushBut
 from PyQt6.QtCore import QTimer, Qt, QSize
 from PyQt6.QtGui import QColor
 
-from core.components import (ResponsiveWindowManager, SerialPortInfo, PortScanner, 
+from core.core import (ResponsiveWindowManager, SerialPortInfo, PortScanner, 
                            WINREG_AVAILABLE)
 from ui.theme.theme import AppFonts, AppColors, ThemeManager, AppStyles, AppDimensions
 

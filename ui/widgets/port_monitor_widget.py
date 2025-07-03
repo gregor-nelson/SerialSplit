@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt, QTimer, QPointF
 from PyQt6.QtGui import QPainter, QColor, QPen, QLinearGradient, QBrush, QPolygonF
 import time
 
-from core.components import SerialPortInfo, SerialPortMonitor
+from core.core import SerialPortInfo, SerialPortMonitor
 from ui.theme.theme import ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts
 from ui.theme.icons.icons import AppIcons
 
