@@ -6,7 +6,7 @@ Windows 10 Task Manager inspired layout for maximum information density
 
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QLabel, QPushButton, 
                              QFrame, QSizePolicy, QVBoxLayout)
-from PyQt6.QtCore import Qt, QTimer, QPointF
+from PyQt6.QtCore import Qt, QTimer, QPointF, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor, QPen, QLinearGradient, QBrush, QPolygonF
 import time
 
@@ -26,7 +26,7 @@ class CombinedDataChart(QWidget):
         self.rx_data = []
         self.tx_data = []
         self.timestamps = []
-        self.max_points = 60  # Higher resolution for smoother curves
+        self.max_points = 120  # Higher resolution for smoother curves and better granularity
         self.max_value = 1
         
     def add_values(self, rx_value: float, tx_value: float):
@@ -66,45 +66,53 @@ class CombinedDataChart(QWidget):
         # Background
         painter.fillRect(self.rect(), QColor(AppColors.BACKGROUND_LIGHT))
         
-        # Draw subtle grid lines
+        # Define margins for chart area
+        margin_top = 8
+        margin_bottom = 8
+        margin_left = 4
+        margin_right = 4
+        
+        # Calculate chart area with margins
+        chart_width = self.width() - margin_left - margin_right
+        chart_height = self.height() - margin_top - margin_bottom
+        
+        # Draw subtle grid lines within chart area
         painter.setPen(QPen(QColor(AppColors.BORDER_DEFAULT), 0.5))
-        width = self.width()
-        height = self.height()
+        width = chart_width
+        height = chart_height
         
         # Only draw grid if there's enough space
         if height > 40:
-            # Horizontal grid lines
+            # Horizontal grid lines within chart area
             grid_lines = min(4, height // 20)  # Adaptive grid based on height
             for i in range(1, grid_lines):
-                y = height * i / grid_lines
-                painter.drawLine(0, int(y), width, int(y))
+                y = margin_top + height * i / grid_lines
+                painter.drawLine(margin_left, int(y), margin_left + width, int(y))
         
         if width > 100:
-            # Vertical grid lines
+            # Vertical grid lines within chart area
             grid_lines = min(6, width // 40)  # Adaptive grid based on width
             for i in range(1, grid_lines):
-                x = width * i / grid_lines
-                painter.drawLine(int(x), 0, int(x), height)
+                x = margin_left + width * i / grid_lines
+                painter.drawLine(int(x), margin_top, int(x), margin_top + height)
         
-        # Draw data if available
+        # Draw data if available within chart area
         if len(self.rx_data) > 1 and self.max_value > 0:
-            self._draw_data_line(painter, self.rx_data, QColor("#28a745"))  # Green for RX
-            self._draw_data_line(painter, self.tx_data, QColor("#007bff"))  # Blue for TX
+            self._draw_data_line(painter, self.rx_data, QColor("#28a745"), margin_left, margin_top, chart_width, chart_height)  # Green for RX
+            self._draw_data_line(painter, self.tx_data, QColor("#007bff"), margin_left, margin_top, chart_width, chart_height)  # Blue for TX
     
-    def _draw_data_line(self, painter, data, color):
-        """Draw a data line with fill area"""
+    def _draw_data_line(self, painter, data, color, margin_left, margin_top, chart_width, chart_height):
+        """Draw a data line with fill area within chart bounds"""
         if len(data) < 2:
             return
         
-        width = self.width()
-        height = self.height()
-        x_step = width / (len(data) - 1)
+        x_step = chart_width / (len(data) - 1)
         
-        # Create path for line
+        # Create path for line within chart area
         points = []
         for i, value in enumerate(data):
-            x = i * x_step
-            y = height - (value / self.max_value * height)
+            x = margin_left + i * x_step
+            y = margin_top + chart_height - (value / self.max_value * chart_height)
             points.append((x, y))
         
         # Draw fill area
@@ -113,18 +121,18 @@ class CombinedDataChart(QWidget):
         painter.setBrush(QBrush(fill_color))
         painter.setPen(QPen(fill_color, 0))
         
-        # Create fill polygon from points to bottom
+        # Create fill polygon from points to bottom of chart area
         fill_polygon = QPolygonF()
         for x, y in points:
             fill_polygon.append(QPointF(x, y))
-        fill_polygon.append(QPointF(width, height))
-        fill_polygon.append(QPointF(0, height))
+        fill_polygon.append(QPointF(margin_left + chart_width, margin_top + chart_height))
+        fill_polygon.append(QPointF(margin_left, margin_top + chart_height))
         
         painter.drawPolygon(fill_polygon)
         
-        # Draw line
+        # Draw line with improved styling
         painter.setBrush(QBrush())
-        painter.setPen(QPen(color, 1.5))
+        painter.setPen(QPen(color, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
         
         for i in range(1, len(points)):
             x1, y1 = points[i-1]
@@ -135,6 +143,10 @@ class CombinedDataChart(QWidget):
 class EnhancedPortInfoWidget(QWidget):
     """Compact port information widget with inline monitoring display"""
     
+    # Signals for thread-safe UI updates
+    tx_success_signal = pyqtSignal()
+    tx_error_signal = pyqtSignal(str)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.port_monitor = None
@@ -143,6 +155,11 @@ class EnhancedPortInfoWidget(QWidget):
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self._update_chart)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        
+        # Connect signals for thread-safe UI updates
+        self.tx_success_signal.connect(self._show_tx_feedback)
+        self.tx_error_signal.connect(self._show_tx_error)
+        
         self.init_ui()
         
     def init_ui(self):
@@ -313,6 +330,28 @@ class EnhancedPortInfoWidget(QWidget):
         self.time_label.setVisible(False)
         control_section.addWidget(self.time_label)
         
+        # TX Test button
+        self.tx_test_btn = QPushButton()
+        self.tx_test_btn.setFixedSize(24, 24)
+        self.tx_test_btn.setToolTip("Send TX test")
+        self.tx_test_btn.clicked.connect(self.send_test_tx)
+        self.tx_test_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent;
+                padding: 0px;
+            }}
+            QPushButton:hover {{
+                background-color: {AppColors.BUTTON_HOVER};
+                border: 1px solid {AppColors.BORDER_DEFAULT};
+            }}
+            QPushButton:pressed {{
+                background-color: {AppColors.BUTTON_PRESSED};
+            }}
+        """)
+        self._update_tx_test_button_icon()
+        self.tx_test_btn.setVisible(False)  # Hidden initially
+        control_section.addWidget(self.tx_test_btn)
+        
         # Monitor button
         self.monitor_btn = QPushButton()
         self.monitor_btn.setFixedSize(24, 24)
@@ -418,6 +457,18 @@ class EnhancedPortInfoWidget(QWidget):
         self.monitor_btn.setIcon(icon)
         self.monitor_btn.setIconSize(IconManager.get_scaled_size(14))
     
+    def _update_tx_test_button_icon(self):
+        """Update TX test button icon"""
+        from ui.theme.theme import IconManager
+        
+        icon = IconManager.create_svg_icon(
+            AppIcons.ARROW_UP,
+            AppColors.TEXT_DEFAULT,
+            IconManager.get_scaled_size(14)
+        )
+        self.tx_test_btn.setIcon(icon)
+        self.tx_test_btn.setIconSize(IconManager.get_scaled_size(14))
+    
     def _update_chart(self):
         """Update chart visualization"""
         if self.port_monitor and self.port_monitor.monitoring and self.last_stats:
@@ -455,6 +506,7 @@ class EnhancedPortInfoWidget(QWidget):
                       port_info.port_type.startswith("Virtual"))
         
         self.monitor_btn.setVisible(can_monitor)
+        self.tx_test_btn.setVisible(can_monitor)  # Show TX test when monitoring is available
         
         if not can_monitor:
             self.stop_monitoring()
@@ -493,7 +545,7 @@ class EnhancedPortInfoWidget(QWidget):
         # Allow chart to expand to fill available space without height limits
         self.chart_container.setMaximumHeight(16777215)  # QWIDGETSIZE_MAX
         self.data_chart.setMaximumHeight(16777215)  # QWIDGETSIZE_MAX
-        self.update_timer.start(250)  # Update chart 4x per second
+        self.update_timer.start(10)  # Update chart 4x per second
     
     def stop_monitoring(self):
         """Stop port monitoring"""
@@ -608,3 +660,71 @@ class EnhancedPortInfoWidget(QWidget):
         self.separator.setVisible(False)
         self.chart_spacer.setVisible(False)  # Hide spacer when widget is hidden
         self.stop_monitoring()
+    
+    def send_test_tx(self):
+        """Send a test TX transmission"""
+        if not self.current_port:
+            return
+            
+        import serial
+        import threading
+        
+        def send_test_data():
+            try:
+                # Open port briefly to send test data
+                with serial.Serial(self.current_port.port_name, 9600, timeout=1) as ser:
+                    test_message = "Serial TX Test\r\n"
+                    ser.write(test_message.encode('utf-8'))
+                    ser.flush()  # Ensure data is sent immediately
+                    
+                    # Brief visual feedback by temporarily highlighting TX indicator
+                    self.tx_success_signal.emit()
+                    
+            except serial.SerialException as e:
+                # Handle port access errors silently or show in status
+                error_msg = str(e)
+                if "busy" in error_msg.lower() or "access" in error_msg.lower():
+                    self.tx_error_signal.emit("Port busy")
+                else:
+                    self.tx_error_signal.emit("TX failed")
+            except Exception as e:
+                self.tx_error_signal.emit("TX error")
+        
+        # Run in thread to avoid blocking UI
+        threading.Thread(target=send_test_data, daemon=True).start()
+    
+    def _show_tx_feedback(self):
+        """Show visual feedback for successful TX test"""
+        # Briefly highlight TX indicator
+        original_style = self.tx_indicator.styleSheet()
+        
+        # Highlight style
+        self.tx_indicator.setStyleSheet(f"""
+            QLabel {{
+                color: #007bff;
+                font-size: 12pt;
+                background: {AppColors.SUCCESS_PRIMARY};
+                border-radius: 6px;
+                padding: 2px;
+            }}
+        """)
+        
+        # Reset after 200ms
+        QTimer.singleShot(200, lambda: self.tx_indicator.setStyleSheet(original_style))
+    
+    def _show_tx_error(self, error_type=None):
+        """Show visual feedback for TX test error"""
+        # Briefly show error on TX indicator
+        original_style = self.tx_indicator.styleSheet()
+        
+        # Error style
+        self.tx_indicator.setStyleSheet(f"""
+            QLabel {{
+                color: {AppColors.ERROR_PRIMARY};
+                font-size: 12pt;
+                background: transparent;
+            }}
+        """)
+        
+        # Reset after 500ms
+        QTimer.singleShot(500, lambda: self.tx_indicator.setStyleSheet(original_style))

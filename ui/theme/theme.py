@@ -1087,12 +1087,16 @@ class IconManager:
         return IconManager.create_svg_icon(AppIcons.CHECKBOX_CHECK, AppColors.TEXT_WHITE, size)
     
     @staticmethod
-    def _svg_to_pixmap(svg_data: str, size: QSize) -> QPixmap:
+    def _svg_to_pixmap(svg_data: str, size) -> QPixmap:
         """Convert SVG data to QPixmap"""
         renderer = QSvgRenderer()
         renderer.load(svg_data.encode('utf-8'))
         
-        pixmap = QPixmap(size)
+        # Handle both int and QSize parameters
+        if isinstance(size, int):
+            pixmap = QPixmap(size, size)
+        else:
+            pixmap = QPixmap(size.width(), size.height())
         pixmap.fill(QColor(0, 0, 0, 0))  # Transparent background
         
         painter = QPainter(pixmap)

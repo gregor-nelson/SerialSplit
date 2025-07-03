@@ -761,47 +761,241 @@ class SerialPortTestWidget(QWidget):
         
         return card
     
-    def _display_test_results(self, results: dict):
-        """Display test results using grouped property cards"""
-        # Check if we have valid results
+    def _create_modern_card(self, title: str, icon_name: str, content: dict, card_type: str = "info") -> QWidget:
+        """Create a modern Windows 10-style card with proper spacing and visual hierarchy"""
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {AppColors.BACKGROUND_WHITE};
+                border: 1px solid {AppColors.BORDER_LIGHT};
+                border-radius: 3px;
+                padding: 0px;
+                margin: 1px;
+            }}
+            QFrame:hover {{
+                border: 1px solid {AppColors.BORDER_DEFAULT};
+            }}
+        """)
+        
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(12, 10, 12, 10)  # Windows 10 standard padding
+        layout.setSpacing(8)
+        
+        # Card header with icon and title
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(8)
+        
+        # Icon
+        icon_label = QLabel()
+        icon_svg = self._get_section_icon(icon_name)
+        icon_color = self._get_section_color(card_type)
+        
+        from ui.theme.theme import IconManager
+        icon_pixmap = IconManager.create_svg_icon(icon_svg, icon_color, 16).pixmap(16, 16)
+        icon_label.setPixmap(icon_pixmap)
+        icon_label.setFixedSize(16, 16)
+        
+        # Title
+        title_label = QLabel(title)
+        title_label.setStyleSheet(f"""
+            QLabel {{
+                color: {AppColors.TEXT_DEFAULT};
+                font-family: {AppFonts.DEFAULT_FAMILY};
+                font-size: {AppFonts.DEFAULT_SIZE};
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                background: transparent;
+            }}
+        """)
+        
+        header_layout.addWidget(icon_label)
+        header_layout.addWidget(title_label)
+        header_layout.addStretch()
+        
+        layout.addLayout(header_layout)
+        
+        # Content area with key-value pairs
+        for key, value in content.items():
+            prop_layout = QHBoxLayout()
+            prop_layout.setContentsMargins(0, 0, 0, 0)
+            prop_layout.setSpacing(8)
+            
+            # Property name
+            key_label = QLabel(f"{key}:")
+            key_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {AppColors.TEXT_DEFAULT};
+                    font-family: {AppFonts.DEFAULT_FAMILY};
+                    font-size: {AppFonts.SMALL_SIZE};
+                    background: transparent;
+                }}
+            """)
+            key_label.setFixedWidth(90)
+            key_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            prop_layout.addWidget(key_label)
+            
+            # Property value
+            value_label = QLabel(str(value))
+            value_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {AppColors.TEXT_DEFAULT};
+                    font-family: {AppFonts.CONSOLE.family()};
+                    font-size: {AppFonts.SMALL_SIZE};
+                    background: transparent;
+                    font-weight: {AppFonts.BOLD_WEIGHT};
+                }}
+            """)
+            value_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            prop_layout.addWidget(value_label)
+            prop_layout.addStretch()
+            
+            layout.addLayout(prop_layout)
+        
+        return card
+    
+    def _get_section_icon(self, icon_name: str) -> str:
+        """Get appropriate icon for each section"""
+        icons = {
+            "settings": AppIcons.SETTINGS,
+            "flow": AppIcons.FLOW_CONTROL,
+            "signal": AppIcons.SIGNAL,
+            "buffer": AppIcons.BUFFER,
+            "timeout": AppIcons.CLOCK,
+            "config": AppIcons.SETTINGS
+        }
+        return icons.get(icon_name, AppIcons.INFO)
+    
+    def _get_section_color(self, card_type: str) -> str:
+        """Get section-specific colors"""
+        colors = {
+            "config": AppColors.ACCENT_BLUE,
+            "control": AppColors.ACCENT_GREEN,
+            "status": AppColors.ACCENT_ORANGE,
+            "info": AppColors.ACCENT_TEAL,
+            "error": AppColors.ACCENT_RED
+        }
+        return colors.get(card_type, AppColors.ACCENT_BLUE)
+    
+    def _format_boolean(self, value: bool) -> str:
+        """Format boolean values with visual indicators"""
+        if value:
+            return "✓ Enabled"
+        else:
+            return "✗ Disabled"
+    
+    def _format_signal_status(self, value) -> str:
+        """Format modem signal status with indicators"""
+        if value == True:
+            return "🟢 Active"
+        elif value == False:
+            return "🔴 Inactive"
+        else:
+            return "⚪ Unknown"
+    
+    def _create_port_config_card(self, details: dict) -> QWidget:
+        """Create Port Configuration card with proper formatting"""
+        config_data = {
+            "Data Bits": details.get('bytesize', 'N/A'),
+            "Parity": details.get('parity', 'N/A'),
+            "Stop Bits": details.get('stopbits', 'N/A'),
+            "Timeout": f"{details.get('timeout', 'N/A')}s"
+        }
+        return self._create_modern_card("Port Configuration", "config", config_data, "config")
+    
+    def _create_flow_control_card(self, details: dict) -> QWidget:
+        """Create Flow Control card with status indicators"""
+        flow_data = {
+            "XON/XOFF": self._format_boolean(details.get('xonxoff', False)),
+            "RTS/CTS": self._format_boolean(details.get('rtscts', False)),
+            "DSR/DTR": self._format_boolean(details.get('dsrdtr', False))
+        }
+        return self._create_modern_card("Flow Control", "flow", flow_data, "control")
+    
+    def _create_modem_status_card(self, details: dict) -> QWidget:
+        """Create Modem Status card with signal indicators"""
+        modem_status = details.get("modem_status", {})
+        if isinstance(modem_status, dict):
+            status_data = {
+                signal: self._format_signal_status(value) 
+                for signal, value in modem_status.items()
+            }
+            return self._create_modern_card("Modem Status", "signal", status_data, "status")
+        else:
+            return self._create_modern_card("Modem Status", "signal", 
+                                           {"Status": "Not available"}, "status")
+    
+    def _create_buffer_status_card(self, details: dict) -> QWidget:
+        """Create Buffer Status card with byte counts"""
+        buffer_data = {}
+        if "in_waiting" in details:
+            buffer_data["Input Buffer"] = f"{details['in_waiting']} bytes"
+        if details.get("out_waiting") != 'N/A':
+            buffer_data["Output Buffer"] = f"{details['out_waiting']} bytes"
+        
+        return self._create_modern_card("Buffer Status", "buffer", buffer_data, "info")
+    
+    def _display_test_results_modern(self, results: dict):
+        """Display test results using modern card system"""
         if not results:
             self._show_error_message("No test results received")
             return
         
-        # Get the status from the actual SerialPortTester result structure
         status = results.get('status', 'Unknown')
         message = results.get('message', 'No message provided')
         details = results.get('details', {})
-        
-        # Determine success based on status
         is_success = status == 'Available'
+        
         self._clear_results()
         
+        # Status header card
         if is_success:
             self._update_status_indicator("success")
-            # Create success status card
             status_card = self._create_status_card(
                 "success", 
-                message,
+                "Port Available",
                 "All diagnostics completed successfully",
                 AppColors.SUCCESS_PRIMARY
             )
-            self._add_result_widget(status_card, "status")
-            
-            # Parse and display detailed results
-            formatted_results = self.tester.format_test_results(results)
-            self._parse_and_display_results(formatted_results)
         else:
             self._update_status_indicator("error")
-            # Create error status card
             error_msg = details.get('error', 'Unknown error')
             status_card = self._create_status_card(
-                "error", 
-                message,
-                f"Error: {error_msg}",
+                "error",
+                "Port Error", 
+                error_msg,
                 AppColors.ERROR_PRIMARY
             )
-            self._add_result_widget(status_card, "status")
+        
+        self._add_result_widget(status_card, "status")
+        
+        # Add detailed cards for successful tests
+        if is_success and details:
+            cards = [
+                self._create_port_config_card(details),
+                self._create_flow_control_card(details),
+                self._create_modem_status_card(details),
+                self._create_buffer_status_card(details)
+            ]
+            
+            # Add timeout card if available
+            if (details.get("write_timeout") != 'N/A' or 
+                details.get("inter_byte_timeout") != 'N/A'):
+                timeout_data = {}
+                if details.get("write_timeout") != 'N/A':
+                    timeout_data["Write Timeout"] = f"{details['write_timeout']}s"
+                if details.get("inter_byte_timeout") != 'N/A':
+                    timeout_data["Inter-byte Timeout"] = f"{details['inter_byte_timeout']}s"
+                
+                cards.append(self._create_modern_card("Advanced Timeouts", "timeout", 
+                                                     timeout_data, "info"))
+            
+            # Add all cards to layout
+            for card in cards:
+                self._add_result_widget(card, "property")
+    
+    def _display_test_results(self, results: dict):
+        """Display test results using modern card-based approach"""
+        # Use the new modern card system
+        self._display_test_results_modern(results)
     
     def _parse_and_display_results(self, formatted_results: str):
         """Parse formatted results and create property cards"""

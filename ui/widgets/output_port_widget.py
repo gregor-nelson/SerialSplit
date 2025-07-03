@@ -30,22 +30,21 @@ class OutputPortWidget(QWidget):
         # Apply borderless styling for seamless integration
         self.setStyleSheet("QWidget { background-color: transparent; border: none; }")
         
-        # Set minimal height constraints for borderless layout
-        self.setMinimumHeight(AppDimensions.COMBOBOX_HEIGHT + AppDimensions.HEIGHT_STATUS_LABEL + AppDimensions.SPACING_MEDIUM * 2)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        # Set consistent size policy without fixed height constraints
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         
         self.init_ui(available_ports)
     
     def init_ui(self, available_ports: List[str]):
-        """Initialize the user interface with flattened layout for seamless integration"""
+        """Initialize the user interface to match incoming port layout exactly"""
         main_layout = QVBoxLayout(self)
-        ThemeManager.set_widget_margins(main_layout, "small")
-        main_layout.setSpacing(AppDimensions.SPACING_SMALL)
+        ThemeManager.set_widget_margins(main_layout, "none")  # No extra margins like incoming port widgets
+        main_layout.setSpacing(AppDimensions.SPACING_MEDIUM)  # Match incoming port spacing
         
-        # Main horizontal layout - flattened for integration
+        # Main horizontal layout to match incoming port structure
         layout = QHBoxLayout()
         ThemeManager.set_widget_margins(layout, "none")
-        layout.setSpacing(AppDimensions.SPACING_MEDIUM)
+        layout.setSpacing(AppDimensions.SPACING_MEDIUM)  # Match incoming port spacing
         
         # Port label using theme manager
         self.label = ThemeManager.create_port_label(self.port_number)
@@ -86,18 +85,13 @@ class OutputPortWidget(QWidget):
         
         main_layout.addLayout(layout)
         
-        # Port type indicator using theme
+        # Port type indicator using theme with fixed dimensions to match combo box
         self.port_type_label = ThemeManager.create_port_type_indicator()
+        self.port_type_label.setFixedHeight(AppDimensions.COMBOBOX_HEIGHT)
+        self.port_type_label.setFixedWidth(AppDimensions.COMBOBOX_MIN_WIDTH)
         
-        # Create indented layout for the port type label (match incoming port style)
-        indicator_layout = QHBoxLayout()
-        indicator_layout.setContentsMargins(
-            AppDimensions.WIDTH_LABEL_PORT + AppDimensions.SPACING_MEDIUM,
-            0, 0, 0
-        )
-        indicator_layout.addWidget(self.port_type_label)
-        indicator_layout.addStretch()
-        main_layout.addLayout(indicator_layout)
+        # Add label directly to main layout without custom indentation
+        main_layout.addWidget(self.port_type_label)
     
     def populate_ports(self, available_ports: List[str]):
         """Populate port combo with available ports (simple version)"""

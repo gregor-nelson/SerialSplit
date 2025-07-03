@@ -523,24 +523,11 @@ class Hub4comGUI(QMainWindow):
         return group
     
     def _create_outgoing_ports_section(self) -> QGroupBox:
-        """Create outgoing ports configuration"""
+        """Create outgoing ports configuration - direct layout like incoming port"""
         group, layout = self._create_groupbox_with_layout("Outgoing Ports")
         
-        # Output ports container with minimal spacing for seamless integration
-        self.output_ports_widget = QWidget()
-        self.output_ports_widget.setStyleSheet(f"QWidget {{ background-color: {AppColors.BACKGROUND_LIGHT}; border: none; }}")
-        self.output_ports_layout = QVBoxLayout(self.output_ports_widget)
-        self.output_ports_layout.setSpacing(AppDimensions.SPACING_MEDIUM)  # Consistent spacing like incoming port
-        ThemeManager.set_widget_margins(self.output_ports_layout, "standard")
-        
-        # Add flexible spacer at top
-        self.output_ports_layout.addStretch(1)
-        
-        # Scroll area
-        output_scroll = QScrollArea()
-        ThemeManager.configure_scroll_area(output_scroll, AppDimensions.HEIGHT_TEXT_XLARGE)
-        output_scroll.setWidget(self.output_ports_widget)
-        layout.addWidget(output_scroll)
+        # Store reference to the main layout for direct widget placement
+        self.output_ports_layout = layout
         
         return group
     
@@ -579,7 +566,7 @@ class Hub4comGUI(QMainWindow):
         combo.setCurrentText(Config.DEFAULT_BAUD)
     
     def add_output_port(self):
-        """Add a new output port configuration"""
+        """Add a new output port configuration with consistent spacing"""
         port_number = len(self.app_state['output_port_widgets']) + 1
         available_ports = self.get_available_ports()
         
@@ -591,13 +578,16 @@ class Hub4comGUI(QMainWindow):
         
         self.app_state['output_port_widgets'].append(widget)
         
-        # Insert widget before the bottom spacer
-        insert_index = self.output_ports_layout.count() - 1  # Before bottom spacer
-        self.output_ports_layout.insertWidget(insert_index, widget)
+        # Remove any existing stretch to recalculate layout
+        if hasattr(self, '_output_stretch_item'):
+            self.output_ports_layout.removeItem(self._output_stretch_item)
         
-        # Add bottom spacer if it doesn't exist
-        if self.output_ports_layout.count() == 2:  # Only top spacer + 1 widget
-            self.output_ports_layout.addStretch(1)
+        # Add widget without stretch factor for consistent spacing
+        insert_position = len(self.app_state['output_port_widgets']) - 1
+        self.output_ports_layout.insertWidget(insert_position, widget)
+        
+        # Add stretch at the end to push all widgets to the top
+        self._output_stretch_item = self.output_ports_layout.addStretch()
         
         self.renumber_output_ports()
         self.update_preview()
@@ -608,6 +598,12 @@ class Hub4comGUI(QMainWindow):
             self.app_state['output_port_widgets'].remove(widget)
             self.output_ports_layout.removeWidget(widget)
             widget.deleteLater()
+            
+            # Remove existing stretch and re-add to maintain consistent layout
+            if hasattr(self, '_output_stretch_item'):
+                self.output_ports_layout.removeItem(self._output_stretch_item)
+            self._output_stretch_item = self.output_ports_layout.addStretch()
+            
             self.renumber_output_ports()
             self.update_preview()
         else:
@@ -624,6 +620,11 @@ class Hub4comGUI(QMainWindow):
             self.app_state['output_port_widgets'].remove(widget)
             self.output_ports_layout.removeWidget(widget)
             widget.deleteLater()
+        
+        # Remove existing stretch and re-add to maintain consistent layout
+        if hasattr(self, '_output_stretch_item'):
+            self.output_ports_layout.removeItem(self._output_stretch_item)
+        self._output_stretch_item = self.output_ports_layout.addStretch()
         
         self.renumber_output_ports()
         self.update_preview()

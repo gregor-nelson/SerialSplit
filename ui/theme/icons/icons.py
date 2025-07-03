@@ -187,6 +187,54 @@ class AppIcons:
         </circle>
     </svg>
     """
+    
+    INFO = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style info icon -->
+        <circle cx="8" cy="8" r="7" fill="none" stroke="{color}" stroke-width="1.5"/>
+        <path d="M8 6v4m0-6h.01" stroke="{color}" stroke-width="1.5" 
+              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    """
+    
+    FLOW_CONTROL = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style flow/exchange icon -->
+        <path d="M3 5h8m0 0l-2-2m2 2l-2 2" stroke="{color}" stroke-width="1.5" 
+              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M13 11H5m0 0l2 2m-2-2l2-2" stroke="{color}" stroke-width="1.5" 
+              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    """
+    
+    SIGNAL = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style signal icon -->
+        <circle cx="8" cy="8" r="1" fill="{color}"/>
+        <circle cx="8" cy="8" r="3" fill="none" stroke="{color}" stroke-width="1"/>
+        <circle cx="8" cy="8" r="5" fill="none" stroke="{color}" stroke-width="1" opacity="0.6"/>
+        <circle cx="8" cy="8" r="7" fill="none" stroke="{color}" stroke-width="1" opacity="0.3"/>
+    </svg>
+    """
+    
+    BUFFER = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style memory/buffer icon -->
+        <rect x="2" y="4" width="12" height="8" fill="none" stroke="{color}" stroke-width="1"/>
+        <rect x="4" y="6" width="2" height="4" fill="{color}"/>
+        <rect x="7" y="6" width="2" height="4" fill="{color}"/>
+        <rect x="10" y="6" width="2" height="4" fill="{color}"/>
+    </svg>
+    """
+    
+    CLOCK = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style clock icon -->
+        <circle cx="8" cy="8" r="7" fill="none" stroke="{color}" stroke-width="1.5"/>
+        <path d="M8 4v4l3 2" stroke="{color}" stroke-width="1.5" 
+              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    """
 
 
 
