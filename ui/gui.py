@@ -32,6 +32,7 @@ from ui.theme.theme import (
 from ui.dialogs import PortScanDialog, PairCreationDialog, ConfigurationSummaryDialog, LaunchDialog
 from ui.dialogs.help_dialog import HelpManager, HelpTopic
 from ui.widgets import OutputPortWidget
+from ui.widgets.tab_manager_widget import SerialPortManagerWidget
 from ui.windows.command_formatter import CommandFormatter
 from ui.windows.output_formatter import OutputLogFormatter
 
@@ -511,8 +512,9 @@ class Hub4comGUI(QMainWindow):
         self.ui_refs['incoming_baud'].currentTextChanged.connect(self.on_incoming_baud_changed)
         layout.addWidget(self.ui_refs['incoming_baud'])
         
-        self.ui_refs['incoming_port_type'] = ThemeManager.create_port_type_indicator()
-        layout.addWidget(self.ui_refs['incoming_port_type'])
+        # Port manager widget with monitor and test tabs
+        self.port_manager_widget = SerialPortManagerWidget()
+        layout.addWidget(self.port_manager_widget)
         
         return group
     
@@ -734,35 +736,34 @@ class Hub4comGUI(QMainWindow):
         self.update_port_type_indicator()
     
     def update_port_type_indicator(self):
-        """Update the port type indicator using theme messages"""
+        """Update the port type indicator using theme messages - now integrated with tab manager"""
         current_port = self.ui_refs['incoming_port'].currentData()
-        indicator = self.ui_refs['incoming_port_type']
         
         if not current_port:
-            indicator.setText("")
-            indicator.setVisible(False)
+            # No port selected - hide tab manager
+            self.port_manager_widget.hide_all()
             return
         
         port_info = next((p for p in self.app_state['scanned_ports'] if p.port_name == current_port), None)
         if not port_info:
-            indicator.setText("")
-            indicator.setVisible(False)
+            # Port not found in scanned ports - hide tab manager
+            self.port_manager_widget.hide_all()
             return
         
-        # Use centralized tooltip system with enhanced status indicators
+        # Create enhanced display text (same logic as before)
         if port_info.is_moxa:
-            text = HelpManager.get_tooltip("port_type_moxa")
+            enhanced_text = HelpManager.get_tooltip("port_type_moxa")
             style_type = "moxa"
         elif port_info.port_type == "Physical":
-            text = HelpManager.get_tooltip("port_type_physical")
+            enhanced_text = HelpManager.get_tooltip("port_type_physical")
             style_type = "available"
         else:
-            text = HelpManager.get_tooltip("port_type_virtual")
+            enhanced_text = HelpManager.get_tooltip("port_type_virtual")
             style_type = "virtual"
         
-        indicator.setText(text)
-        indicator.setStyleSheet(AppStyles.port_type_indicator(style_type))
-        indicator.setVisible(True)
+        # Update the tab manager with comprehensive port info
+        self.port_manager_widget.update_port_info(port_info, enhanced_text)
+        self.port_manager_widget.set_port_type(style_type)
     
     # ========================================================================
     # HUB4COM MANAGEMENT

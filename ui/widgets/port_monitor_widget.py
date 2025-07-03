@@ -181,17 +181,18 @@ class EnhancedPortInfoWidget(QWidget):
         # Port info section (left)
         port_section = QHBoxLayout()
         port_section.setSpacing(AppDimensions.SPACING_SMALL)
+        port_section.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         
         # Port status indicator (small colored bar)
         self.status_indicator = QFrame()
-        self.status_indicator.setFixedSize(3, 24)
+        # Will set size after port_label is created to match its font height
         self.status_indicator.setStyleSheet(f"""
             QFrame {{
                 background-color: {AppColors.TEXT_DISABLED};
                 border: none;
             }}
         """)
-        port_section.addWidget(self.status_indicator)
+        port_section.addWidget(self.status_indicator, 0, Qt.AlignmentFlag.AlignVCenter)
         
         # Port name and type
         self.port_label = QLabel("")
@@ -206,6 +207,11 @@ class EnhancedPortInfoWidget(QWidget):
         """)
         self.port_label.setMinimumWidth(200)
         port_section.addWidget(self.port_label)
+        
+        # Set status indicator height to match port label font height
+        label_font_metrics = self.port_label.fontMetrics()
+        label_height = label_font_metrics.height()
+        self.status_indicator.setFixedSize(3, label_height)
         
         panel_layout.addLayout(port_section)
         
@@ -591,6 +597,11 @@ class EnhancedPortInfoWidget(QWidget):
         current_text = self.port_label.text()
         if not current_text.endswith("]"):
             self.port_label.setText(current_text + error_text)
+    
+    def set_port_type(self, port_type: str):
+        """Set the port type and apply appropriate styling"""
+        if hasattr(self, 'status_indicator'):
+            self._apply_status_style(port_type)
     
     def hide_all(self):
         """Hide all port information"""
