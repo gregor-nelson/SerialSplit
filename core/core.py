@@ -28,7 +28,7 @@ except ImportError:
     SERIAL_AVAILABLE = False
     print("Warning: pyserial module not available. Port monitoring will be disabled.")
 
-from PyQt6.QtCore import QThread, pyqtSignal, QSettings
+from PyQt6.QtCore import QThread, pyqtSignal, QMutex, QSettings
 from PyQt6.QtWidgets import QApplication
 
 
@@ -756,6 +756,9 @@ class SerialPortMonitor(QThread):
         self.monitoring = False
         self.ser = None
         
+        # Thread safety for TX operations
+        self.tx_mutex = QMutex()
+        
     def start_monitoring(self):
         """Start monitoring the serial port."""
         if not SERIAL_AVAILABLE:
@@ -960,6 +963,46 @@ class SerialPortMonitor(QThread):
         stats_str += f"Errors: {self.stats['errors']}"
         
         return stats_str
+    
+    def send_data(self, data):
+        """
+        Send data through the monitored serial port (thread-safe).
+        
+        Args:
+            data: bytes or str to send
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not self.monitoring or not self.ser or not self.ser.is_open:
+            return False
+            
+        try:
+            # Convert string to bytes if needed
+            if isinstance(data, str):
+                data = data.encode('utf-8')
+            
+            # Thread-safe TX operation
+            self.tx_mutex.lock()
+            try:
+                bytes_written = self.ser.write(data)
+                self.ser.flush()  # Ensure data is sent immediately
+                
+                # Update TX statistics
+                if bytes_written > 0:
+                    self.stats["tx_bytes"] += bytes_written
+                    now = time.time()
+                    self.tx_window.append((now, bytes_written))
+                
+                return True
+                
+            finally:
+                self.tx_mutex.unlock()
+                
+        except Exception as e:
+            self.stats["errors"] += 1
+            self.error_occurred.emit(f"TX error: {str(e)}")
+            return False
 
 
 class SerialPortTester:

@@ -665,33 +665,44 @@ class EnhancedPortInfoWidget(QWidget):
         """Send a test TX transmission"""
         if not self.current_port:
             return
+        
+        test_message = "Serial TX Test\r\n"
+        
+        # Use shared connection if monitoring is active
+        if self.port_monitor and self.port_monitor.monitoring:
+            # Use the shared serial connection
+            success = self.port_monitor.send_data(test_message)
+            if success:
+                self.tx_success_signal.emit()
+            else:
+                self.tx_error_signal.emit("TX failed")
+        else:
+            # Fallback to independent connection when not monitoring
+            import serial
+            import threading
             
-        import serial
-        import threading
-        
-        def send_test_data():
-            try:
-                # Open port briefly to send test data
-                with serial.Serial(self.current_port.port_name, 9600, timeout=1) as ser:
-                    test_message = "Serial TX Test\r\n"
-                    ser.write(test_message.encode('utf-8'))
-                    ser.flush()  # Ensure data is sent immediately
-                    
-                    # Brief visual feedback by temporarily highlighting TX indicator
-                    self.tx_success_signal.emit()
-                    
-            except serial.SerialException as e:
-                # Handle port access errors silently or show in status
-                error_msg = str(e)
-                if "busy" in error_msg.lower() or "access" in error_msg.lower():
-                    self.tx_error_signal.emit("Port busy")
-                else:
-                    self.tx_error_signal.emit("TX failed")
-            except Exception as e:
-                self.tx_error_signal.emit("TX error")
-        
-        # Run in thread to avoid blocking UI
-        threading.Thread(target=send_test_data, daemon=True).start()
+            def send_test_data():
+                try:
+                    # Open port briefly to send test data
+                    with serial.Serial(self.current_port.port_name, 9600, timeout=1) as ser:
+                        ser.write(test_message.encode('utf-8'))
+                        ser.flush()  # Ensure data is sent immediately
+                        
+                        # Brief visual feedback by temporarily highlighting TX indicator
+                        self.tx_success_signal.emit()
+                        
+                except serial.SerialException as e:
+                    # Handle port access errors silently or show in status
+                    error_msg = str(e)
+                    if "busy" in error_msg.lower() or "access" in error_msg.lower():
+                        self.tx_error_signal.emit("Port busy")
+                    else:
+                        self.tx_error_signal.emit("TX failed")
+                except Exception as e:
+                    self.tx_error_signal.emit("TX error")
+            
+            # Run in thread to avoid blocking UI
+            threading.Thread(target=send_test_data, daemon=True).start()
     
     def _show_tx_feedback(self):
         """Show visual feedback for successful TX test"""
