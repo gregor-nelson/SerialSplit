@@ -1,10 +1,6 @@
 # Serial Port Splitter
 
-
-![Gui Screenshot](https://github.com/user-attachments/assets/c786b7ff-0a16-43d5-8d2b-11b965b4bafe)
-
-
-
+![Git Screenshot](https://github.com/user-attachments/assets/6c6aea1b-2b3d-4ad0-81f4-0a9b8f3df953)
 
 This Python GUI application provides a user-friendly interface for managing virtual serial ports using `com0com` and `hub4com`. The application allows users to create virtual serial port pairs and route data between multiple ports. It is designed to offer similar functionality to commercial products like FabulaTech's Serial Port Splitter, which allows sharing of a single serial port among multiple applications by creating virtual COM ports.
 
