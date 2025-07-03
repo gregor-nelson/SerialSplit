@@ -108,6 +108,57 @@ class AppIcons:
     </svg>
     """
 
+    MONITOR = """
+<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <!-- Windows 10 style monitoring/chart icon -->
+    <rect x="1" y="2" width="14" height="10" 
+          fill="none" stroke="{color}" stroke-width="1"/>
+    <path d="M3 9l3-3 2 2 5-4" 
+          fill="none" stroke="{color}" stroke-width="1"
+          stroke-linejoin="round"/>
+</svg>
+"""
+
+    ARROW_DOWN = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style down arrow -->
+        <path d="M8 3v8m0 0l-3-3m3 3l3-3" 
+              stroke="{color}" stroke-width="1.5" 
+              stroke-linecap="round" stroke-linejoin="round"
+              fill="none"/>
+    </svg>
+    """
+
+    ARROW_UP = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style up arrow -->
+        <path d="M8 13V5m0 0l-3 3m3-3l3 3" 
+              stroke="{color}" stroke-width="1.5" 
+              stroke-linecap="round" stroke-linejoin="round"
+              fill="none"/>
+    </svg>
+    """
+
+    SEARCH = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style search/magnifier icon -->
+        <circle cx="6.5" cy="6.5" r="4.5" 
+                fill="none" stroke="{color}" stroke-width="1.5"/>
+        <path d="M10 10l4 4" 
+              stroke="{color}" stroke-width="1.5" 
+              stroke-linecap="round"/>
+    </svg>
+    """
+
+    CHART_BAR = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style bar chart icon -->
+        <rect x="2" y="8" width="3" height="5" fill="{color}"/>
+        <rect x="6.5" y="5" width="3" height="8" fill="{color}"/>
+        <rect x="11" y="3" width="3" height="10" fill="{color}"/>
+    </svg>
+    """
+
 
 
 

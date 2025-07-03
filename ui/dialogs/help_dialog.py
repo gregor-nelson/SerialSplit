@@ -371,12 +371,18 @@ class HelpContentRegistry:
         <li>Serial device connected</li>
     </ul>
 
-    <h3>Driver Installation</h3>
-    <p>The COM0COM driver should be installed automatically when the application is first run. If issues are encountered:</p>
+    <div class="warning-box">
+    <h3>⚠️ Administrator Privileges Required</h3>
+    <p><b>CRITICAL:</b> COM0COM driver installation requires Windows Administrator privileges and UAC elevation. Installation is NOT automatic.</p>
+    </div>
+
+    <h3>Required Installation Steps</h3>
     <ol>
-        <li>Close the application</li>
-        <li>Right-click the application and select "Run as Administrator"</li>
-        <li>The driver installation will complete automatically</li>
+        <li><b>Close all applications</b> that may use serial ports</li>
+        <li><b>Right-click the application</b> and select "Run as Administrator"</li>
+        <li><b>Accept UAC prompt</b> when Windows requests elevation</li>
+        <li><b>Allow driver installation</b> if Windows Defender or antivirus shows warnings</li>
+        <li><b>Restart the system</b> if prompted to complete driver registration</li>
     </ol>
 
     <h3>Verify Installation</h3>
@@ -388,8 +394,14 @@ class HelpContentRegistry:
     </ol>
 
     <div class="warning-box">
-    <h3>Windows Security</h3>
-    <p>Windows may show a security warning for the unsigned driver. This is normal - click "Install anyway" to proceed.</p>
+    <h3>⚠️ Enterprise Security Considerations</h3>
+    <p><b>Corporate/Offshore Networks:</b> Group Policy or security software may prevent COM0COM installation:</p>
+    <ul>
+        <li><b>Digital signature warnings:</b> COM0COM uses test-signed drivers</li>
+        <li><b>Driver installation restrictions:</b> IT policies may block unsigned drivers</li>
+        <li><b>Antivirus interference:</b> Security software may quarantine driver files</li>
+    </ul>
+    <p><b>Resolution:</b> Contact IT security team for driver approval before deployment.</p>
     </div>
     """
 
@@ -429,8 +441,16 @@ class HelpContentRegistry:
         <li>Restart applications after creating new pairs</li>
     </ul>
 
-    <div class="footer-box">
-    <p><b>Note:</b> Port numbers are assigned by Windows and may change after system restarts.</p>
+    <div class="warning-box">
+    <h3>⚠️ CRITICAL: Port Number Stability</h3>
+    <p><b>Port numbers CAN change after:</b></p>
+    <ul>
+        <li>System restarts</li>
+        <li>Hardware configuration changes</li>
+        <li>Windows updates</li>
+        <li>Driver reinstallation</li>
+    </ul>
+    <p><b>IMPACT:</b> Automated systems and applications must be reconfigured when port numbers change. Always verify port assignments before critical operations.</p>
     </div>
     """
 
@@ -808,6 +828,20 @@ class HelpContentRegistry:
         <li><b>"Virtual pair created"</b> - New ports available</li>
     </ul>
 
+    <h3>Critical Process Failures</h3>
+
+    <div class="warning-box">
+    <h4>"HUB4COM process terminated unexpectedly"</h4>
+    <p><b>Immediate Action Required:</b></p>
+    <ol>
+        <li><b>Stop all data collection</b> - routing has failed</li>
+        <li><b>Check Windows Event Viewer</b> for crash details</li>
+        <li><b>Verify all output ports are accessible</b></li>
+        <li><b>Restart routing service</b> from main application</li>
+        <li><b>Monitor for repeated failures</b> - may indicate hardware issues</li>
+    </ol>
+    </div>
+
     <h3>Getting Help</h3>
     <p>If an error not listed here is encountered:</p>
     <ol>
@@ -828,12 +862,13 @@ class HelpContentRegistry:
 
     <h3>Port Display Format</h3>
     <p>Port pairs are displayed using the following convention:</p>
-    <p style="margin-left: 20px;"><b>COM3 ⇄ COM4 [CNCA0 ⇄ CNCB0] [Features: Baud Rate Emulation]</b></p>
+    <p style="margin-left: 20px;"><b>COM131 ⇄ COM132 [CNCA31 ⇄ CNCB31] [Features: Baud Rate Emulation]</b></p>
     <ul>
-        <li><b>COM3 ⇄ COM4</b>: These are the system-level port names that will be visible to and used by applications.</li>
-        <li><b>[CNCA0 ⇄ CNCB0]</b>: These are the internal driver names for the virtual port pair.</li>
+        <li><b>COM131 ⇄ COM132</b>: These are the system-level port names that will be visible to and used by applications.</li>
+        <li><b>[CNCA31 ⇄ CNCB31]</b>: These are the internal driver names for the virtual port pair.</li>
         <li><b>[Features: ...]</b>: This section indicates which special emulation features are currently enabled for the port pair.</li>
     </ul>
+    <p><b>Default Configuration:</b> This application creates port pairs using the CNCA31/CNCB31 and CNCA41/CNCB41 naming convention, which typically map to COM131/132 and COM141/142 respectively.</p>
 
     <h3>Configuration Settings</h3>
     <p>The following settings control the behaviour of the virtual serial ports to simulate physical hardware characteristics.</p>
@@ -983,7 +1018,9 @@ class HelpContentRegistry:
 <h3>Baud Rate Guidelines</h3>
 <ul>
     <li><b>Physical/MOXA Ports:</b> Must match the connected device's baud rate exactly</li>
-    <li><b>Virtual Ports:</b> Baud rate setting is usually ignored (instant transfer)</li>
+    <li><b>Virtual Ports (EmuBR Disabled):</b> Data transfers instantly, baud rate setting ignored</li>
+    <li><b>Virtual Ports (EmuBR Enabled):</b> Data transfer speed matches configured baud rate exactly - <b>CRITICAL</b> for timing-sensitive offshore equipment</li>
+    <li><b>Default Configuration:</b> This application enables EmuBR by default for realistic timing behavior</li>
     <li><b>Mixed Routing:</b> Each port can have its own baud rate when routing between different types</li>
 </ul>
 

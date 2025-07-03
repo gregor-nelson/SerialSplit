@@ -5,8 +5,11 @@ Contains data classes, managers, and worker threads
 """
 
 import subprocess
+import time
+import threading
 from pathlib import Path
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 # Try to import winreg, fallback gracefully if not available
@@ -16,6 +19,14 @@ try:
 except ImportError:
     WINREG_AVAILABLE = False
     print("Warning: winreg module not available. Port scanning will be limited.")
+
+# Try to import serial, fallback gracefully if not available
+try:
+    import serial
+    SERIAL_AVAILABLE = True
+except ImportError:
+    SERIAL_AVAILABLE = False
+    print("Warning: pyserial module not available. Port monitoring will be disabled.")
 
 from PyQt6.QtCore import QThread, pyqtSignal, QSettings
 from PyQt6.QtWidgets import QApplication
@@ -696,3 +707,405 @@ class Com0comProcess(QThread):
         except Exception as e:
             # Fallback to original behavior if detection fails
             self._create_default_pairs()
+
+
+# ============================================================================
+# SERIAL PORT MONITORING
+# ============================================================================
+
+class SerialPortMonitor(QThread):
+    """
+    Serial port monitoring class for real-time statistics and data flow observation.
+    """
+    # Signals
+    stats_updated = pyqtSignal(dict)  # Emits updated port statistics
+    data_received = pyqtSignal(bytes)  # Emits raw data received
+    error_occurred = pyqtSignal(str)  # Emits error messages
+    
+    def __init__(self, port_name, baudrate=9600):
+        """
+        Initialize the serial port monitor.
+        
+        Args:
+            port_name: Serial port name
+            baudrate: Baud rate for monitoring
+        """
+        super().__init__()
+        
+        self.port_name = port_name
+        self.baudrate = baudrate
+        
+        # Statistics
+        self.stats = {
+            "rx_bytes": 0,
+            "tx_bytes": 0,
+            "rx_rate": 0.0,  # bytes per second
+            "tx_rate": 0.0,  # bytes per second
+            "errors": 0,
+            "start_time": None,
+            "running_time": 0.0,
+            "is_monitoring": False
+        }
+        
+        # Rate calculation windows
+        self.rx_window = []  # List of (timestamp, bytes) tuples
+        self.tx_window = []  # List of (timestamp, bytes) tuples
+        self.window_size = 2  # seconds for rate calculation
+        
+        # Operation flags
+        self.monitoring = False
+        self.ser = None
+        
+    def start_monitoring(self):
+        """Start monitoring the serial port."""
+        if not SERIAL_AVAILABLE:
+            self.error_occurred.emit("pyserial module not available for port monitoring")
+            return False
+            
+        if self.monitoring:
+            return True
+            
+        try:
+            # Reset stats
+            self.stats = {
+                "rx_bytes": 0,
+                "tx_bytes": 0,
+                "rx_rate": 0.0,
+                "tx_rate": 0.0,
+                "errors": 0,
+                "start_time": datetime.now(),
+                "running_time": 0.0,
+                "is_monitoring": True
+            }
+            
+            self.rx_window = []
+            self.tx_window = []
+            
+            # Start the monitor thread
+            self.monitoring = True
+            self.start()
+            
+            return True
+            
+        except Exception as e:
+            self.error_occurred.emit(f"Error starting monitor for {self.port_name}: {str(e)}")
+            self.monitoring = False
+            return False
+    
+    def stop_monitoring(self):
+        """Stop monitoring the serial port."""
+        if not self.monitoring:
+            return
+            
+        self.monitoring = False
+        self.stats["is_monitoring"] = False
+        
+        # Wait for thread to exit
+        if self.isRunning():
+            self.wait(1000)
+        
+        # Close the port if open
+        if self.ser and self.ser.is_open:
+            try:
+                self.ser.close()
+            except:
+                pass
+    
+    def run(self):
+        """Main monitoring loop running in the thread."""
+        last_stats_update = time.time()
+        
+        # Try to open port for monitoring (non-blocking)
+        try:
+            if SERIAL_AVAILABLE:
+                self.ser = serial.Serial()
+                self.ser.port = self.port_name
+                self.ser.baudrate = self.baudrate
+                self.ser.timeout = 0.1
+                
+                # Try to open the port with enhanced error handling
+                try:
+                    self.ser.open()
+                except serial.SerialException as e:
+                    # Provide specific error feedback for different scenarios
+                    error_msg = str(e).lower()
+                    if "access is denied" in error_msg or "permission denied" in error_msg:
+                        self.error_occurred.emit(f"Port {self.port_name} is busy or in use by another application")
+                    elif "could not open port" in error_msg:
+                        if "moxa" in self.port_name.lower() or "mxser" in error_msg:
+                            self.error_occurred.emit(f"Moxa port {self.port_name} network connection unavailable")
+                        else:
+                            self.error_occurred.emit(f"Port {self.port_name} could not be opened - device may be disconnected")
+                    else:
+                        self.error_occurred.emit(f"Port {self.port_name} monitoring unavailable: {str(e)}")
+                    self.ser = None
+                except Exception as e:
+                    self.error_occurred.emit(f"Unexpected error opening {self.port_name}: {str(e)}")
+                    self.ser = None
+                    
+        except Exception as e:
+            self.error_occurred.emit(f"Failed to initialize monitoring for {self.port_name}: {str(e)}")
+            self.ser = None
+        
+        while self.monitoring:
+            try:
+                # If we have an open serial port, monitor it
+                if self.ser and self.ser.is_open:
+                    # Check for incoming data
+                    if self.ser.in_waiting > 0:
+                        data = self.ser.read(self.ser.in_waiting)
+                        if data:
+                            # Update statistics
+                            self.stats["rx_bytes"] += len(data)
+                            now = time.time()
+                            self.rx_window.append((now, len(data)))
+                            
+                            # Emit the data
+                            self.data_received.emit(data)
+                
+                # Update running time and rates periodically
+                now = time.time()
+                if now - last_stats_update >= 1.0:  # Update stats every second
+                    self._update_rates(now)
+                    if self.stats["start_time"]:
+                        self.stats["running_time"] = (datetime.now() - self.stats["start_time"]).total_seconds()
+                    
+                    # Emit updated stats
+                    self.stats_updated.emit(self.stats.copy())
+                    last_stats_update = now
+                
+                # Short sleep to prevent CPU thrashing
+                time.sleep(0.1)
+                
+            except Exception as e:
+                self.stats["errors"] += 1
+                self.error_occurred.emit(f"Monitor error: {str(e)}")
+                time.sleep(0.5)  # Wait before retrying
+        
+        # Ensure port is closed on exit
+        if self.ser and self.ser.is_open:
+            try:
+                self.ser.close()
+            except:
+                pass
+    
+    def _update_rates(self, now):
+        """
+        Update RX and TX rates based on windowed data.
+        
+        Args:
+            now: Current timestamp
+        """
+        # Remove old data points outside the window
+        window_start = now - self.window_size
+        self.rx_window = [(ts, sz) for ts, sz in self.rx_window if ts >= window_start]
+        self.tx_window = [(ts, sz) for ts, sz in self.tx_window if ts >= window_start]
+        
+        # Calculate rates
+        if self.rx_window:
+            total_rx_bytes = sum(sz for _, sz in self.rx_window)
+            oldest_ts = min(ts for ts, _ in self.rx_window)
+            if now > oldest_ts:
+                time_span = now - oldest_ts
+                self.stats["rx_rate"] = total_rx_bytes / time_span
+            else:
+                self.stats["rx_rate"] = 0.0
+        else:
+            self.stats["rx_rate"] = 0.0
+        
+        if self.tx_window:
+            total_tx_bytes = sum(sz for _, sz in self.tx_window)
+            oldest_ts = min(ts for ts, _ in self.tx_window)
+            if now > oldest_ts:
+                time_span = now - oldest_ts
+                self.stats["tx_rate"] = total_tx_bytes / time_span
+            else:
+                self.stats["tx_rate"] = 0.0
+        else:
+            self.stats["tx_rate"] = 0.0
+    
+    def get_formatted_stats(self):
+        """
+        Get formatted statistics as a string.
+        
+        Returns:
+            str: Formatted statistics string
+        """
+        if not self.stats["start_time"] or not self.stats["is_monitoring"]:
+            return "Not monitoring"
+            
+        # Format rates
+        rx_rate = self.stats["rx_rate"]
+        tx_rate = self.stats["tx_rate"]
+        
+        # Choose appropriate units
+        if rx_rate < 1024:
+            rx_rate_str = f"{rx_rate:.1f} B/s"
+        else:
+            rx_rate_str = f"{rx_rate/1024:.1f} KB/s"
+            
+        if tx_rate < 1024:
+            tx_rate_str = f"{tx_rate:.1f} B/s"
+        else:
+            tx_rate_str = f"{tx_rate/1024:.1f} KB/s"
+            
+        # Format running time
+        seconds = int(self.stats["running_time"])
+        running_time = str(timedelta(seconds=seconds))
+        
+        # Format the statistics string
+        stats_str = f"Monitoring: {running_time}\n"
+        stats_str += f"RX: {self.stats['rx_bytes']} bytes ({rx_rate_str})\n"
+        stats_str += f"TX: {self.stats['tx_bytes']} bytes ({tx_rate_str})\n"
+        stats_str += f"Errors: {self.stats['errors']}"
+        
+        return stats_str
+
+
+class SerialPortTester:
+    """
+    Serial port testing functionality for parameter detection and diagnostics.
+    """
+    
+    def __init__(self):
+        """Initialize the port tester."""
+        self.available = SERIAL_AVAILABLE
+    
+    def test_port(self, port_name: str) -> Dict:
+        """
+        Test a serial port and return comprehensive information.
+        
+        Args:
+            port_name (str): Name of the serial port to test
+            
+        Returns:
+            Dict: Dictionary containing test results and port information
+        """
+        if not self.available:
+            return {
+                "status": "Error",
+                "message": "pyserial module not available",
+                "details": {}
+            }
+        
+        try:
+            # Try to open the port with minimal configuration
+            ser = serial.Serial(port_name, timeout=1)
+            
+            # Collect basic port information
+            port_info = {
+                "port": port_name,
+                "bytesize": ser.bytesize,
+                "parity": ser.parity,
+                "stopbits": ser.stopbits,
+                "timeout": ser.timeout,
+                "xonxoff": ser.xonxoff,
+                "rtscts": ser.rtscts,
+                "dsrdtr": ser.dsrdtr,
+                "write_timeout": getattr(ser, 'write_timeout', 'N/A'),
+                "inter_byte_timeout": getattr(ser, 'inter_byte_timeout', 'N/A')
+            }
+            
+            # Get modem status if available
+            try:
+                modem_status = {
+                    "CTS": ser.cts if hasattr(ser, 'cts') else 'N/A',
+                    "DSR": ser.dsr if hasattr(ser, 'dsr') else 'N/A',
+                    "RI": ser.ri if hasattr(ser, 'ri') else 'N/A',
+                    "CD": ser.cd if hasattr(ser, 'cd') else 'N/A'
+                }
+                port_info["modem_status"] = modem_status
+            except Exception:
+                port_info["modem_status"] = "Not available"
+            
+            # Get buffer information if available
+            try:
+                port_info["in_waiting"] = ser.in_waiting
+                port_info["out_waiting"] = ser.out_waiting if hasattr(ser, 'out_waiting') else 'N/A'
+            except Exception:
+                port_info["in_waiting"] = 'N/A'
+                port_info["out_waiting"] = 'N/A'
+            
+            # Close the port
+            ser.close()
+            
+            return {
+                "status": "Available",
+                "message": f"Port {port_name} is available and ready",
+                "details": port_info
+            }
+            
+        except serial.SerialException as e:
+            error_msg = str(e).lower()
+            if "access is denied" in error_msg or "permission denied" in error_msg:
+                status_msg = f"Port {port_name} is in use by another application"
+            elif "file not found" in error_msg or "system cannot find" in error_msg:
+                status_msg = f"Port {port_name} does not exist or is not available"
+            else:
+                status_msg = f"Port {port_name} has an error: {str(e)}"
+            
+            return {
+                "status": "Error",
+                "message": status_msg,
+                "details": {"error": str(e)}
+            }
+        except Exception as e:
+            return {
+                "status": "Error", 
+                "message": f"Unexpected error testing port {port_name}",
+                "details": {"error": str(e)}
+            }
+    
+    def format_test_results(self, test_results: Dict) -> str:
+        """
+        Format test results into a readable string.
+        
+        Args:
+            test_results (Dict): Results from test_port()
+            
+        Returns:
+            str: Formatted test results
+        """
+        if test_results["status"] == "Error":
+            return f"{test_results['message']}\n\nError Details:\n{test_results['details'].get('error', 'Unknown error')}"
+        
+        details = test_results["details"]
+        result = f"{test_results['message']}\n\n"
+        
+        # Basic port configuration
+        result += "Port Configuration:\n"
+        result += f"Data Bits: {details.get('bytesize', 'N/A')}\n"
+        result += f"Parity: {details.get('parity', 'N/A')}\n"
+        result += f"Stop Bits: {details.get('stopbits', 'N/A')}\n"
+        result += f"Timeout: {details.get('timeout', 'N/A')}s\n\n"
+        
+        # Flow control
+        result += "Flow Control:\n"
+        result += f"XON/XOFF: {details.get('xonxoff', 'N/A')}\n"
+        result += f"RTS/CTS: {details.get('rtscts', 'N/A')}\n"
+        result += f"DSR/DTR: {details.get('dsrdtr', 'N/A')}\n\n"
+        
+        # Modem status
+        if "modem_status" in details and isinstance(details["modem_status"], dict):
+            result += "Modem Status:\n"
+            for signal, value in details["modem_status"].items():
+                result += f"  {signal}: {value}\n"
+            result += "\n"
+        
+        # Buffer status
+        if "in_waiting" in details:
+            result += "Buffer Status:\n"
+            result += f"Input Buffer: {details['in_waiting']} bytes\n"
+            if details.get("out_waiting") != 'N/A':
+                result += f"  Output Buffer: {details['out_waiting']} bytes\n"
+            result += "\n"
+        
+        # Additional timeouts
+        if details.get("write_timeout") != 'N/A' or details.get("inter_byte_timeout") != 'N/A':
+            result += "Advanced Timeouts:\n"
+            if details.get("write_timeout") != 'N/A':
+                result += f"  Write Timeout: {details['write_timeout']}s\n"
+            if details.get("inter_byte_timeout") != 'N/A':
+                result += f"  Inter-byte Timeout: {details['inter_byte_timeout']}s\n"
+        
+        return result

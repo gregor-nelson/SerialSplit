@@ -32,13 +32,10 @@ from ui.theme.theme import (
 from ui.dialogs import PortScanDialog, PairCreationDialog, ConfigurationSummaryDialog, LaunchDialog
 from ui.dialogs.help_dialog import HelpManager, HelpTopic
 from ui.widgets import OutputPortWidget
-from ui.windows.command_formatter import CommandFormatter, parse_command_info
-from ui.windows.output_log_formatter import OutputLogFormatter
+from ui.windows.command_formatter import CommandFormatter
+from ui.windows.output_formatter import OutputLogFormatter
 
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
 
 class Config:
     """Application configuration constants"""
