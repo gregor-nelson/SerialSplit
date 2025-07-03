@@ -319,9 +319,9 @@ class SerialPortTestWidget(QWidget):
         self._update_status_indicator("testing")
         self._clear_results()
         
-        # Create loading message card
+        # Create loading message card with animated spinner
         loading_card = self._create_status_card(
-            "⏳", 
+            "spinner", 
             "Initializing Test...",
             "Preparing port diagnostics",
             AppColors.ACCENT_BLUE
@@ -372,18 +372,32 @@ class SerialPortTestWidget(QWidget):
         )
         layout.setSpacing(AppDimensions.SPACING_LARGE)
         
-        # Status icon
-        icon_label = QLabel(icon)
-        icon_label.setStyleSheet(f"""
-            QLabel {{
-                color: {color};
-                font-size: 20pt;
-                font-weight: bold;
-                background: transparent;
-            }}
-        """)
-        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_label.setFixedSize(32, 32)
+        # Status icon - use SVG for loading spinner, text for others
+        if icon == "spinner":
+            from ui.theme.theme import IconManager
+            
+            icon_label = QLabel()
+            spinner_icon = IconManager.create_svg_icon(
+                AppIcons.SPINNER,
+                color,
+                IconManager.get_scaled_size(18)
+            )
+            icon_label.setPixmap(spinner_icon.pixmap(18, 18))
+            icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            icon_label.setFixedSize(24, 24)
+        else:
+            icon_label = QLabel(icon)
+            icon_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {color};
+                    font-size: 16pt;
+                    font-weight: bold;
+                    background: transparent;
+                }}
+            """)
+            icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            icon_label.setFixedSize(24, 24)
+        
         layout.addWidget(icon_label)
         
         # Text section

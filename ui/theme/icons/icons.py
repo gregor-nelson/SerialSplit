@@ -159,6 +159,26 @@ class AppIcons:
     </svg>
     """
 
+    SPINNER = """
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Windows 10 style loading spinner -->
+        <circle cx="8" cy="8" r="6" 
+                fill="none" stroke="{color}" stroke-width="2" 
+                stroke-linecap="round" stroke-dasharray="28" 
+                stroke-dashoffset="28" opacity="0.3"/>
+        <circle cx="8" cy="8" r="6" 
+                fill="none" stroke="{color}" stroke-width="2" 
+                stroke-linecap="round" stroke-dasharray="8" 
+                stroke-dashoffset="0">
+            <animateTransform attributeName="transform" 
+                              type="rotate" 
+                              values="0 8 8;360 8 8" 
+                              dur="1s" 
+                              repeatCount="indefinite"/>
+        </circle>
+    </svg>
+    """
+
 
 
 

@@ -476,9 +476,9 @@ class Hub4comGUI(QMainWindow):
         ports_splitter = QSplitter(Qt.Orientation.Horizontal)
         ports_splitter.addWidget(self._create_incoming_port_section())
         ports_splitter.addWidget(self._create_outgoing_ports_section())
-        ports_splitter.setSizes([240, 560])  # 40/60 split for 800px total
-        ports_splitter.setStretchFactor(0, 3)  # 40%
-        ports_splitter.setStretchFactor(1, 7)  # 60%
+        ports_splitter.setChildrenCollapsible(False)  # Prevent collapse
+        ports_splitter.setStretchFactor(0, 2)  # Incoming: proportional scaling
+        ports_splitter.setStretchFactor(1, 3)  # Outgoing: proportional scaling
         layout.addWidget(ports_splitter, 1, 0, 1, 4)
         
         return group
@@ -522,11 +522,14 @@ class Hub4comGUI(QMainWindow):
         """Create outgoing ports configuration"""
         group, layout = self._create_groupbox_with_layout("Outgoing Ports")
         
-        # Output ports container
+        # Output ports container with flexible spacing
         self.output_ports_widget = QWidget()
         self.output_ports_layout = QVBoxLayout(self.output_ports_widget)
-        self.output_ports_layout.setSpacing(AppDimensions.SPACING_TINY)
-        ThemeManager.set_widget_margins(self.output_ports_layout, "none")
+        self.output_ports_layout.setSpacing(AppDimensions.SPACING_SMALL)  # Fixed spacing between ports
+        ThemeManager.set_widget_margins(self.output_ports_layout, "small")
+        
+        # Add flexible spacer at top
+        self.output_ports_layout.addStretch(1)
         
         # Scroll area
         output_scroll = QScrollArea()
@@ -582,7 +585,14 @@ class Hub4comGUI(QMainWindow):
         widget.port_changed.connect(self.update_preview)
         
         self.app_state['output_port_widgets'].append(widget)
-        self.output_ports_layout.addWidget(widget)
+        
+        # Insert widget before the bottom spacer
+        insert_index = self.output_ports_layout.count() - 1  # Before bottom spacer
+        self.output_ports_layout.insertWidget(insert_index, widget)
+        
+        # Add bottom spacer if it doesn't exist
+        if self.output_ports_layout.count() == 2:  # Only top spacer + 1 widget
+            self.output_ports_layout.addStretch(1)
         
         self.renumber_output_ports()
         self.update_preview()
@@ -1504,8 +1514,8 @@ class Hub4comGUI(QMainWindow):
         ]
         
         for mode, label in route_modes:
-            check = "☑" if settings['mode'] == mode else "☐"
-            action = menu.addAction(f"{check} {label}")
+            is_checked = settings['mode'] == mode
+            action = menu.addAction(self.checkbox_icon(is_checked), label)
             action.triggered.connect(lambda checked, m=mode: self.set_route_mode(m))
         
         menu.addSeparator()
@@ -1520,8 +1530,8 @@ class Hub4comGUI(QMainWindow):
         ]
         
         for key, label, callback in advanced_options:
-            check = "☑" if settings.get(key) else "☐"
-            action = menu.addAction(f"{check} {label}")
+            is_checked = settings.get(key, False)
+            action = menu.addAction(self.checkbox_icon(is_checked), label)
             action.triggered.connect(lambda checked, k=key: callback(k))
         
         menu.addSeparator()
@@ -1535,14 +1545,14 @@ class Hub4comGUI(QMainWindow):
         ]
         
         for checkbox, label in port_options:
-            check = "☑" if checkbox.isChecked() else "☐"
-            action = menu.addAction(f"{check} {label}")
+            is_checked = checkbox.isChecked()
+            action = menu.addAction(self.checkbox_icon(is_checked), label)
             action.triggered.connect(lambda: checkbox.setChecked(not checkbox.isChecked()))
         
         menu.addSeparator()
         
         # Baud rate submenu
-        baud_menu = menu.addMenu("Set All Baud Rates ▶")
+        baud_menu = menu.addMenu("Set All Baud Rates")
         self._create_baud_rate_menu(baud_menu)
         
         menu.addSeparator()

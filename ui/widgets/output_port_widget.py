@@ -30,6 +30,10 @@ class OutputPortWidget(QWidget):
         # Apply widget styling from theme
         self.setStyleSheet(AppStyles.output_port_widget())
         
+        # Set fixed height to maintain consistent element sizes
+        self.setFixedHeight(AppDimensions.HEIGHT_OUTPUT_PORT_WIDGET)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        
         self.init_ui(available_ports)
     
     def init_ui(self, available_ports: List[str]):
