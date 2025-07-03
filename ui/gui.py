@@ -526,11 +526,12 @@ class Hub4comGUI(QMainWindow):
         """Create outgoing ports configuration"""
         group, layout = self._create_groupbox_with_layout("Outgoing Ports")
         
-        # Output ports container with flexible spacing
+        # Output ports container with minimal spacing for seamless integration
         self.output_ports_widget = QWidget()
+        self.output_ports_widget.setStyleSheet(f"QWidget {{ background-color: {AppColors.BACKGROUND_LIGHT}; border: none; }}")
         self.output_ports_layout = QVBoxLayout(self.output_ports_widget)
-        self.output_ports_layout.setSpacing(AppDimensions.SPACING_SMALL)  # Fixed spacing between ports
-        ThemeManager.set_widget_margins(self.output_ports_layout, "small")
+        self.output_ports_layout.setSpacing(AppDimensions.SPACING_MEDIUM)  # Consistent spacing like incoming port
+        ThemeManager.set_widget_margins(self.output_ports_layout, "standard")
         
         # Add flexible spacer at top
         self.output_ports_layout.addStretch(1)

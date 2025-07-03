@@ -27,22 +27,22 @@ class OutputPortWidget(QWidget):
         self.port_number = port_number
         self.scanned_ports: List[SerialPortInfo] = []
         
-        # Apply widget styling from theme
-        self.setStyleSheet(AppStyles.output_port_widget())
+        # Apply borderless styling for seamless integration
+        self.setStyleSheet("QWidget { background-color: transparent; border: none; }")
         
-        # Set dynamic height with minimum constraints for consistency
-        self.setMinimumHeight(AppDimensions.COMBOBOX_HEIGHT * 2 + AppDimensions.HEIGHT_PORT_TYPE_INDICATOR + AppDimensions.SPACING_SMALL * 3 + AppDimensions.MARGIN_CONTROL[1] * 2)
+        # Set minimal height constraints for borderless layout
+        self.setMinimumHeight(AppDimensions.COMBOBOX_HEIGHT + AppDimensions.HEIGHT_STATUS_LABEL + AppDimensions.SPACING_MEDIUM * 2)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         self.init_ui(available_ports)
     
     def init_ui(self, available_ports: List[str]):
-        """Initialize the user interface with full theme integration"""
+        """Initialize the user interface with flattened layout for seamless integration"""
         main_layout = QVBoxLayout(self)
-        ThemeManager.set_widget_margins(main_layout, "control")
+        ThemeManager.set_widget_margins(main_layout, "small")
         main_layout.setSpacing(AppDimensions.SPACING_SMALL)
         
-        # Main horizontal layout
+        # Main horizontal layout - flattened for integration
         layout = QHBoxLayout()
         ThemeManager.set_widget_margins(layout, "none")
         layout.setSpacing(AppDimensions.SPACING_MEDIUM)
@@ -89,13 +89,14 @@ class OutputPortWidget(QWidget):
         # Port type indicator using theme
         self.port_type_label = ThemeManager.create_port_type_indicator()
         
-        # Create indented layout for the port type label
+        # Create indented layout for the port type label (match incoming port style)
         indicator_layout = QHBoxLayout()
         indicator_layout.setContentsMargins(
             AppDimensions.WIDTH_LABEL_PORT + AppDimensions.SPACING_MEDIUM,
             0, 0, 0
         )
         indicator_layout.addWidget(self.port_type_label)
+        indicator_layout.addStretch()
         main_layout.addLayout(indicator_layout)
     
     def populate_ports(self, available_ports: List[str]):
@@ -245,12 +246,12 @@ class OutputPortWidget(QWidget):
         """Override to handle enabling/disabling with proper visual feedback"""
         super().setEnabled(enabled)
         
-        # Apply disabled styling from theme
+        # Apply simple disabled styling for borderless design
         if not enabled:
-            current_style = self.styleSheet()
-            self.setStyleSheet(current_style + AppStyles.output_port_widget_disabled())
+            self.setStyleSheet("QWidget { background-color: transparent; border: none; }"
+                             f"QWidget:disabled {{ color: {AppColors.TEXT_DISABLED}; }}")
         else:
-            self.setStyleSheet(AppStyles.output_port_widget())
+            self.setStyleSheet("QWidget { background-color: transparent; border: none; }")
         
         # Enable/disable child widgets
         self.port_combo.setEnabled(enabled)
@@ -259,11 +260,10 @@ class OutputPortWidget(QWidget):
     
     def mousePressEvent(self, event):
         """Handle mouse press for visual feedback"""
-        self.setStyleSheet(AppStyles.output_port_widget_pressed())
+        # No visual feedback needed for borderless design
         super().mousePressEvent(event)
     
     def mouseReleaseEvent(self, event):
         """Handle mouse release to restore normal state"""
-        # Restore normal styling from theme
-        self.setStyleSheet(AppStyles.output_port_widget())
+        # No styling changes needed for borderless design
         super().mouseReleaseEvent(event)

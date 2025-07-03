@@ -136,13 +136,8 @@ class SerialPortTestWidget(QWidget):
     def init_ui(self):
         """Initialize the user interface with theme integration"""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(
-            AppDimensions.SPACING_LARGE,
-            AppDimensions.SPACING_MEDIUM, 
-            AppDimensions.SPACING_LARGE,
-            AppDimensions.SPACING_MEDIUM
-        )
-        main_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
+        main_layout.setContentsMargins(6, 4, 6, 4)  # Tighter main margins
+        main_layout.setSpacing(6)  # Reduced spacing between sections
         
         # Header section
         header_layout = QHBoxLayout()
@@ -235,13 +230,8 @@ class SerialPortTestWidget(QWidget):
         # Results container widget with grid layout for responsiveness
         self.results_widget = QWidget()
         self.results_layout = QGridLayout(self.results_widget)
-        self.results_layout.setContentsMargins(
-            AppDimensions.SPACING_SMALL,
-            AppDimensions.SPACING_SMALL,
-            AppDimensions.SPACING_SMALL,
-            AppDimensions.SPACING_SMALL
-        )
-        self.results_layout.setSpacing(AppDimensions.SPACING_SMALL)
+        self.results_layout.setContentsMargins(4, 4, 4, 4)  # Minimal margins
+        self.results_layout.setSpacing(4)  # Tight spacing between cards
         self.results_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         # Set equal column stretching for two-column mode
@@ -574,13 +564,8 @@ class SerialPortTestWidget(QWidget):
         """)
         
         layout = QHBoxLayout(card)
-        layout.setContentsMargins(
-            AppDimensions.SPACING_LARGE,
-            AppDimensions.SPACING_LARGE,
-            AppDimensions.SPACING_LARGE,
-            AppDimensions.SPACING_LARGE
-        )
-        layout.setSpacing(AppDimensions.SPACING_LARGE)
+        layout.setContentsMargins(8, 8, 8, 8)  # Compact status card margins
+        layout.setSpacing(8)  # Reduced spacing in status cards
         
         # Status icon - use animated spinner or SVG for custom icons, text for fallback
         if icon == "spinner":
@@ -626,7 +611,7 @@ class SerialPortTestWidget(QWidget):
         
         # Text section
         text_layout = QVBoxLayout()
-        text_layout.setSpacing(AppDimensions.SPACING_SMALL)
+        text_layout.setSpacing(2)  # Minimal spacing between title and subtitle
         
         # Title
         title_label = QLabel(title)
@@ -691,13 +676,13 @@ class SerialPortTestWidget(QWidget):
         """)
         layout.addWidget(title_label)
         
-        # Properties grid
+        # Properties grid with tight spacing
         for key, value in properties.items():
             prop_layout = QHBoxLayout()
             prop_layout.setContentsMargins(0, 0, 0, 0)
-            prop_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
+            prop_layout.setSpacing(8)  # Fixed gap between columns
             
-            # Property name
+            # Property name - fixed width for alignment
             key_label = QLabel(f"{key}:")
             key_label.setStyleSheet(f"""
                 QLabel {{
@@ -707,10 +692,11 @@ class SerialPortTestWidget(QWidget):
                     background: transparent;
                 }}
             """)
-            key_label.setMinimumWidth(120)
+            key_label.setFixedWidth(100)  # Fixed width for consistent alignment
+            key_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
             prop_layout.addWidget(key_label)
             
-            # Property value
+            # Property value - pinned left with stretch after
             value_label = QLabel(str(value))
             value_label.setStyleSheet(f"""
                 QLabel {{
@@ -720,7 +706,11 @@ class SerialPortTestWidget(QWidget):
                     background: transparent;
                 }}
             """)
+            value_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            value_label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
             prop_layout.addWidget(value_label)
+            
+            # Add stretch to consume extra horizontal space
             prop_layout.addStretch()
             
             layout.addLayout(prop_layout)
@@ -738,13 +728,8 @@ class SerialPortTestWidget(QWidget):
         """)
         
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(
-            AppDimensions.SPACING_LARGE,
-            AppDimensions.SPACING_MEDIUM,
-            AppDimensions.SPACING_LARGE,
-            AppDimensions.SPACING_MEDIUM
-        )
-        layout.setSpacing(AppDimensions.SPACING_SMALL)
+        layout.setContentsMargins(8, 6, 8, 6)  # Compact info card margins
+        layout.setSpacing(2)  # Tight spacing between info items
         
         # Card title
         title_label = QLabel(title)

@@ -892,35 +892,34 @@ class AppStyles:
     
     @staticmethod
     def output_port_widget() -> str:
-        """Output port widget container style"""
+        """Output port widget container style - borderless for seamless integration"""
         return f"""
         OutputPortWidget {{
-            background-color: {AppColors.BACKGROUND_WHITE};
-            padding: {AppDimensions.PADDING_MEDIUM};
-            margin-bottom: {AppDimensions.SPACING_SMALL}px;
-        }}
-        OutputPortWidget:hover {{
-            background-color: {AppColors.BUTTON_HOVER};
+            background-color: transparent;
+            border: none;
+            padding: 0px;
+            margin: 0px;
         }}
         """
     
     @staticmethod
     def output_port_widget_pressed() -> str:
-        """Output port widget pressed state"""
+        """Output port widget pressed state - no styling for borderless design"""
         return f"""
         OutputPortWidget {{
-            background-color: {AppColors.BUTTON_PRESSED};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+            background-color: transparent;
+            border: none;
         }}
         """
     
     @staticmethod
     def output_port_widget_disabled() -> str:
-        """Output port widget disabled state"""
+        """Output port widget disabled state - minimal styling for borderless design"""
         return f"""
         OutputPortWidget:disabled {{
-            background-color: {AppColors.BACKGROUND_DISABLED};
-            border-color: {AppColors.BORDER_DISABLED};
+            background-color: transparent;
+            color: {AppColors.TEXT_DISABLED};
+            border: none;
         }}
         """
     
@@ -950,8 +949,8 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {border_color};
             border-left: 3px solid {border_color};
             margin: {AppDimensions.SPACING_SMALL}px 0px;
-            max-height: {AppDimensions.HEIGHT_PORT_TYPE_INDICATOR}px;
-            min-height: {AppDimensions.HEIGHT_PORT_TYPE_INDICATOR}px;
+            max-height: {AppDimensions.HEIGHT_STATUS_LABEL}px;
+            min-height: {AppDimensions.HEIGHT_STATUS_LABEL}px;
         }}
         """
     
