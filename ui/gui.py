@@ -474,7 +474,7 @@ class Hub4comGUI(QMainWindow):
             "play": "Start",
             "stop": "Stop",
             "port": "Ports",
-            "configure": "Configure"
+            "configure": "Config"
         }
         
         for config in buttons:
@@ -695,7 +695,7 @@ class Hub4comGUI(QMainWindow):
                 buttons=[
                     ButtonConfig("create", self.add_output_port, "Add new output port", True),
                     ButtonConfig("delete", self.remove_all_output_ports, "Remove all output ports", True, "remove_all_ports_btn"),
-                    ButtonConfig("configure", self.update_preview, "Update command preview", True)
+                    ButtonConfig("configure", self.show_launch_dialog, "Show launch configuration summary", True)
                 ],
                 width_hint=160  # Increased width
             ),
@@ -1345,6 +1345,22 @@ class Hub4comGUI(QMainWindow):
         self._update_status("Output routing configured: COM131 & COM141 @ 115200 baud, two-way mode enabled", component='com0com')
         QTimer.singleShot(200, self.update_preview)
     
+    def show_launch_dialog(self):
+        """Show the launch dialog with the current configuration"""
+        try:
+            created_pairs = getattr(self, 'created_pairs_info', [])
+            existing_pairs = getattr(self, 'existing_pairs_info', [])
+            
+            dialog = LaunchDialog(
+                parent=self,
+                created_pairs=created_pairs,
+                existing_pairs=existing_pairs
+            )
+            dialog.exec()
+        except Exception as e:
+            print(f"Error in show_launch_dialog: {type(e).__name__}: {e}")
+            self._show_message("Error", "Could not show the launch dialog.", "error")
+
     def _show_configuration_summary(self):
         """Show launch dialog to user if enabled in settings"""
         try:

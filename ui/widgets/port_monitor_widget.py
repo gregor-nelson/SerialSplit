@@ -303,12 +303,12 @@ class EnhancedPortInfoWidget(QWidget):
         """)
         monitor_section.addWidget(self.tx_value)
         
-        # Hide monitoring section initially
+        # Show monitoring section by default
         self.monitor_container = QWidget()
         monitor_layout = QHBoxLayout(self.monitor_container)
         monitor_layout.setContentsMargins(0, 0, 0, 0)
         monitor_layout.addLayout(monitor_section)
-        self.monitor_container.setVisible(False)
+        self.monitor_container.setVisible(True)
         
         panel_layout.addWidget(self.monitor_container)
         panel_layout.addStretch()
@@ -390,12 +390,12 @@ class EnhancedPortInfoWidget(QWidget):
                 max-height: 1px;
             }}
         """)
-        self.separator.setVisible(False)
+        self.separator.setVisible(True)
         layout.addWidget(self.separator)
         
         # Combined chart section - pre-allocated space that fills vertically
         self.chart_container = QWidget()
-        self.chart_container.setVisible(False)
+        self.chart_container.setVisible(True)
         self.chart_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.chart_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
@@ -410,7 +410,7 @@ class EnhancedPortInfoWidget(QWidget):
         
         # Invisible spacer to maintain consistent width when chart is hidden
         self.chart_spacer = QWidget()
-        self.chart_spacer.setVisible(True)  # Always visible to maintain width
+        self.chart_spacer.setVisible(False)
         # Remove minimum width constraint for flexible scaling
         self.chart_spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         layout.addWidget(self.chart_spacer)
@@ -536,16 +536,12 @@ class EnhancedPortInfoWidget(QWidget):
         
         if self.port_monitor.start_monitoring():
             self._update_monitor_button_icon(True)
-            self.monitor_container.setVisible(True)
-            self.chart_container.setVisible(True)
-            self.separator.setVisible(True)
             self.time_label.setVisible(True)
-            self.chart_spacer.setVisible(False)  # Hide spacer when chart is active
         
-        # Allow chart to expand to fill available space without height limits
-        self.chart_container.setMaximumHeight(16777215)  # QWIDGETSIZE_MAX
-        self.data_chart.setMaximumHeight(16777215)  # QWIDGETSIZE_MAX
-        self.update_timer.start(10)  # Update chart 4x per second
+            # Allow chart to expand to fill available space without height limits
+            self.chart_container.setMaximumHeight(16777215)  # QWIDGETSIZE_MAX
+            self.data_chart.setMaximumHeight(16777215)  # QWIDGETSIZE_MAX
+            self.update_timer.start(10)  # Update chart 4x per second
     
     def stop_monitoring(self):
         """Stop port monitoring"""
@@ -555,15 +551,7 @@ class EnhancedPortInfoWidget(QWidget):
             
         self.update_timer.stop()
         self._update_monitor_button_icon(False)
-        self.monitor_container.setVisible(False)
-        self.chart_container.setVisible(False)
-        self.separator.setVisible(False)
         self.time_label.setVisible(False)
-        self.chart_spacer.setVisible(True)  # Show spacer to maintain width
-        
-        # Reset chart size constraints
-        self.chart_container.setMaximumHeight(0)
-        self.data_chart.setMaximumHeight(0)
         
         # Reset displays
         self.rx_value.setText("0 B/s")
