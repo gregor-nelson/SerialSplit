@@ -446,7 +446,7 @@ class AppStyles:
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid transparent;
         }}
         """
-    
+
     @staticmethod
     def combobox() -> str:
         """Windows 10 system combobox - exact native styling"""

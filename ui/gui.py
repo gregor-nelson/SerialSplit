@@ -155,7 +155,7 @@ class ControlPanelBuilder:
         
         layout = QHBoxLayout(panel)
         layout.setSpacing(16)  # Increased spacing between columns
-        layout.setContentsMargins(12, 12, 12, 12)  # Even more generous margins
+        layout.setContentsMargins(2, 2, 2, 2)  # Reduced margins for control panels
         
         # Add columns
         for i, column in enumerate(columns):
@@ -184,18 +184,18 @@ class ControlPanelBuilder:
         widget.setMinimumWidth(column.width_hint)
         
         layout = QVBoxLayout(widget)
-        layout.setSpacing(6)  # Further increased spacing between title and buttons
+        layout.setSpacing(3)  # Compact spacing between title and buttons
         layout.setContentsMargins(0, 0, 0, 0)
         
         # Column title
         title_label = QLabel(column.title)
-        title_label.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))  # Increased to 10pt
-        title_label.setStyleSheet("QLabel { color: #333333; padding: 6px 0px; margin-bottom: 2px; }")  # More padding and margin
+        title_label.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8, QFont.Weight.Bold))  # Use SMALL_SIZE from theme
+        title_label.setStyleSheet("QLabel { color: #333333; padding: 2px 0px; }")  # Minimal padding for compact headers
         layout.addWidget(title_label)
         
         # Button row
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(8)  # Further increased spacing between buttons
+        button_layout.setSpacing(4)  # Compact spacing between buttons
         button_layout.setContentsMargins(0, 0, 0, 0)
         
         # Create buttons using parent's button creation method
@@ -224,8 +224,8 @@ class ControlPanelBuilder:
         if len(indicators) == 1:
             # Single status indicator
             status_label = QLabel(indicators[0].initial_text)
-            status_label.setFont(QFont("Segoe UI", 10))  # Further increased
-            status_label.setStyleSheet("QLabel { color: #666666; padding: 6px 15px; font-style: italic; min-height: 20px; }")  # More padding and min height
+            status_label.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8))  # Use SMALL_SIZE
+            status_label.setStyleSheet("QLabel { color: #666666; padding: 4px 8px; font-style: italic; }")  # Compact padding
             self.parent.ui_refs[indicators[0].key] = status_label
             return status_label
         else:
@@ -237,8 +237,8 @@ class ControlPanelBuilder:
             
             for indicator in indicators:
                 label = QLabel(indicator.initial_text)
-                label.setFont(QFont("Segoe UI", 10))  # Further increased
-                label.setStyleSheet("QLabel { color: #666666; padding: 3px 15px; font-style: italic; min-height: 18px; }")  # More padding and min height
+                label.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8))  # Use SMALL_SIZE
+                label.setStyleSheet("QLabel { color: #666666; padding: 2px 8px; font-style: italic; }")  # Compact padding
                 layout.addWidget(label)
                 self.parent.ui_refs[indicator.key] = label
             
@@ -414,12 +414,34 @@ class Hub4comGUI(QMainWindow):
     # ========================================================================
     
     def _create_groupbox_with_layout(self, title: str, layout_class=QVBoxLayout) -> tuple:
-        """Create a styled groupbox with layout"""
+        """Create a styled groupbox with layout optimized for control panels"""
         group = ThemeManager.create_groupbox(title)
+        
+        # Override GroupBox styling to prevent control panel clipping
+        group.setStyleSheet(f"""
+            QGroupBox {{
+                font-weight: normal;
+                color: {AppColors.TEXT_DEFAULT};
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+                margin-top: 12px;  /* Reduced from 8px */
+                padding-top: 2px;  /* Minimal padding - reduced from 6px */
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                font-family: {AppFonts.DEFAULT_FAMILY};
+                font-size: {AppFonts.DEFAULT_SIZE};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: {AppDimensions.SPACING_LARGE}px;
+                padding: 0 {AppDimensions.SPACING_SMALL}px;
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                color: {AppColors.TEXT_DEFAULT};
+            }}
+        """)
+        
         layout = layout_class(group) if layout_class else None
         if layout:
             layout.setSpacing(AppDimensions.SPACING_MEDIUM)
-            ThemeManager.set_widget_margins(layout, "standard")
+            layout.setContentsMargins(8, 4, 8, 8)  # Minimal top margin
         return group, layout
     
     def _create_icon_button_group(self, buttons: List[ButtonConfig], 
@@ -462,7 +484,7 @@ class Hub4comGUI(QMainWindow):
             btn.setMaximumWidth(120)  # Further increased 
             btn.setMinimumHeight(32)  # Much taller buttons
             btn.setMaximumHeight(32)  # Much taller buttons
-            btn.setFont(QFont("Segoe UI", 9))  # Keep at 9pt
+            btn.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8))  # Use SMALL_SIZE for compact appearance
             
             # Set button text
             button_text = button_text_map.get(config.icon_name, config.icon_name.title())
@@ -489,11 +511,10 @@ class Hub4comGUI(QMainWindow):
                 QPushButton {
                     background-color: transparent;
                     border: 1px solid transparent;
-                    border-radius: 2px;
                     padding: 4px 10px 4px 26px;  /* More generous padding */
                     text-align: left;
                     font-family: "Segoe UI";
-                    font-size: 9pt;
+                    font-size: 8pt;  /* Match button font */
                     color: #333333;
                     line-height: 1.2;
                 }
@@ -518,11 +539,10 @@ class Hub4comGUI(QMainWindow):
                     QPushButton {
                         background-color: #e5f3ff;
                         border: 1px solid #cce4f7;
-                        border-radius: 2px;
                         padding: 4px 10px 4px 26px;  /* More generous padding */
                         text-align: left;
                         font-family: "Segoe UI";
-                        font-size: 9pt;
+                        font-size: 8pt;  /* Match button font */
                         color: #0078d4;
                         font-weight: normal;
                         line-height: 1.2;
@@ -605,6 +625,7 @@ class Hub4comGUI(QMainWindow):
         """Create virtual ports management section with clean column-based layout"""
         group, layout = self._create_groupbox_with_layout("Com0com Configuration")
         
+        
         # Define control panel structure
         columns = [
             ControlPanelColumn(
@@ -635,7 +656,6 @@ class Hub4comGUI(QMainWindow):
         control_panel = self.control_panel_builder.create_control_panel(columns, status_indicators)
         layout.addWidget(control_panel)
         
-        
         # Port pairs list
         self.ui_refs['port_pairs_list'] = ThemeManager.create_listwidget()
         self.ui_refs['port_pairs_list'].itemSelectionChanged.connect(self.on_pair_selected)
@@ -658,7 +678,7 @@ class Hub4comGUI(QMainWindow):
     
     def _create_configuration_section(self) -> QGroupBox:
         """Create hub4com configuration section with clean column-based layout"""
-        group, layout = self._create_groupbox_with_layout("Hub4com Configuration", QGridLayout)
+        group, layout = self._create_groupbox_with_layout("Hub4com Configuration", QVBoxLayout)
         
         # Define control panel structure with 3 columns
         columns = [
@@ -698,7 +718,7 @@ class Hub4comGUI(QMainWindow):
         
         # Create control panel using the builder
         control_panel = self.control_panel_builder.create_control_panel(columns, status_indicators)
-        layout.addWidget(control_panel, 0, 0, 1, 4)
+        layout.addWidget(control_panel)
         
         # Initialize hidden settings
         self._init_hidden_settings()
@@ -711,10 +731,10 @@ class Hub4comGUI(QMainWindow):
         ports_splitter.setChildrenCollapsible(False)  # Prevent collapse
         ports_splitter.setStretchFactor(0, 1)  # Incoming: equal scaling
         ports_splitter.setStretchFactor(1, 1)  # Outgoing: equal scaling
-        layout.addWidget(ports_splitter, 1, 0, 1, 4)
+        layout.addWidget(ports_splitter)
         
         return group
-
+    
     def _init_hidden_settings(self):
         """Initialize hidden checkbox settings"""
         self.ui_refs['disable_cts'] = ThemeManager.create_checkbox("Disable CTS Handshaking")

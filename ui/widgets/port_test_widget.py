@@ -768,7 +768,6 @@ class SerialPortTestWidget(QWidget):
             QFrame {{
                 background-color: {AppColors.BACKGROUND_WHITE};
                 border: 1px solid {AppColors.BORDER_LIGHT};
-                border-radius: 3px;
                 padding: 0px;
                 margin: 1px;
             }}

@@ -201,7 +201,6 @@ class PortScanDialog(QDialog):
             QTableWidget {{
                 background-color: {AppColors.BACKGROUND_WHITE};
                 border: 1px solid {AppColors.BORDER_LIGHT};
-                border-radius: 8px;
                 selection-background-color: {AppColors.SELECTION_BG};
                 gridline-color: transparent;
                 font-family: {AppFonts.DEFAULT_FAMILY};
@@ -222,8 +221,6 @@ class PortScanDialog(QDialog):
                 background-color: {AppColors.BUTTON_HOVER};
             }}
             QTableWidget::item:first {{
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
             }}
             QHeaderView::section {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
@@ -236,10 +233,8 @@ class PortScanDialog(QDialog):
                 border-right: 1px solid {AppColors.BORDER_LIGHT};
             }}
             QHeaderView::section:first {{
-                border-top-left-radius: 8px;
             }}
             QHeaderView::section:last {{
-                border-top-right-radius: 8px;
                 border-right: none;
             }}
             QHeaderView::section:hover {{
@@ -311,7 +306,6 @@ class PortScanDialog(QDialog):
             QTextEdit {{
                 background-color: {AppColors.BACKGROUND_WHITE};
                 border: 1px solid {AppColors.BORDER_LIGHT};
-                border-radius: 8px;
                 padding: 16px;
                 font-family: {AppFonts.DEFAULT_FAMILY};
                 font-size: 10pt;
@@ -544,7 +538,6 @@ class PortScanDialog(QDialog):
             .moxa-section {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
                 padding: 12px;
-                border-radius: 6px;
                 margin-top: 12px;
             }}
             .recommendation {{
@@ -555,7 +548,6 @@ class PortScanDialog(QDialog):
             .port-type {{
                 display: inline-block;
                 padding: 4px 8px;
-                border-radius: 4px;
                 font-size: 9pt;
                 font-weight: 500;
         """

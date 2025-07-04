@@ -715,7 +715,6 @@ class EnhancedPortInfoWidget(QWidget):
                 color: #007bff;
                 font-size: 12pt;
                 background: {AppColors.SUCCESS_PRIMARY};
-                border-radius: 6px;
                 padding: 2px;
             }}
         """)

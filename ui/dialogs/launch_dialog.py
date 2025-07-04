@@ -73,7 +73,7 @@ class LaunchDialog(QDialog):
         <h3>Configured Components</h3>
         <ul>
             <li><b>Virtual Port Pairs:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">✓</span> {port_status_data['pairs_html']}</li>
-            <li><b>Baud Rate:</b> <code style="background: {AppColors.GRAY_200}; padding: 2px 4px; border-radius: 2px;">{self.default_config.default_baud}</code></li>
+            <li><b>Baud Rate:</b> <code style="background: {AppColors.GRAY_200}; padding: 2px 4px;">{self.default_config.default_baud}</code></li>
             <li><b>Buffer Management:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">Enabled</span></li>
             <li><b>Timing Control:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">Enabled</span></li>
         </ul>
@@ -105,7 +105,7 @@ class LaunchDialog(QDialog):
         # Format pairs list simply
         formatted_pairs = []
         for pair in pairs_list:
-            formatted_pairs.append(f'<code style="background: {AppColors.GRAY_100}; padding: 2px 4px; border-radius: 2px;">{pair}</code>')
+            formatted_pairs.append(f'<code style="background: {AppColors.GRAY_100}; padding: 2px 4px;">{pair}</code>')
         
         pairs_html = ", ".join(formatted_pairs)
         
@@ -119,7 +119,7 @@ class LaunchDialog(QDialog):
         ports = ["COM132", "COM142"]
         formatted_ports = []
         for port in ports:
-            formatted_ports.append(f'<code style="background: {AppColors.GRAY_200}; padding: 2px 4px; border-radius: 2px;">{port}</code>')
+            formatted_ports.append(f'<code style="background: {AppColors.GRAY_200}; padding: 2px 4px;">{port}</code>')
         
         return " and ".join(formatted_ports)
     
