@@ -98,8 +98,8 @@ class CombinedDataChart(QWidget):
         
         # Draw data if available within chart area
         if len(self.rx_data) > 1 and self.max_value > 0:
-            self._draw_data_line(painter, self.rx_data, QColor("#28a745"), margin_left, margin_top, chart_width, chart_height)  # Green for RX
-            self._draw_data_line(painter, self.tx_data, QColor("#007bff"), margin_left, margin_top, chart_width, chart_height)  # Blue for TX
+            self._draw_data_line(painter, self.rx_data, QColor(AppColors.ACCENT_GREEN), margin_left, margin_top, chart_width, chart_height)  # Green for RX
+            self._draw_data_line(painter, self.tx_data, QColor(AppColors.ACCENT_BLUE), margin_left, margin_top, chart_width, chart_height)  # Blue for TX
     
     def _draw_data_line(self, painter, data, color, margin_left, margin_top, chart_width, chart_height):
         """Draw a data line with fill area within chart bounds"""
@@ -239,7 +239,7 @@ class EnhancedPortInfoWidget(QWidget):
         self.rx_indicator = QLabel("●")
         self.rx_indicator.setStyleSheet(f"""
             QLabel {{
-                color: #28a745;
+                color: {AppColors.ACCENT_GREEN};
                 font-size: 12pt;
                 background: transparent;
             }}
@@ -273,7 +273,7 @@ class EnhancedPortInfoWidget(QWidget):
         self.tx_indicator = QLabel("●")
         self.tx_indicator.setStyleSheet(f"""
             QLabel {{
-                color: #007bff;
+                color: {AppColors.ACCENT_BLUE};
                 font-size: 12pt;
                 background: transparent;
             }}
@@ -712,7 +712,7 @@ class EnhancedPortInfoWidget(QWidget):
         # Highlight style
         self.tx_indicator.setStyleSheet(f"""
             QLabel {{
-                color: #007bff;
+                color: {AppColors.ACCENT_BLUE};
                 font-size: 12pt;
                 background: {AppColors.SUCCESS_PRIMARY};
                 padding: 2px;

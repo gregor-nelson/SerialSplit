@@ -136,8 +136,7 @@ class SerialPortTestWidget(QWidget):
     def init_ui(self):
         """Initialize the user interface with theme integration"""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(6, 4, 6, 4)  # Tighter main margins
-        main_layout.setSpacing(6)  # Reduced spacing between sections
+        main_layout.setSpacing(2)  # Reduced spacing between sections
         
         # Header section
         header_layout = QHBoxLayout()
@@ -671,7 +670,6 @@ class SerialPortTestWidget(QWidget):
                 font-size: {AppFonts.DEFAULT_SIZE};
                 font-weight: {AppFonts.BOLD_WEIGHT};
                 background: transparent;
-                padding-bottom: 4px;
             }}
         """)
         layout.addWidget(title_label)
@@ -728,7 +726,7 @@ class SerialPortTestWidget(QWidget):
         """)
         
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(8, 6, 8, 6)  # Compact info card margins
+        layout.setContentsMargins(2, 2, 2, 2)  # Compact info card margins
         layout.setSpacing(2)  # Tight spacing between info items
         
         # Card title
@@ -740,7 +738,6 @@ class SerialPortTestWidget(QWidget):
                 font-size: {AppFonts.DEFAULT_SIZE};
                 font-weight: {AppFonts.BOLD_WEIGHT};
                 background: transparent;
-                padding-bottom: 4px;
             }}
         """)
         layout.addWidget(title_label)
@@ -767,17 +764,13 @@ class SerialPortTestWidget(QWidget):
         card.setStyleSheet(f"""
             QFrame {{
                 background-color: {AppColors.BACKGROUND_WHITE};
-                border: 1px solid {AppColors.BORDER_LIGHT};
                 padding: 0px;
-                margin: 1px;
-            }}
-            QFrame:hover {{
-                border: 1px solid {AppColors.BORDER_DEFAULT};
+                margin: 2px;
             }}
         """)
         
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(12, 10, 12, 10)  # Windows 10 standard padding
+        layout.setContentsMargins(6, 6, 6, 6)  # Windows 10 standard padding
         layout.setSpacing(8)
         
         # Card header with icon and title

@@ -17,6 +17,8 @@ from typing import Dict, Any, Optional, Callable
 import math
 from .icons.icons import AppIcons
 
+
+
 @dataclass
 class AppColors:
     """Exact Windows 10 system color palette from registry and theme specifications"""
@@ -1630,7 +1632,6 @@ class HTMLTheme:
         """Format text with success styling"""
         return f'<span class="success">{text}</span>'
     
-
 # Configuration constants that should be in the theme
 class Config:
     """Application configuration constants using theme system"""
