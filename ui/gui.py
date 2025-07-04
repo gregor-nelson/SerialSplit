@@ -123,6 +123,127 @@ class PortManager:
         return "", ""
 
 
+@dataclass
+class ControlPanelColumn:
+    """Configuration for a control panel column"""
+    title: str
+    buttons: List[ButtonConfig]
+    width_hint: int = 100  # Minimum width hint
+    
+@dataclass
+class StatusIndicator:
+    """Configuration for status indicators"""
+    key: str
+    initial_text: str
+    
+class ControlPanelBuilder:
+    """Builds clean, robust column-based control panels"""
+    
+    def __init__(self, parent):
+        self.parent = parent
+        
+    def create_control_panel(self, columns: List[ControlPanelColumn], 
+                           status_indicators: List[StatusIndicator] = None) -> QWidget:
+        """Create a professional column-based control panel"""
+        panel = QWidget()
+        panel.setStyleSheet("""
+            QWidget {
+                background-color: #f8f8f8;
+                border-bottom: 1px solid #d0d0d0;
+            }
+        """)
+        
+        layout = QHBoxLayout(panel)
+        layout.setSpacing(16)  # Increased spacing between columns
+        layout.setContentsMargins(12, 12, 12, 12)  # Even more generous margins
+        
+        # Add columns
+        for i, column in enumerate(columns):
+            column_widget = self._create_column(column)
+            layout.addWidget(column_widget)
+            
+            # Add separator between columns (except after last column)
+            if i < len(columns) - 1:
+                separator = self._create_column_separator()
+                layout.addWidget(separator)
+        
+        # Add stretch before status indicators
+        layout.addStretch()
+        
+        # Add status indicators
+        if status_indicators:
+            status_widget = self._create_status_section(status_indicators)
+            layout.addWidget(status_widget)
+        
+        panel.setFixedHeight(65)  # Significantly increased height for full visibility
+        return panel
+    
+    def _create_column(self, column: ControlPanelColumn) -> QWidget:
+        """Create a single column with title and buttons"""
+        widget = QWidget()
+        widget.setMinimumWidth(column.width_hint)
+        
+        layout = QVBoxLayout(widget)
+        layout.setSpacing(6)  # Further increased spacing between title and buttons
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Column title
+        title_label = QLabel(column.title)
+        title_label.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))  # Increased to 10pt
+        title_label.setStyleSheet("QLabel { color: #333333; padding: 6px 0px; margin-bottom: 2px; }")  # More padding and margin
+        layout.addWidget(title_label)
+        
+        # Button row
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(8)  # Further increased spacing between buttons
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Create buttons using parent's button creation method
+        button_refs = self.parent._create_icon_button_group(column.buttons, button_layout)
+        
+        # Update parent's UI references
+        self.parent.ui_refs.update(button_refs)
+        
+        # Add stretch to left-align buttons
+        button_layout.addStretch()
+        
+        layout.addLayout(button_layout)
+        
+        return widget
+    
+    def _create_column_separator(self) -> QFrame:
+        """Create a vertical separator between columns"""
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.VLine)
+        separator.setStyleSheet("QFrame { color: #d0d0d0; margin: 2px 0px; }")
+        separator.setMaximumHeight(55)  # Increased to match new panel height
+        return separator
+    
+    def _create_status_section(self, indicators: List[StatusIndicator]) -> QWidget:
+        """Create status indicators section"""
+        if len(indicators) == 1:
+            # Single status indicator
+            status_label = QLabel(indicators[0].initial_text)
+            status_label.setFont(QFont("Segoe UI", 10))  # Further increased
+            status_label.setStyleSheet("QLabel { color: #666666; padding: 6px 15px; font-style: italic; min-height: 20px; }")  # More padding and min height
+            self.parent.ui_refs[indicators[0].key] = status_label
+            return status_label
+        else:
+            # Multiple status indicators in vertical layout
+            widget = QWidget()
+            layout = QVBoxLayout(widget)
+            layout.setSpacing(1)
+            layout.setContentsMargins(0, 0, 0, 0)
+            
+            for indicator in indicators:
+                label = QLabel(indicator.initial_text)
+                label.setFont(QFont("Segoe UI", 10))  # Further increased
+                label.setStyleSheet("QLabel { color: #666666; padding: 3px 15px; font-style: italic; min-height: 18px; }")  # More padding and min height
+                layout.addWidget(label)
+                self.parent.ui_refs[indicator.key] = label
+            
+            return widget
+
 class CommandBuilder:
     """Builds hub4com commands"""
     def __init__(self):
@@ -198,6 +319,7 @@ class Hub4comGUI(QMainWindow):
         self.command_builder = CommandBuilder()
         self.command_formatter = CommandFormatter()
         self.output_log_formatter = OutputLogFormatter()
+        self.control_panel_builder = ControlPanelBuilder(self)
         
         # State management
         self.app_state = {
@@ -302,13 +424,124 @@ class Hub4comGUI(QMainWindow):
     
     def _create_icon_button_group(self, buttons: List[ButtonConfig], 
                                   layout: QHBoxLayout) -> Dict[str, QPushButton]:
-        """Create a group of icon buttons"""
+        """Create a group of Windows Explorer style compact buttons with SVG icons"""
         created_buttons = {}
         
+        # Icon mapping to SVG names
+        icon_svg_map = {
+            "refresh": "REFRESH",
+            "create": "CREATE", 
+            "delete": "DELETE",
+            "settings": "SETTINGS",
+            "help": "HELP",
+            "list": "SEARCH",  # Use search icon for port scanning
+            "play": "PLAY",
+            "stop": "STOP",
+            "port": "PORT",
+            "configure": "CONFIGURE"
+        }
+        
+        # Button text mapping
+        button_text_map = {
+            "refresh": "Refresh",
+            "create": "New",
+            "delete": "Delete",
+            "settings": "Settings",
+            "help": "Help",
+            "list": "Scan",
+            "play": "Start",
+            "stop": "Stop",
+            "port": "Ports",
+            "configure": "Configure"
+        }
+        
         for config in buttons:
-            btn = ThemeManager.create_icon_button(
-                config.icon_name, config.tooltip, "medium"
-            )
+            # Create base button with Windows Explorer styling
+            btn = QPushButton()
+            btn.setMinimumWidth(90)  # Further increased
+            btn.setMaximumWidth(120)  # Further increased 
+            btn.setMinimumHeight(32)  # Much taller buttons
+            btn.setMaximumHeight(32)  # Much taller buttons
+            btn.setFont(QFont("Segoe UI", 9))  # Keep at 9pt
+            
+            # Set button text
+            button_text = button_text_map.get(config.icon_name, config.icon_name.title())
+            btn.setText(button_text)
+            btn.setToolTip(config.tooltip)
+            
+            # Add SVG icon if available using the ThemeManager system
+            svg_name = icon_svg_map.get(config.icon_name)
+            if svg_name:
+                try:
+                    # Use the IconManager directly to create the icon
+                    from ui.theme.icons.icons import AppIcons
+                    icon_template = getattr(AppIcons, svg_name, None)
+                    if icon_template:
+                        icon_size = QSize(16, 16)
+                        icon = IconManager.create_svg_icon(icon_template, AppColors.ICON_DEFAULT, icon_size)
+                        btn.setIcon(icon)
+                        btn.setIconSize(icon_size)
+                except Exception as e:
+                    print(f"Warning: Could not load icon {svg_name}: {e}")
+            
+            # Apply Windows Explorer button styling - subtle and compact
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: transparent;
+                    border: 1px solid transparent;
+                    border-radius: 2px;
+                    padding: 4px 10px 4px 26px;  /* More generous padding */
+                    text-align: left;
+                    font-family: "Segoe UI";
+                    font-size: 9pt;
+                    color: #333333;
+                    line-height: 1.2;
+                }
+                QPushButton:hover {
+                    background-color: #e5f3ff;
+                    border-color: #cce4f7;
+                }
+                QPushButton:pressed {
+                    background-color: #cce4f7;
+                    border-color: #9ac9e3;
+                }
+                QPushButton:disabled {
+                    background-color: transparent;
+                    color: #999999;
+                    border-color: transparent;
+                }
+            """)
+            
+            # Special styling for primary actions
+            if config.icon_name in ["play", "create"]:
+                btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #e5f3ff;
+                        border: 1px solid #cce4f7;
+                        border-radius: 2px;
+                        padding: 4px 10px 4px 26px;  /* More generous padding */
+                        text-align: left;
+                        font-family: "Segoe UI";
+                        font-size: 9pt;
+                        color: #0078d4;
+                        font-weight: normal;
+                        line-height: 1.2;
+                    }
+                    QPushButton:hover {
+                        background-color: #d0e7ff;
+                        border-color: #9ac9e3;
+                    }
+                    QPushButton:pressed {
+                        background-color: #bde0ff;
+                        border-color: #7bb8dd;
+                    }
+                    QPushButton:disabled {
+                        background-color: #f5f5f5;
+                        color: #999999;
+                        border-color: #d0d0d0;
+                    }
+                """)
+            
             btn.clicked.connect(config.callback)
             btn.setEnabled(config.enabled)
             layout.addWidget(btn)
@@ -369,46 +602,50 @@ class Hub4comGUI(QMainWindow):
     # ========================================================================
     
     def _create_virtual_ports_section(self) -> QGroupBox:
-        """Create virtual ports management section"""
+        """Create virtual ports management section with clean column-based layout"""
         group, layout = self._create_groupbox_with_layout("Com0com Configuration")
         
-        # Control buttons
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
-        
-        # Create all buttons using button group helper
-        button_configs = [
-            ButtonConfig("refresh", self.list_com0com_pairs, "Refresh port pairs list", True),
-            ButtonConfig("create", self.create_com0com_pair, "Create new virtual port pair", True),
-            ButtonConfig("delete", self.remove_com0com_pair, "Delete selected pair", False, "remove_pair_btn"),
-            ButtonConfig("settings", self.show_settings_menu, "Configure selected pair", False, "settings_btn"),
-            ButtonConfig("help", lambda: self._show_help(HelpTopic.COM0COM_SETTINGS), "Help and documentation", True)
+        # Define control panel structure
+        columns = [
+            ControlPanelColumn(
+                title="Port Management",
+                buttons=[
+                    ButtonConfig("refresh", self.list_com0com_pairs, "Refresh port pairs list", True),
+                    ButtonConfig("create", self.create_com0com_pair, "Create new virtual port pair", True)
+                ],
+                width_hint=160  # Increased width
+            ),
+            ControlPanelColumn(
+                title="Pair Configuration",
+                buttons=[
+                    ButtonConfig("delete", self.remove_com0com_pair, "Delete selected pair", False, "remove_pair_btn"),
+                    ButtonConfig("settings", self.show_settings_menu, "Configure selected pair", False, "settings_btn"),
+                    ButtonConfig("help", lambda: self._show_help(HelpTopic.COM0COM_SETTINGS), "Help and documentation", True)
+                ],
+                width_hint=180  # Increased width
+            )
         ]
         
-        # Add action buttons
-        action_buttons = self._create_icon_button_group(button_configs[:2], buttons_layout)
+        # Define status indicators
+        status_indicators = [
+            StatusIndicator("com0com_status", AppMessages.READY)
+        ]
         
-        # Add separator
-        buttons_layout.addWidget(ThemeManager.create_separator("vertical"))
+        # Create control panel using the builder
+        control_panel = self.control_panel_builder.create_control_panel(columns, status_indicators)
+        layout.addWidget(control_panel)
         
-        # Add management buttons
-        mgmt_buttons = self._create_icon_button_group(button_configs[2:], buttons_layout)
-        self.ui_refs.update(mgmt_buttons)
-        
-        # Status label
-        self.ui_refs['com0com_status'] = ThemeManager.create_status_label_inline(AppMessages.READY)
-        buttons_layout.addWidget(self.ui_refs['com0com_status'])
-        buttons_layout.addStretch()
-        buttons_container = QWidget()
-        buttons_container.setLayout(buttons_layout)
-        buttons_container.setFixedHeight(50)
-        layout.addWidget(buttons_container)
         
         # Port pairs list
         self.ui_refs['port_pairs_list'] = ThemeManager.create_listwidget()
         self.ui_refs['port_pairs_list'].itemSelectionChanged.connect(self.on_pair_selected)
         self.ui_refs['port_pairs_list'].itemDoubleClicked.connect(self.on_pair_double_clicked)
         self.ui_refs['port_pairs_list'].setMaximumHeight(AppDimensions.HEIGHT_LIST_MEDIUM)
+        
+        # Add right-click context menu support
+        self.ui_refs['port_pairs_list'].setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.ui_refs['port_pairs_list'].customContextMenuRequested.connect(self.show_port_pair_context_menu)
+        
         layout.addWidget(self.ui_refs['port_pairs_list'])
         
         # Progress bar
@@ -420,54 +657,48 @@ class Hub4comGUI(QMainWindow):
         return group
     
     def _create_configuration_section(self) -> QGroupBox:
-        """Create hub4com configuration section"""
+        """Create hub4com configuration section with clean column-based layout"""
         group, layout = self._create_groupbox_with_layout("Hub4com Configuration", QGridLayout)
         
-        # Unified control bar
-        controls_layout = QHBoxLayout()
-        controls_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
-        
-        # All hub4com control buttons
-        button_configs = [
-            ButtonConfig("list", self.show_port_scanner, "Scan ports for detailed analysis", True),
-            ButtonConfig("refresh", self.refresh_port_lists, "Refresh port lists", True),
-            ButtonConfig("create", self.add_output_port, "Add new output port", True),
-            ButtonConfig("delete", self.remove_all_output_ports, "Remove all output ports", True, "remove_all_ports_btn"),
-            ButtonConfig("settings", self.show_hub4com_settings_menu, "Hub4com configuration settings", True, "hub4com_settings_btn"),
-            ButtonConfig("refresh", self.update_preview, "Update command preview", True),
-            ButtonConfig("play", self.start_hub4com, "Start hub4com routing", True, "start_btn"),
-            ButtonConfig("stop", self.stop_hub4com, "Stop hub4com routing", False, "stop_btn")
+        # Define control panel structure with 3 columns
+        columns = [
+            ControlPanelColumn(
+                title="Port Discovery",
+                buttons=[
+                    ButtonConfig("list", self.show_port_scanner, "Scan ports for detailed analysis", True),
+                    ButtonConfig("refresh", self.refresh_port_lists, "Refresh port lists", True)
+                ],
+                width_hint=140  # Increased width
+            ),
+            ControlPanelColumn(
+                title="Port Management",
+                buttons=[
+                    ButtonConfig("create", self.add_output_port, "Add new output port", True),
+                    ButtonConfig("delete", self.remove_all_output_ports, "Remove all output ports", True, "remove_all_ports_btn"),
+                    ButtonConfig("configure", self.update_preview, "Update command preview", True)
+                ],
+                width_hint=160  # Increased width
+            ),
+            ControlPanelColumn(
+                title="Hub4com Control",
+                buttons=[
+                    ButtonConfig("settings", self.show_hub4com_settings_menu, "Hub4com configuration settings", True, "hub4com_settings_btn"),
+                    ButtonConfig("play", self.start_hub4com, "Start hub4com routing", True, "start_btn"),
+                    ButtonConfig("stop", self.stop_hub4com, "Stop hub4com routing", False, "stop_btn")
+                ],
+                width_hint=150  # Increased width
+            )
         ]
         
-        # Port status label
-        self.ui_refs['port_status'] = ThemeManager.create_status_label_inline(AppMessages.SCANNING)
-        
-        # Create buttons in groups with separators
-        button_groups = [
-            (button_configs[:2], None),  # Scan buttons
-            ([], self.ui_refs['port_status']),  # Status label
-            (button_configs[2:4], None),  # Port management
-            (button_configs[4:5], None),  # Settings
-            (button_configs[5:], None),   # Hub4com controls
+        # Define dual status indicators
+        status_indicators = [
+            StatusIndicator("port_status", AppMessages.SCANNING),
+            StatusIndicator("status_label", AppMessages.READY)
         ]
         
-        for buttons, widget in button_groups:
-            if buttons:
-                created = self._create_icon_button_group(buttons, controls_layout)
-                self.ui_refs.update(created)
-            if widget:
-                controls_layout.addWidget(widget)
-            if buttons and button_groups.index((buttons, widget)) < len(button_groups) - 1:
-                controls_layout.addWidget(ThemeManager.create_separator("vertical"))
-        
-        # Status label
-        self.ui_refs['status_label'] = ThemeManager.create_status_label_inline(AppMessages.READY)
-        controls_layout.addWidget(self.ui_refs['status_label'])
-        controls_layout.addStretch()
-        controls_container = QWidget()
-        controls_container.setLayout(controls_layout)
-        controls_container.setFixedHeight(50)
-        layout.addWidget(controls_container, 0, 0, 1, 4)
+        # Create control panel using the builder
+        control_panel = self.control_panel_builder.create_control_panel(columns, status_indicators)
+        layout.addWidget(control_panel, 0, 0, 1, 4)
         
         # Initialize hidden settings
         self._init_hidden_settings()
@@ -1451,6 +1682,35 @@ class Hub4comGUI(QMainWindow):
         menu.addSeparator()
         menu.addAction("Help", lambda: self._show_help(HelpTopic.COM0COM_SETTINGS))
         return menu
+
+    def show_port_pair_context_menu(self, position):
+        """Show context menu for port pair right-click"""
+        # Get the item at the clicked position
+        item = self.ui_refs['port_pairs_list'].itemAt(position)
+        if not item or "No virtual port pairs found" in item.text():
+            return
+        
+        # Select the item to maintain consistency with existing behavior
+        self.ui_refs['port_pairs_list'].setCurrentItem(item)
+        
+        # Parse port names and settings for the clicked item
+        item_text = item.text()
+        port_a, port_b = self.port_manager.extract_port_info(item_text)
+        
+        if not port_a or not port_b:
+            return
+        
+        current_settings = self._parse_current_settings(item.toolTip())
+        
+        # Create and show the same menu as the settings button
+        menu = self._create_settings_menu(port_a, port_b, current_settings)
+        
+        # Add separator and additional context menu actions
+        menu.addSeparator()
+        menu.addAction("Remove Pair", self.remove_com0com_pair)
+        
+        # Show menu at the clicked position
+        menu.exec(self.ui_refs['port_pairs_list'].mapToGlobal(position))
 
     def quick_modify_pair(self, param: str, value: str):
         """Quick modify a parameter for selected pair"""

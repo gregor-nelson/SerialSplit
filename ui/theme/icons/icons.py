@@ -1,241 +1,448 @@
 #!/usr/bin/env python3
 """
-SVG Icon Definitions for Hub4com GUI
+Windows 10 Professional System Icons for Hub4com GUI
+
+This collection follows authentic Windows 10 design principles:
+- Flat design with subtle depth
+- Professional color palette
+- Clean geometric shapes
+- Enterprise-appropriate aesthetic
+- Consistent with Windows system applications
 """
 
 class AppIcons:
-    """SVG icon definitions matching Windows 10 system style"""
+    """
+    Windows 10 Professional system icon definitions.
+    Designed for professional applications with enterprise-grade appearance.
+    """
 
+    # Windows 10 standard shadow - subtle and professional
+    _WIN10_SHADOW = """
+        <filter id="win10-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
+            <feOffset dx="0" dy="1" result="offsetblur"/>
+            <feFlood flood-color="#000000" flood-opacity="0.12"/>
+            <feComposite in2="offsetblur" operator="in"/>
+            <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    """
 
-    DOCUMENT_SEARCH = """
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M200-800v247.15-1V-160v-640 180-180Zm-60 700v-760h390l210 210v110.38q-14.39-5.69-29.39-8.65T680-552.85V-620H500v-180H200v640h248.31q11.71 17.75 26.35 32.91 14.65 15.17 31.72 27.09H140Zm520.08-93.85q44.61 0 75.34-30.8 30.73-30.81 30.73-75.43 0-44.61-30.8-75.34-30.81-30.73-75.43-30.73-44.61 0-75.34 30.8-30.73 30.81-30.73 75.43 0 44.61 30.8 75.34 30.81 30.73 75.43 30.73ZM864-54.23 754.46-163.77q-20.23 14.77-44.34 22.35-24.12 7.57-50.12 7.57-69.23 0-117.69-48.46-48.46-48.46-48.46-117.69 0-69.23 48.46-117.69 48.46-48.46 117.69-48.46 69.23 0 117.69 48.46 48.46 48.46 48.46 117.69 0 26-7.57 50.12-7.58 24.11-22.35 44.34L905.77-96 864-54.23Z"/></svg>
-      """
-    LIST = """
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg>
-    """
-   
-    CREATE = """
-    <svg height="48" width="48" xmlns="http://www.w3.org/2000/svg"><circle cx="23.940615" cy="31.534513" fill="#4d99be" opacity=".99" r="13.232998" transform="matrix(1.75830584759 0 0 1.75830608345 -18.15909274367 -30.97874795549)"/><path d="m23.477665 8.7982051-2.084648 4.5939519h1.643454v17.465845c-.558268-.863366-1.3509-1.582586-2.101192-2.222524-.626945-.534729-1.235231-1.019975-1.665516-1.466977-.430285-.447003-.654036-.839353-.656277-1.16917-.0059-.878605.0145-1.434924.02759-2.222524 1.209249-.102785 2.161859-1.113521 2.161859-2.349369 0-1.304115-1.056283-2.360398-2.360398-2.360398s-2.365916 1.056283-2.365916 2.360398c0 1.128981.794111 2.072081 1.853028 2.30525-.01294.802781-.03927 1.362645-.03306 2.272159.0044.627435.378492 1.159439.860333 1.66.48184.500559 1.09977.991743 1.715148 1.516609 1.212275 1.033968 2.377764 2.186616 2.564447 3.639867v2.283189c-1.238899.190827-2.18943 1.255587-2.18943 2.547907 0 1.427184 1.159321 2.581004 2.586508 2.581004 1.427188 0 2.580999-1.15382 2.580999-2.581004 0-1.318458-.985462-2.400838-2.261132-2.558936v-2.28319h.0052c-.0015-.0132-.0037-.02546-.0052-.0386v-3.430298h.01102c0-1.491973.785436-2.374387 1.869565-3.248305 1.084136-.87392 2.455663-1.677431 3.397216-2.956014l.0052-.0055.0052-.0055c.107268-.161601.113976-.282537.137872-.441196.02389-.158658.03853-.342168.04962-.551495.02226-.41865.02167-.925517.01657-1.428371-.0052-.502855-.01531-.999487-.02759-1.384253-.0059-.177367-.0074-.202112-.01102-.325381h1.786843v-3.910062h-3.904587v3.9101h1.4008c.0037.118843.0052.165129.01102.347441.0122.381971.02803.872982.03306 1.367707.0052.494725-.0015.993095-.02204 1.384253-.01035.195578-.02588.364502-.04408.485316-.01316.08736-.03949.153623-.03861.159933-.827621 1.107574-2.110814 1.883585-3.242792 2.79608-.539698.435053-1.0486.916211-1.433889 1.489036v-13.633054h1.709639l-1.985382-4.5939529z" fill="#fcffff" fill-opacity=".719858"/><g fill="none" stroke="#fff" stroke-opacity=".968085" stroke-width="3"><path d="m28.714286 32.571429h9.702901"/><path d="m33.565736 37.42288v-9.702901"/></g></svg>
-    """
-    
-    HELP = """
-    <svg height="48" width="48" xmlns="http://www.w3.org/2000/svg"><path d="m44.322082 27.405077a19.729762 19.729765 0 0 1 -19.729762 19.729765 19.729762 19.729765 0 0 1 -19.7297621-19.729765 19.729762 19.729765 0 0 1 19.7297621-19.7297632 19.729762 19.729765 0 0 1 19.729762 19.7297632z" fill="#5995b6" opacity=".99" transform="matrix(1.1503549 0 0 1.1503549 -4.486125 -7.525565)"/><g fill="#fff" fill-rule="evenodd"><path d="m12.6 21h6v-7.5h-6z" fill-opacity=".532847"/><path d="m12.6 15h16.5v9h-9v10.5h6v-4.5h9v-21h-22.5z"/><path d="m20.1 37.5h6v4.5h-6z" fill-opacity=".507299"/></g></svg>
-    """
-   
-    REFRESH = """
-    
-      <svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-      <defs>
-      <linearGradient id="c-3" x1="-197.1" x2="-196.91" y1="217.68" y2="219.37" gradientTransform="rotate(-45 -338.07 -140.03)" gradientUnits="userSpaceOnUse">
-      <stop offset="0"/>
-      <stop stop-opacity="0" offset="1"/>
-      </linearGradient>
-      </defs>
-      <path d="m3.175 2.381c-0.293 0-0.265 0.264-0.265 0.53h-1.058c-0.265 0-0.265 0-0.265 0.264v5.556c0 0.293 0.237 0.53 0.53 0.53h12.7a0.529 0.529 0 0 0 0.529-0.53v-5.556c0-0.265 0-0.265-0.265-0.265h-7.408c0-0.265 0.028-0.53-0.265-0.53z" fill="#ffffff" fill-opacity=".976" stroke="#000000" stroke-opacity=".268" stroke-width=".529" paint-order="markers stroke fill"/>
-      <path d="m3.175 2.381c-0.293 0-0.265 0.264-0.265 0.53h-1.058c-0.265 0-0.265 0-0.265 0.264v5.556c0 0.293 0.237 0.53 0.53 0.53h12.7a0.529 0.529 0 0 0 0.529-0.53v-5.556c0-0.265 0-0.265-0.265-0.265h-7.408c0-0.265 0.028-0.53-0.265-0.53z" fill="#ffffff" fill-opacity=".976" paint-order="markers stroke fill"/>
-      <path d="m8.467 4.233c-0.293 0-0.382 0.276-0.53 0.53l-0.308 0.528h-6.835c-0.265 0-0.265 0.265-0.265 0.265v8.996c0 0.264 0.265 0.264 0.265 0.264h15.346c0.264 0 0.264-0.264 0.264-0.264v-10.054c0-0.265-0.264-0.265-0.264-0.265z" fill="none" stroke="#003579" stroke-opacity=".561" stroke-width=".529" paint-order="markers stroke fill"/>
-      <path d="m8.467 4.233c-0.293 0-0.382 0.276-0.53 0.53l-0.308 0.528h-6.835c-0.265 0-0.265 0.265-0.265 0.265v8.996c0 0.264 0.265 0.264 0.265 0.264h15.346c0.264 0 0.264-0.264 0.264-0.264v-10.054c0-0.265-0.264-0.265-0.264-0.265z" fill="#6ba4e7" paint-order="markers stroke fill"/>
-      <rect x="3.44" y="2.91" width="3.704" height=".529" rx=".265" ry=".265" fill-opacity=".267" paint-order="markers stroke fill"/>
-      <path d="M9.259 7.18c-.439 0-.876.17-1.21.504a1.71 1.71 0 0 0-.214 2.164c-.01.008-.023.012-.033.02l-1.767 1.618c-.14.128-.059.423.075.557.135.134.429.215.557.075l1.617-1.767c.01-.01.014-.022.022-.032a1.71 1.71 0 0 0 2.163-.214 1.71 1.71 0 0 0 0-2.42 1.706 1.706 0 0 0-1.21-.504zm0 .686a1.026 1.026 0 0 1 .728 1.757 1.031 1.031 0 0 1-1.456-1.457c.2-.2.465-.3.728-.3z" opacity=".3"/>
-      <path d="m16.404 11.641-3.1744 3.1749h2.6458c0.29307 0 0.52864-0.23557 0.52864-0.52864z" fill="url(#c-3)" opacity=".1" stroke-width=".26458"/>
-      </svg>
+    # Windows 10 Professional Color Palette
+    _COLORS = {
+        'PRIMARY_BLUE': '#0078D4',
+        'LIGHT_BLUE': '#40E0FF', 
+        'DARK_BLUE': '#005A9E',
+        'SUCCESS_GREEN': '#107C10',
+        'WARNING_ORANGE': '#FF8C00',
+        'ERROR_RED': '#E81123',
+        'GRAY_DARK': '#323130',
+        'GRAY_MEDIUM': '#8A8886',
+        'GRAY_LIGHT': '#C8C6C4',
+        'BACKGROUND': '#F3F2F1',
+        'WHITE': '#FFFFFF'
+    }
 
-    """
-    
-    EXPORT = """
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-480ZM210.08-79.23 168.31-122l128-128H191.69v-60h206.39v206.38h-60v-103.61l-128 128ZM485.77-100v-60H720v-460H540v-180H240v402.31h-60V-860h390l210 210v550H485.77Z"/></svg>
-    """
-    
-    FOLDER = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style folder icon -->
-        <path d="M1 3v10h14V5H8L6 3H1z" 
-              fill="none" stroke="{color}" stroke-width="1"/>
-        <path d="M1 5h14v8H1V5z" 
-              fill="{color}" opacity="0.1"/>
-        <path d="M6 3l2 2h7V4H7L6 3z" 
-              fill="{color}" opacity="0.2"/>
-    </svg>
-    """
-    
-    SETTINGS = """
-      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="a" gradientUnits="userSpaceOnUse" x1="22.27" y1="11.73" x2="9.646" y2="24.354" gradientTransform="matrix(2 0 0 -2 0 68)"><stop offset="0" style="stop-color:#fff;stop-opacity:1"/><stop offset=".242" style="stop-color:#f2f2f2;stop-opacity:1"/><stop offset="1" style="stop-color:#ccc;stop-opacity:1"/></linearGradient><linearGradient id="b" gradientUnits="userSpaceOnUse" x1="10.386" y1="23.614" x2="20.234" y2="13.766" gradientTransform="matrix(2 0 0 -2 0 68)"><stop offset=".229" style="stop-color:#0669bc;stop-opacity:1"/><stop offset=".804" style="stop-color:#104e91;stop-opacity:1"/></linearGradient><linearGradient id="c" gradientUnits="userSpaceOnUse" x1="1.185" y1="32.737" x2="27.173" y2="6.749" gradientTransform="matrix(2 0 0 -2 0 68)"><stop offset=".145" style="stop-color:#8a9198;stop-opacity:1"/><stop offset=".894" style="stop-color:#63707b;stop-opacity:1"/></linearGradient></defs><path style="stroke:none;fill-rule:nonzero;fill:url(#a)" d="M50 32c0 9.941-8.059 18-18 18s-18-8.059-18-18 8.059-18 18-18 18 8.059 18 18m0 0"/><path style="stroke:none;fill-rule:nonzero;fill:url(#b)" d="M44 32c0 6.629-5.371 12-12 12s-12-5.371-12-12 5.371-12 12-12 12 5.371 12 12m0 0"/><path style="stroke:none;fill-rule:nonzero;fill:url(#c)" d="M63.05 24.637a11.23 11.23 0 0 1-9.573-5.5 10.86 10.86 0 0 1-.258-10.543A32.1 32.1 0 0 0 41.332 2 11.23 11.23 0 0 1 32 6.93 11.22 11.22 0 0 1 22.672 2a32.1 32.1 0 0 0-11.89 6.594 10.85 10.85 0 0 1-.259 10.543 11.23 11.23 0 0 1-9.574 5.5 30.1 30.1 0 0 0-.367 13.398 11.24 11.24 0 0 1 9.941 5.508 10.87 10.87 0 0 1-.355 11.566A32.1 32.1 0 0 0 21.914 62a11.258 11.258 0 0 1 20.172 0 32 32 0 0 0 11.742-6.89 10.86 10.86 0 0 1-.351-11.567 11.24 11.24 0 0 1 9.941-5.508 30.2 30.2 0 0 0-.367-13.398M32 48c-8.836 0-16-7.164-16-16s7.164-16 16-16 16 7.164 16 16-7.164 16-16 16m0 0"/></svg>
-    """
-   
-    DELETE = """
-    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><path fill="none" d="M0 0h64v64H0z"/><path d="M12 5.5h40c1.108 0 1.625.958 2 2l1.8 5c.375 1.043-.892 2-2 2H10.2c-1.108 0-2.375-.957-2-2l1.8-5c.375-1.042.892-2 2-2z" fill="#636a78" stroke="#272a2f" stroke-opacity=".784"/><path d="M52 6l-6.3 43.042c-.157 1.073-.892 1.957-2 1.957H20.3c-1.108 0-1.843-.884-2-1.957L12 6z" opacity=".3"/><path d="M55.8 13.501l-4.3 43.042c-.108 1.08-.892 1.957-2 1.957h-35c-1.108 0-1.892-.878-2-1.957L8.2 13.501z" fill="#636a78" stroke="#272a2f" stroke-opacity=".784"/><path d="M23.812 41.641c-.256.46-.46 1.152-.46 1.587 0 .101 0 .23.025.409l-3.198-5.501A1.427 1.427 0 0 1 20 37.47c0-.231.076-.512.179-.69l1.535-2.688-1.714-.97 5.578-.103 2.712 4.886-1.74-.997zm2.456-16.104c.486-.845 1.28-1.306 2.251-1.306 1.05 0 1.87.487 2.457 1.484l.87 1.458-3.02 5.82-4.886-3.44zm.358 20.53a2.675 2.675 0 0 1-2.66-2.66c0-.41.179-1.101.435-1.536l.818-1.458h6.064v5.654h-4.657zm4.862-20.684c-.383-.665-.895-1.127-1.51-1.383h6.294c.563 0 .998.231 1.255.667l1.56 2.66 1.688-.998-2.712 4.862-5.551-.078 1.714-.972zm9.698 15.081c.767 0 1.407-.204 1.944-.613l-3.173 5.526a1.382 1.382 0 0 1-1.253.69h-2.995v1.97l-2.865-4.784 2.865-4.785v1.996h5.477zm2.455-4.605c.23.41.359.844.359 1.305 0 .92-.59 1.893-1.407 2.353a2.857 2.857 0 0 1-1.458.334h-1.69l-3.018-5.22 4.886-2.79z" fill="#fff"/></svg>
-    """
-  
-    REMOVE = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style X/close icon -->
-        <path d="M4.5 4.5l7 7m0-7l-7 7" 
-              stroke="{color}" stroke-width="1.5" 
-              stroke-linecap="round"/>
-    </svg>
-    """
-    
-    PLAY = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style play icon -->
-        <path d="M4 3l8 5-8 5V3z" 
-              fill="{color}" stroke="none"/>
-    </svg>
-    """
-    
-    STOP = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style stop icon -->
-        <rect x="4" y="4" width="8" height="8" 
-              fill="{color}" stroke="none"/>
-    </svg>
-    """
-    
-    DROPDOWN_ARROW = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style dropdown arrow -->
-        <path d="M4 6l4 4 4-4H4z" 
-              fill="{color}" stroke="none"/>
-    </svg>
-    """
-    
-    CHECKBOX_CHECK = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style checkmark -->
-        <path d="M3 8l3 3 7-7" 
-              stroke="{color}" stroke-width="2" 
-              fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    LIST = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Document background -->
+        <g filter="url(#win10-shadow)">
+            <rect x="8" y="6" width="26" height="34" rx="2" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_LIGHT']}" stroke-width="1"/>
+            <!-- Folded corner -->
+            <path d="M30,6 L34,10 L34,40 L30,40 Z" fill="{_COLORS['GRAY_LIGHT']}"/>
+            <path d="M30,6 L34,10 L30,10 Z" fill="{_COLORS['GRAY_MEDIUM']}"/>
+        </g>
+        <!-- List items -->
+        <rect x="12" y="14" width="2" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+        <rect x="16" y="14" width="14" height="2" fill="{_COLORS['GRAY_MEDIUM']}"/>
+        <rect x="12" y="19" width="2" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+        <rect x="16" y="19" width="18" height="2" fill="{_COLORS['GRAY_MEDIUM']}"/>
+        <rect x="12" y="24" width="2" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+        <rect x="16" y="24" width="16" height="2" fill="{_COLORS['GRAY_MEDIUM']}"/>
+        <rect x="12" y="29" width="2" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+        <rect x="16" y="29" width="12" height="2" fill="{_COLORS['GRAY_MEDIUM']}"/>
     </svg>
     """
 
-    ERROR_CROSS = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style error cross -->
-        <path d="M4 4l8 8M12 4l-8 8" 
-              stroke="{color}" stroke-width="2" 
-              stroke-linecap="round" stroke-linejoin="round"/>
+    CREATE = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Background circle -->
+        <g filter="url(#win10-shadow)">
+            <circle cx="24" cy="24" r="18" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        </g>
+        <!-- Plus symbol -->
+        <rect x="22" y="14" width="4" height="20" fill="{_COLORS['WHITE']}"/>
+        <rect x="14" y="22" width="20" height="4" fill="{_COLORS['WHITE']}"/>
     </svg>
     """
 
-    MONITOR = """
-<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-    <!-- Windows 10 style monitoring/chart icon -->
-    <rect x="1" y="2" width="14" height="10" 
-          fill="none" stroke="{color}" stroke-width="1"/>
-    <path d="M3 9l3-3 2 2 5-4" 
-          fill="none" stroke="{color}" stroke-width="1"
-          stroke-linejoin="round"/>
-</svg>
-"""
-
-    ARROW_DOWN = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style down arrow -->
-        <path d="M8 3v8m0 0l-3-3m3 3l3-3" 
-              stroke="{color}" stroke-width="1.5" 
-              stroke-linecap="round" stroke-linejoin="round"
-              fill="none"/>
+    HELP = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Background circle -->
+        <g filter="url(#win10-shadow)">
+            <circle cx="24" cy="24" r="18" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        </g>
+        <!-- Question mark -->
+        <path d="M24,32a2,2,0,1,1-2-2A2,2,0,0,1,24,32Z" fill="{_COLORS['WHITE']}"/>
+        <path d="M18,18c0-3.3,2.7-6,6-6s6,2.7,6,6c0,2-1,3-2,4l-1,1v3h-6v-4l2-2c1-1,1-1,1-2a2,2,0,0,0-4,0H18z" fill="{_COLORS['WHITE']}"/>
     </svg>
     """
 
-    ARROW_UP = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style up arrow -->
-        <path d="M8 13V5m0 0l-3 3m3-3l3 3" 
-              stroke="{color}" stroke-width="1.5" 
-              stroke-linecap="round" stroke-linejoin="round"
-              fill="none"/>
+    REFRESH = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Refresh arrow -->
+        <g filter="url(#win10-shadow)">
+            <path d="M24,8A16,16,0,1,0,35.2,19.6" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round"/>
+            <!-- Arrow head -->
+            <path d="M32,12 L38,18 L32,24" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
     </svg>
     """
 
-    SEARCH = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style search/magnifier icon -->
-        <circle cx="6.5" cy="6.5" r="4.5" 
-                fill="none" stroke="{color}" stroke-width="1.5"/>
-        <path d="M10 10l4 4" 
-              stroke="{color}" stroke-width="1.5" 
-              stroke-linecap="round"/>
+    EXPORT = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Document -->
+        <g filter="url(#win10-shadow)">
+            <rect x="10" y="8" width="20" height="28" rx="2" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_LIGHT']}" stroke-width="1"/>
+            <path d="M26,8 L30,12 L30,36 L26,36 Z" fill="{_COLORS['GRAY_LIGHT']}"/>
+            <path d="M26,8 L30,12 L26,12 Z" fill="{_COLORS['GRAY_MEDIUM']}"/>
+        </g>
+        <!-- Export arrow -->
+        <path d="M32,20 L38,20 M35,17 L38,20 L35,23" stroke="{_COLORS['SUCCESS_GREEN']}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </svg>
     """
 
-    CHART_BAR = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style bar chart icon -->
-        <rect x="2" y="8" width="3" height="5" fill="{color}"/>
-        <rect x="6.5" y="5" width="3" height="8" fill="{color}"/>
-        <rect x="11" y="3" width="3" height="10" fill="{color}"/>
+    FOLDER = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Folder structure -->
+        <g filter="url(#win10-shadow)">
+            <!-- Back part -->
+            <path d="M6,14V36h32V18H20l-3-4H6z" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <!-- Front part -->
+            <path d="M6,18V38h32V18H6z" fill="{_COLORS['LIGHT_BLUE']}"/>
+            <!-- Subtle highlight -->
+            <path d="M6,18h32v2H6z" fill="rgba(255,255,255,0.2)"/>
+        </g>
     </svg>
     """
 
-    SPINNER = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style loading spinner -->
-        <circle cx="8" cy="8" r="6" 
-                fill="none" stroke="{color}" stroke-width="2" 
-                stroke-linecap="round" stroke-dasharray="28" 
-                stroke-dashoffset="28" opacity="0.3"/>
-        <circle cx="8" cy="8" r="6" 
-                fill="none" stroke="{color}" stroke-width="2" 
-                stroke-linecap="round" stroke-dasharray="8" 
-                stroke-dashoffset="0">
-            <animateTransform attributeName="transform" 
-                              type="rotate" 
-                              values="0 8 8;360 8 8" 
-                              dur="1s" 
-                              repeatCount="indefinite"/>
+    SETTINGS = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Settings gear - simplified Windows 10 style -->
+        <g filter="url(#win10-shadow)">
+            <path d="M24,6c-1.1,0-2,0.9-2,2v2.1c-1.3,0.2-2.5,0.6-3.6,1.2l-1.5-1.5c-0.8-0.8-2-0.8-2.8,0l-2.8,2.8c-0.8,0.8-0.8,2,0,2.8l1.5,1.5c-0.6,1.1-1,2.3-1.2,3.6H10c-1.1,0-2,0.9-2,2v4c0,1.1,0.9,2,2,2h2.1c0.2,1.3,0.6,2.5,1.2,3.6l-1.5,1.5c-0.8,0.8-0.8,2,0,2.8l2.8,2.8c0.8,0.8,2,0.8,2.8,0l1.5-1.5c1.1,0.6,2.3,1,3.6,1.2V38c0,1.1,0.9,2,2,2h4c1.1,0,2-0.9,2-2v-2.1c1.3-0.2,2.5-0.6,3.6-1.2l1.5,1.5c0.8,0.8,2,0.8,2.8,0l2.8-2.8c0.8-0.8,0.8-2,0-2.8l-1.5-1.5c0.6-1.1,1-2.3,1.2-3.6H38c1.1,0,2-0.9,2-2v-4c0-1.1-0.9-2-2-2h-2.1c-0.2-1.3-0.6-2.5-1.2-3.6l1.5-1.5c0.8-0.8,0.8-2,0-2.8l-2.8-2.8c-0.8-0.8-2-0.8-2.8,0l-1.5,1.5c-1.1-0.6-2.3-1-3.6-1.2V8c0-1.1-0.9-2-2-2H24z" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <!-- Center circle -->
+            <circle cx="24" cy="24" r="6" fill="{_COLORS['BACKGROUND']}" stroke="{_COLORS['GRAY_DARK']}" stroke-width="1.5"/>
+        </g>
+    </svg>
+    """
+
+    DELETE = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Trash can - Windows 10 style -->
+        <g filter="url(#win10-shadow)">
+            <!-- Handle -->
+            <rect x="20" y="8" width="8" height="4" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <!-- Lid -->
+            <rect x="14" y="12" width="20" height="3" rx="1.5" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <!-- Body -->
+            <path d="M16,15 L32,15 L31,36 L17,36 Z" fill="{_COLORS['ERROR_RED']}"/>
+            <!-- Delete lines -->
+            <rect x="20" y="19" width="1.5" height="12" fill="{_COLORS['WHITE']}"/>
+            <rect x="23.25" y="19" width="1.5" height="12" fill="{_COLORS['WHITE']}"/>
+            <rect x="26.5" y="19" width="1.5" height="12" fill="{_COLORS['WHITE']}"/>
+        </g>
+    </svg>
+    """
+
+    REMOVE = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Remove X in circle -->
+        <g filter="url(#win10-shadow)">
+            <circle cx="24" cy="24" r="18" fill="{_COLORS['ERROR_RED']}"/>
+            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        </g>
+        <!-- X mark -->
+        <path d="M17,17 L31,31 M17,31 L31,17" stroke="{_COLORS['WHITE']}" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    """
+
+    PLAY = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Play button -->
+        <g filter="url(#win10-shadow)">
+            <circle cx="24" cy="24" r="18" fill="{_COLORS['SUCCESS_GREEN']}"/>
+            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        </g>
+        <!-- Play triangle -->
+        <path d="M19,16 L33,24 L19,32 Z" fill="{_COLORS['WHITE']}"/>
+    </svg>
+    """
+
+    STOP = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Stop button -->
+        <g filter="url(#win10-shadow)">
+            <circle cx="24" cy="24" r="18" fill="{_COLORS['ERROR_RED']}"/>
+            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        </g>
+        <!-- Stop square -->
+        <rect x="16" y="16" width="16" height="16" rx="2" fill="{_COLORS['WHITE']}"/>
+    </svg>
+    """
+
+    DROPDOWN_ARROW = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <path d="M16,20 L24,28 L32,20" fill="none" stroke="{_COLORS['GRAY_DARK']}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    """
+
+    CHECKBOX_CHECK = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Checkbox -->
+        <g filter="url(#win10-shadow)">
+            <rect x="10" y="10" width="28" height="28" rx="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="10" y="10" width="28" height="28" rx="2" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        </g>
+        <!-- Checkmark -->
+        <path d="M16,24 L22,30 L34,18" stroke="{_COLORS['WHITE']}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    """
+
+    ERROR_CROSS = REMOVE  # Reuse for consistency
+
+    MONITOR = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Monitor -->
+        <g filter="url(#win10-shadow)">
+            <!-- Stand -->
+            <rect x="20" y="38" width="8" height="4" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <rect x="18" y="35" width="12" height="3" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <!-- Screen bezel -->
+            <rect x="6" y="8" width="36" height="27" rx="2" fill="{_COLORS['GRAY_DARK']}"/>
+            <!-- Screen -->
+            <rect x="9" y="11" width="30" height="21" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <!-- Screen content -->
+            <rect x="12" y="14" width="24" height="2" fill="{_COLORS['WHITE']}" opacity="0.7"/>
+            <rect x="12" y="18" width="18" height="2" fill="{_COLORS['WHITE']}" opacity="0.5"/>
+            <rect x="12" y="22" width="20" height="2" fill="{_COLORS['WHITE']}" opacity="0.6"/>
+        </g>
+    </svg>
+    """
+
+    SPINNER = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <!-- Loading spinner -->
+        <circle cx="24" cy="24" r="16" fill="none" stroke="{_COLORS['GRAY_LIGHT']}" stroke-width="3"/>
+        <circle cx="24" cy="24" r="16" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round" stroke-dasharray="25 75">
+            <animateTransform attributeName="transform" type="rotate" from="0 24 24" to="360 24 24" dur="1s" repeatCount="indefinite"/>
         </circle>
     </svg>
     """
-    
-    INFO = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style info icon -->
-        <circle cx="8" cy="8" r="7" fill="none" stroke="{color}" stroke-width="1.5"/>
-        <path d="M8 6v4m0-6h.01" stroke="{color}" stroke-width="1.5" 
-              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </svg>
-    """
-    
-    FLOW_CONTROL = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style flow/exchange icon -->
-        <path d="M3 5h8m0 0l-2-2m2 2l-2 2" stroke="{color}" stroke-width="1.5" 
-              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M13 11H5m0 0l2 2m-2-2l2-2" stroke="{color}" stroke-width="1.5" 
-              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </svg>
-    """
-    
-    SIGNAL = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style signal icon -->
-        <circle cx="8" cy="8" r="1" fill="{color}"/>
-        <circle cx="8" cy="8" r="3" fill="none" stroke="{color}" stroke-width="1"/>
-        <circle cx="8" cy="8" r="5" fill="none" stroke="{color}" stroke-width="1" opacity="0.6"/>
-        <circle cx="8" cy="8" r="7" fill="none" stroke="{color}" stroke-width="1" opacity="0.3"/>
-    </svg>
-    """
-    
-    BUFFER = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style memory/buffer icon -->
-        <rect x="2" y="4" width="12" height="8" fill="none" stroke="{color}" stroke-width="1"/>
-        <rect x="4" y="6" width="2" height="4" fill="{color}"/>
-        <rect x="7" y="6" width="2" height="4" fill="{color}"/>
-        <rect x="10" y="6" width="2" height="4" fill="{color}"/>
-    </svg>
-    """
-    
-    CLOCK = """
-    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Windows 10 style clock icon -->
-        <circle cx="8" cy="8" r="7" fill="none" stroke="{color}" stroke-width="1.5"/>
-        <path d="M8 4v4l3 2" stroke="{color}" stroke-width="1.5" 
-              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+    INFO = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Info circle -->
+        <g filter="url(#win10-shadow)">
+            <circle cx="24" cy="24" r="18" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        </g>
+        <!-- Info symbol -->
+        <rect x="22" y="20" width="4" height="14" fill="{_COLORS['WHITE']}"/>
+        <circle cx="24" cy="15" r="2.5" fill="{_COLORS['WHITE']}"/>
     </svg>
     """
 
+    ARROW_DOWN = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Down arrow -->
+        <g filter="url(#win10-shadow)">
+            <path d="M24,8 L24,34 M16,26 L24,34 L32,26" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+    </svg>
+    """
 
+    ARROW_UP = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Up arrow -->
+        <g filter="url(#win10-shadow)">
+            <path d="M24,40 L24,14 M16,22 L24,14 L32,22" stroke="{_COLORS['SUCCESS_GREEN']}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+    </svg>
+    """
 
+    SEARCH = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Search icon -->
+        <g filter="url(#win10-shadow)">
+            <circle cx="20" cy="20" r="10" fill="none" stroke="{_COLORS['GRAY_DARK']}" stroke-width="3"/>
+            <path d="M28,28 L38,38" stroke="{_COLORS['GRAY_DARK']}" stroke-width="3" stroke-linecap="round"/>
+        </g>
+    </svg>
+    """
 
+    CHART_BAR = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Bar chart -->
+        <g filter="url(#win10-shadow)">
+            <rect x="8" y="24" width="6" height="16" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="18" y="16" width="6" height="24" fill="{_COLORS['SUCCESS_GREEN']}"/>
+            <rect x="28" y="20" width="6" height="20" fill="{_COLORS['WARNING_ORANGE']}"/>
+            <rect x="38" y="12" width="6" height="28" fill="{_COLORS['ERROR_RED']}"/>
+        </g>
+    </svg>
+    """
+
+    FLOW_CONTROL = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Flow arrows -->
+        <g filter="url(#win10-shadow)">
+            <path d="M8,16 L34,16 M28,10 L34,16 L28,22" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M40,32 L14,32 M20,26 L14,32 L20,38" stroke="{_COLORS['SUCCESS_GREEN']}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+    </svg>
+    """
+
+    SIGNAL = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <!-- Signal strength -->
+        <rect x="8" y="32" width="4" height="8" fill="{_COLORS['SUCCESS_GREEN']}"/>
+        <rect x="16" y="24" width="4" height="16" fill="{_COLORS['SUCCESS_GREEN']}"/>
+        <rect x="24" y="16" width="4" height="24" fill="{_COLORS['SUCCESS_GREEN']}"/>
+        <rect x="32" y="8" width="4" height="32" fill="{_COLORS['GRAY_LIGHT']}"/>
+    </svg>
+    """
+
+    BUFFER = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Buffer blocks -->
+        <g filter="url(#win10-shadow)">
+            <rect x="8" y="16" width="8" height="16" rx="1" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="20" y="16" width="8" height="16" rx="1" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="32" y="16" width="8" height="16" rx="1" fill="{_COLORS['GRAY_LIGHT']}"/>
+        </g>
+    </svg>
+    """
+
+    CLOCK = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Clock -->
+        <g filter="url(#win10-shadow)">
+            <circle cx="24" cy="24" r="18" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_MEDIUM']}" stroke-width="2"/>
+            <!-- Clock hands -->
+            <circle cx="24" cy="24" r="1.5" fill="{_COLORS['GRAY_DARK']}"/>
+            <path d="M24,24 L24,12" stroke="{_COLORS['GRAY_DARK']}" stroke-width="2" stroke-linecap="round"/>
+            <path d="M24,24 L32,24" stroke="{_COLORS['GRAY_DARK']}" stroke-width="2" stroke-linecap="round"/>
+        </g>
+    </svg>
+    """
+
+    PORT = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Serial port connector -->
+        <g filter="url(#win10-shadow)">
+            <!-- Connector body -->
+            <rect x="12" y="16" width="24" height="16" rx="2" fill="{_COLORS['GRAY_MEDIUM']}" stroke="{_COLORS['GRAY_DARK']}" stroke-width="1"/>
+            <!-- Connector pins -->
+            <rect x="16" y="20" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="22" y="20" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="28" y="20" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="16" y="26" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="22" y="26" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="28" y="26" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <!-- Cable -->
+            <rect x="8" y="22" width="4" height="4" rx="2" fill="{_COLORS['GRAY_DARK']}"/>
+            <rect x="36" y="22" width="4" height="4" rx="2" fill="{_COLORS['GRAY_DARK']}"/>
+        </g>
+    </svg>
+    """
+
+    CONFIGURE = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Configuration panel -->
+        <g filter="url(#win10-shadow)">
+            <!-- Panel background -->
+            <rect x="8" y="12" width="32" height="24" rx="2" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_MEDIUM']}" stroke-width="1"/>
+            <!-- Sliders -->
+            <rect x="12" y="18" width="24" height="2" fill="{_COLORS['GRAY_LIGHT']}"/>
+            <rect x="24" y="16" width="4" height="6" rx="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="12" y="24" width="24" height="2" fill="{_COLORS['GRAY_LIGHT']}"/>
+            <rect x="18" y="22" width="4" height="6" rx="2" fill="{_COLORS['SUCCESS_GREEN']}"/>
+            <rect x="12" y="30" width="24" height="2" fill="{_COLORS['GRAY_LIGHT']}"/>
+            <rect x="30" y="28" width="4" height="6" rx="2" fill="{_COLORS['WARNING_ORANGE']}"/>
+        </g>
+    </svg>
+    """

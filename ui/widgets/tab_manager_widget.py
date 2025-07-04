@@ -65,11 +65,11 @@ class SerialPortManagerWidget(QWidget):
         
         # Monitor tab - existing functionality
         self.monitor_widget = EnhancedPortInfoWidget()
-        self.tab_widget.addTab(self.monitor_widget, "Monitor")
+        self.tab_widget.addTab(self.monitor_widget, "Port Monitor")
         
         # Test tab - new functionality
         self.test_widget = SerialPortTestWidget()
-        self.tab_widget.addTab(self.test_widget, "Test")
+        self.tab_widget.addTab(self.test_widget, "Port Test")
         
         main_layout.addWidget(self.tab_widget)
     
