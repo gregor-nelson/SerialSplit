@@ -7,9 +7,10 @@ Integrates with main GUI port selection (no internal dropdown)
 from typing import Optional
 
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QPushButton, QTextEdit, QFrame, QScrollArea, QSizePolicy, QGridLayout)
+                             QPushButton, QTextEdit, QFrame, QScrollArea, QSizePolicy, 
+                             QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView)
 from PyQt6.QtCore import Qt, QThread, pyqtSlot, pyqtSignal, QTimer
-from PyQt6.QtGui import QTransform, QPainter, QResizeEvent
+from PyQt6.QtGui import QTransform, QPainter, QResizeEvent, QColor
 
 from core.core import SerialPortInfo, SerialPortTester
 from ui.theme.theme import (
@@ -125,11 +126,8 @@ class SerialPortTestWidget(QWidget):
         self.loading_timer.timeout.connect(self._start_actual_test)
         self.active_spinners = []  # Track active animated spinners for cleanup
         
-        # Layout responsiveness  
-        self.min_width_for_two_columns = 400  # Minimum width to enable two-column layout (reduced from 600)
-        self.is_two_column_layout = True  # Start with two-column as default for 50/50 mode
-        self.results_widgets = []  # Track result widgets for layout switching
-        self.widget_types = []  # Track widget types (status, property) for layout decisions
+        # Results table for Windows-native feel
+        self.results_table = None
         
         self.init_ui()
     
@@ -138,8 +136,10 @@ class SerialPortTestWidget(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(2)  # Reduced spacing between sections
         
-        # Header section
-        header_layout = QHBoxLayout()
+        # Header section (hideable for compact results view)
+        self.header_widget = QWidget()
+        header_layout = QHBoxLayout(self.header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         
         # Port status indicator (colored bar) - matches monitor widget
@@ -196,143 +196,158 @@ class SerialPortTestWidget(QWidget):
         self.test_button.setEnabled(False)
         header_layout.addWidget(self.test_button)
         
-        main_layout.addLayout(header_layout)
+        main_layout.addWidget(self.header_widget)
         
-        # Separator - matches help dialog separators
-        separator = ThemeManager.create_separator("horizontal")
-        main_layout.addWidget(separator)
+        # Separator - matches help dialog separators (hideable with header)
+        self.header_separator = ThemeManager.create_separator("horizontal")
+        main_layout.addWidget(self.header_separator)
         
-        # Results area - scrollable container for property cards
+        # Results area - use table for better Windows-native feel
         self.results_scroll = QScrollArea()
         self.results_scroll.setWidgetResizable(True)
         self.results_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.results_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.results_scroll.setStyleSheet(AppStyles.scroll_area())
         
-        # Results container widget with grid layout for responsiveness
+        # Create container widget that can hold either status cards OR results table
         self.results_widget = QWidget()
-        self.results_layout = QGridLayout(self.results_widget)
-        self.results_layout.setContentsMargins(4, 4, 4, 4)  # Minimal margins
-        self.results_layout.setSpacing(4)  # Tight spacing between cards
-        self.results_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.results_layout = QVBoxLayout(self.results_widget)
+        self.results_layout.setContentsMargins(2, 2, 2, 2)  # Minimal margins for compactness
+        self.results_layout.setSpacing(2)  # Tight spacing for compactness
         
-        # Set equal column stretching for two-column mode
-        self.results_layout.setColumnStretch(0, 1)
-        self.results_layout.setColumnStretch(1, 1)
+        # Results table for test data (initially hidden)
+        self.results_table = self._create_results_table()
+        self.results_table.setVisible(False)
+        self.results_layout.addWidget(self.results_table)
         
         self.results_scroll.setWidget(self.results_widget)
         main_layout.addWidget(self.results_scroll)
+        
+        # Track status widgets for loading/testing states
+        self.status_widgets = []
     
-    def resizeEvent(self, event: QResizeEvent):
-        """Handle widget resize to switch between single and two-column layouts"""
-        super().resizeEvent(event)
-        self._update_layout_based_on_width()
+    def _create_results_table(self) -> QTableWidget:
+        """Create Windows-native style results table"""
+        table = QTableWidget()
+        table.setColumnCount(2)
+        table.setHorizontalHeaderLabels(["Property", "Value"])
+        
+        # Apply Windows-native table styling with compact layout
+        table.setStyleSheet(f"""
+            QTableWidget {{
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+                background-color: {AppColors.BACKGROUND_WHITE};
+                color: {AppColors.TEXT_DEFAULT};
+                gridline-color: {AppColors.BORDER_LIGHT};
+                font-family: {AppFonts.DEFAULT_FAMILY};
+                font-size: {AppFonts.SMALL_SIZE};
+                outline: none;
+                selection-background-color: {AppColors.SELECTION_BG};
+                selection-color: {AppColors.SELECTION_TEXT};
+            }}
+            QTableWidget::item {{
+                padding: 2px 4px;
+                border: none;
+                border-bottom: 1px solid {AppColors.BORDER_LIGHT};
+                height: 18px;
+            }}
+            QTableWidget::item:selected {{
+                background-color: {AppColors.SELECTION_BG};
+                color: {AppColors.SELECTION_TEXT};
+            }}
+            QHeaderView::section {{
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                color: {AppColors.TEXT_DEFAULT};
+                padding: 2px 4px;
+                border: none;
+                border-right: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+                border-bottom: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                font-family: {AppFonts.DEFAULT_FAMILY};
+                font-size: {AppFonts.SMALL_SIZE};
+                height: 20px;
+            }}
+        """)
+        
+        # Configure table behavior
+        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        table.setAlternatingRowColors(True)
+        table.verticalHeader().setVisible(False)
+        table.horizontalHeader().setStretchLastSection(True)
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        
+        # Compact row heights for maximum density
+        table.verticalHeader().setDefaultSectionSize(20)  # Compact row height
+        table.verticalHeader().setMinimumSectionSize(18)   # Minimum row height
+        table.setShowGrid(True)  # Show gridlines for better separation in compact view
+        
+        # Optimize for small screens
+        table.setMinimumHeight(80)  # Reduced minimum height
+        table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        return table
     
-    def _update_layout_based_on_width(self):
-        """Switch between single and two-column layouts based on available width"""
-        current_width = self.width()
-        should_use_two_columns = current_width >= self.min_width_for_two_columns
-        
-        if should_use_two_columns != self.is_two_column_layout:
-            self.is_two_column_layout = should_use_two_columns
-            self._rearrange_existing_widgets()
+    def _hide_header_for_results(self):
+        """Hide header and separator to maximize results view"""
+        self.header_widget.setVisible(False)
+        self.header_separator.setVisible(False)
     
-    def _rearrange_existing_widgets(self):
-        """Rearrange existing widgets without rebuilding layout"""
-        if not self.results_widgets:
-            return
-        
-        # Remove all widgets from grid positions (but don't delete them)
-        for widget in self.results_widgets:
-            self.results_layout.removeWidget(widget)
-        
-        # Re-add widgets in the appropriate arrangement
-        current_row = 0
-        property_widgets_in_row = 0
-        
-        for i, (widget, widget_type) in enumerate(zip(self.results_widgets, self.widget_types)):
-            if self.is_two_column_layout:
-                if widget_type == "status":
-                    # Status widgets span entire row
-                    if property_widgets_in_row > 0:
-                        current_row += 1  # Move to next row if we had property widgets
-                        property_widgets_in_row = 0
-                    self.results_layout.addWidget(widget, current_row, 0, 1, 2)  # Span both columns
-                    current_row += 1
-                else:  # property widget
-                    # Property widgets use columns
-                    col = property_widgets_in_row % 2
-                    if col == 0 and property_widgets_in_row > 0:
-                        current_row += 1
-                    self.results_layout.addWidget(widget, current_row, col)
-                    property_widgets_in_row += 1
-                    if col == 1:  # Completed a row
-                        current_row += 1
-                        property_widgets_in_row = 0
-            else:
-                # Single-column arrangement (all in column 0, spanning both columns)
-                self.results_layout.addWidget(widget, i, 0, 1, 2)
+    def _show_header_for_testing(self):
+        """Show header and separator for port selection and testing"""
+        self.header_widget.setVisible(True)
+        self.header_separator.setVisible(True)
     
-    def _add_result_widget(self, widget: QWidget, widget_type: str = "property"):
-        """Add a widget to results with responsive layout support
+    def _add_section_header(self, section_name: str):
+        """Add a compact section header row to the table"""
+        current_row = self.results_table.rowCount()
+        self.results_table.insertRow(current_row)
         
-        Args:
-            widget: The widget to add
-            widget_type: Either 'status' (spans full row) or 'property' (uses columns)
-        """
-        self.results_widgets.append(widget)
-        self.widget_types.append(widget_type)
+        # Create section header item that spans both columns
+        header_item = QTableWidgetItem(section_name)
+        header_item.setBackground(QColor(AppColors.BACKGROUND_LIGHT))
+        header_item.setForeground(QColor(AppColors.TEXT_DEFAULT))
         
-        # Calculate position based on existing widgets
-        if self.is_two_column_layout:
-            if widget_type == "status":
-                # Status widgets span entire row
-                current_row = self._calculate_next_status_row()
-                self.results_layout.addWidget(widget, current_row, 0, 1, 2)  # Span both columns
-            else:  # property widget
-                row, col = self._calculate_next_property_position()
-                self.results_layout.addWidget(widget, row, col)
-        else:
-            # Single-column arrangement (all widgets span both columns)
-            widget_index = len(self.results_widgets) - 1
-            self.results_layout.addWidget(widget, widget_index, 0, 1, 2)
+        # Make section header bold and compact
+        font = header_item.font()
+        font.setBold(True)
+        font.setPointSize(8)  # Smaller font for compactness
+        header_item.setFont(font)
+        
+        self.results_table.setItem(current_row, 0, header_item)
+        self.results_table.setSpan(current_row, 0, 1, 2)  # Span both columns
+        
+        # Set compact height for section header
+        self.results_table.setRowHeight(current_row, 22)
     
-    def _calculate_next_status_row(self) -> int:
-        """Calculate the next available row for a status widget"""
-        if not self.results_widgets:
-            return 0
+    def _add_property_row(self, property_name: str, value: str):
+        """Add a compact property row to the table"""
+        current_row = self.results_table.rowCount()
+        self.results_table.insertRow(current_row)
         
-        # Count property widgets that aren't paired (to see if we need an extra row)
-        property_count = sum(1 for t in self.widget_types[:-1] if t == "property")
-        status_count = sum(1 for t in self.widget_types[:-1] if t == "status")
+        # Property name with compact font
+        name_item = QTableWidgetItem(property_name)
+        name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        name_font = name_item.font()
+        name_font.setPointSize(8)  # Compact font size
+        name_item.setFont(name_font)
         
-        # Each status takes 1 row, each pair of properties takes 1 row
-        used_rows = status_count + (property_count + 1) // 2
-        return used_rows
-    
-    def _calculate_next_property_position(self) -> tuple:
-        """Calculate the next position (row, col) for a property widget"""
-        # Count widgets before this one
-        property_widgets_before = 0
-        current_row = 0
+        # Property value with compact monospace font
+        value_item = QTableWidgetItem(str(value))
+        value_item.setFlags(value_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        value_font = value_item.font()
+        value_font.setFamily(AppFonts.CONSOLE.family())
+        value_font.setPointSize(8)  # Compact font size
+        value_item.setFont(value_font)
         
-        for widget_type in self.widget_types[:-1]:  # Exclude the current widget
-            if widget_type == "status":
-                if property_widgets_before % 2 == 1:  # Odd number, incomplete row
-                    current_row += 1  # Complete the row
-                current_row += 1  # Status takes its own row
-                property_widgets_before = 0  # Reset property count for new section
-            else:  # property
-                property_widgets_before += 1
-                if property_widgets_before % 2 == 0:  # Completed a pair
-                    current_row += 1
+        self.results_table.setItem(current_row, 0, name_item)
+        self.results_table.setItem(current_row, 1, value_item)
         
-        # Calculate position for the new property widget
-        col = property_widgets_before % 2
-        if col == 0 and property_widgets_before > 0:
-            current_row += 1
-            
-        return current_row, col
+        # Set compact height for property row
+        self.results_table.setRowHeight(current_row, 20)
     
     def _update_test_button_icon(self, is_testing: bool):
         """Update test button icon matching monitor widget style"""
@@ -360,6 +375,9 @@ class SerialPortTestWidget(QWidget):
         """Set the current port to test from external source (main GUI)"""
         self.current_port_name = port_name
         self.current_port_info = port_info
+        
+        # Show header when user selects a port (for testing interface)
+        self._show_header_for_testing()
         
         if port_name and port_name != "No ports available":
             # Update label to show current port
@@ -486,15 +504,15 @@ class SerialPortTestWidget(QWidget):
                 spinner.stop_animation()
         self.active_spinners.clear()
         
-        # Clear tracked widgets and types
-        self.results_widgets.clear()
-        self.widget_types.clear()
+        # Clear status widgets
+        for widget in self.status_widgets:
+            widget.setParent(None)
+            widget.deleteLater()
+        self.status_widgets.clear()
         
-        # Clear all widgets from results layout
-        while self.results_layout.count():
-            child = self.results_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+        # Clear and hide table
+        self.results_table.setRowCount(0)
+        self.results_table.setVisible(False)
     
     def _show_loading_message(self):
         """Show initial loading state"""
@@ -508,7 +526,10 @@ class SerialPortTestWidget(QWidget):
             "Preparing diagnostics",
             AppColors.ACCENT_BLUE
         )
-        self._add_result_widget(loading_card, "status")
+        # Insert loading card above the table
+        table_index = self.results_layout.indexOf(self.results_table)
+        self.results_layout.insertWidget(table_index, loading_card)
+        self.status_widgets.append(loading_card)
     
     def _show_testing_message(self):
         """Show testing in progress message"""
@@ -522,7 +543,10 @@ class SerialPortTestWidget(QWidget):
             "Running checks",
             AppColors.WARNING_PRIMARY
         )
-        self._add_result_widget(testing_card, "status")
+        # Insert testing card above the table
+        table_index = self.results_layout.indexOf(self.results_table)
+        self.results_layout.insertWidget(table_index, testing_card)
+        self.status_widgets.append(testing_card)
         
         # Create progress info
         progress_text = [
@@ -533,7 +557,10 @@ class SerialPortTestWidget(QWidget):
         ]
         
         progress_card = self._create_info_card("Test Progress", progress_text)
-        self._add_result_widget(progress_card, "property")
+        # Insert progress card above the table as well
+        table_index = self.results_layout.indexOf(self.results_table)
+        self.results_layout.insertWidget(table_index, progress_card)
+        self.status_widgets.append(progress_card)
     
     def _create_status_card(self, icon: str, title: str, subtitle: str, color: str) -> QWidget:
         """Create a large status header card"""
@@ -581,8 +608,8 @@ class SerialPortTestWidget(QWidget):
             icon_label.setStyleSheet(f"""
                 QLabel {{
                     color: {color};
-                    font-size: 16pt;
-                    font-weight: bold;
+                    font-size: {AppFonts.CAPTION_SIZE};
+                    font-weight: {AppFonts.BOLD_WEIGHT};
                     background: transparent;
                 }}
             """)
@@ -601,7 +628,7 @@ class SerialPortTestWidget(QWidget):
             QLabel {{
                 color: {AppColors.TEXT_DEFAULT};
                 font-family: {AppFonts.DEFAULT_FAMILY};
-                font-size: {AppFonts.CONSOLE_LARGE};
+                font-size: {AppFonts.CAPTION_SIZE};
                 font-weight: {AppFonts.BOLD_WEIGHT};
                 background: transparent;
             }}
@@ -909,7 +936,7 @@ class SerialPortTestWidget(QWidget):
         return self._create_modern_card("Buffer Status", "buffer", buffer_data, "info")
     
     def _display_test_results_modern(self, results: dict):
-        """Display test results using modern card system"""
+        """Display test results using Windows-native table"""
         if not results:
             self._show_error_message("No test results received")
             return
@@ -921,7 +948,7 @@ class SerialPortTestWidget(QWidget):
         
         self._clear_results()
         
-        # Status header card
+        # Status header card (keep existing)
         if is_success:
             self._update_status_indicator("success")
             status_card = self._create_status_card(
@@ -940,32 +967,56 @@ class SerialPortTestWidget(QWidget):
                 AppColors.ERROR_PRIMARY
             )
         
-        self._add_result_widget(status_card, "status")
+        # Insert status card above the table for proper visual hierarchy
+        table_index = self.results_layout.indexOf(self.results_table)
+        self.results_layout.insertWidget(table_index, status_card)
+        self.status_widgets.append(status_card)
         
-        # Add detailed cards for successful tests
+        # Show and populate table for successful tests
         if is_success and details:
-            cards = [
-                self._create_port_config_card(details),
-                self._create_flow_control_card(details),
-                self._create_modem_status_card(details),
-                self._create_buffer_status_card(details)
-            ]
+            # Show table after status card for proper ordering
+            self.results_table.setVisible(True)
             
-            # Add timeout card if available
+            # Port Configuration section
+            self._add_section_header("⚙️ Port Configuration")
+            self._add_property_row("Data Bits", details.get('bytesize', 'N/A'))
+            self._add_property_row("Parity", details.get('parity', 'N/A'))
+            self._add_property_row("Stop Bits", details.get('stopbits', 'N/A'))
+            self._add_property_row("Timeout", f"{details.get('timeout', 'N/A')}s")
+            
+            # Flow Control section
+            self._add_section_header("🔄 Flow Control")
+            self._add_property_row("XON/XOFF", self._format_boolean(details.get('xonxoff', False)))
+            self._add_property_row("RTS/CTS", self._format_boolean(details.get('rtscts', False)))
+            self._add_property_row("DSR/DTR", self._format_boolean(details.get('dsrdtr', False)))
+            
+            # Modem Status section
+            modem_status = details.get("modem_status", {})
+            if isinstance(modem_status, dict) and modem_status:
+                self._add_section_header("📡 Modem Status")
+                for signal, value in modem_status.items():
+                    self._add_property_row(signal, self._format_signal_status(value))
+            
+            # Buffer Status section
+            if "in_waiting" in details or details.get("out_waiting") != 'N/A':
+                self._add_section_header("📊 Buffer Status")
+                if "in_waiting" in details:
+                    self._add_property_row("Input Buffer", f"{details['in_waiting']} bytes")
+                if details.get("out_waiting") != 'N/A':
+                    self._add_property_row("Output Buffer", f"{details['out_waiting']} bytes")
+            
+            # Advanced Timeouts section
             if (details.get("write_timeout") != 'N/A' or 
                 details.get("inter_byte_timeout") != 'N/A'):
-                timeout_data = {}
+                self._add_section_header("⏱️ Advanced Timeouts")
                 if details.get("write_timeout") != 'N/A':
-                    timeout_data["Write Timeout"] = f"{details['write_timeout']}s"
+                    self._add_property_row("Write Timeout", f"{details['write_timeout']}s")
                 if details.get("inter_byte_timeout") != 'N/A':
-                    timeout_data["Inter-byte Timeout"] = f"{details['inter_byte_timeout']}s"
-                
-                cards.append(self._create_modern_card("Advanced Timeouts", "timeout", 
-                                                     timeout_data, "info"))
-            
-            # Add all cards to layout
-            for card in cards:
-                self._add_result_widget(card, "property")
+                    self._add_property_row("Inter-byte Timeout", f"{details['inter_byte_timeout']}s")
+        
+        # Hide header after successful test completion to maximize results view
+        if is_success and details:
+            self._hide_header_for_results()
     
     def _display_test_results(self, results: dict):
         """Display test results using modern card-based approach"""
@@ -1014,4 +1065,9 @@ class SerialPortTestWidget(QWidget):
             error_msg,
             AppColors.ERROR_PRIMARY
         )
-        self._add_result_widget(error_card, "status")
+        # Insert error card above the table
+        table_index = self.results_layout.indexOf(self.results_table)
+        self.results_layout.insertWidget(table_index, error_card)
+        self.status_widgets.append(error_card)
+        
+        # Keep header visible for errors so user can easily retry

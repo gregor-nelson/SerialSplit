@@ -1548,16 +1548,93 @@ class ThemeManager:
     @staticmethod
     def create_html_content_widget(max_height: int = 350) -> QTextEdit:
         """Create widget for HTML content display"""
-        widget = QTextEdit()
+        from PyQt6.QtWidgets import QTextBrowser
+        from PyQt6.QtCore import QUrl
+        
+        class NonNavigatingTextBrowser(QTextBrowser):
+            def loadResource(self, type, name):
+                # Prevent loading external resources to avoid navigation
+                if isinstance(name, QUrl) and name.scheme() in ('http', 'https'):
+                    return None
+                return super().loadResource(type, name)
+        
+        widget = NonNavigatingTextBrowser()
         widget.setReadOnly(True)
         widget.setMaximumHeight(max_height)
         widget.setStyleSheet(AppStyles.textedit_html())
+        widget.setOpenExternalLinks(False)
         return widget
 
     @staticmethod
     def style_dialog(dialog: QDialog):
         """Apply standard dialog styling"""
         dialog.setStyleSheet(AppStyles.dialog_window())
+
+    @staticmethod
+    def create_dark_message_box(parent, title: str, message: str, msg_type: str = "info"):
+        """Create a dark-themed message box"""
+        from PyQt6.QtWidgets import QMessageBox
+        
+        msg_box = QMessageBox(parent)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        
+        # Apply dark theme styling
+        msg_box.setStyleSheet(f"""
+            QMessageBox {{
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                color: {AppColors.TEXT_DEFAULT};
+                font-family: {AppFonts.DEFAULT_FAMILY};
+                font-size: {AppFonts.DEFAULT_SIZE};
+            }}
+            QMessageBox QLabel {{
+                color: {AppColors.TEXT_DEFAULT};
+                background-color: transparent;
+                padding: {AppDimensions.PADDING_MEDIUM};
+            }}
+            QMessageBox QPushButton {{
+                background-color: {AppColors.BUTTON_DEFAULT};
+                color: {AppColors.TEXT_DEFAULT};
+                padding: {AppDimensions.PADDING_BUTTON_STANDARD};
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+                font-family: {AppFonts.DEFAULT_FAMILY};
+                font-size: {AppFonts.DEFAULT_SIZE};
+                min-width: {AppDimensions.BUTTON_WIDTH_STANDARD}px;
+                min-height: {AppDimensions.BUTTON_HEIGHT_STANDARD}px;
+            }}
+            QMessageBox QPushButton:hover {{
+                background-color: {AppColors.BUTTON_HOVER};
+            }}
+            QMessageBox QPushButton:pressed {{
+                background-color: {AppColors.BUTTON_PRESSED};
+            }}
+        """)
+        
+        # Set appropriate icon and buttons based on message type
+        if msg_type == "info":
+            msg_box.setIcon(QMessageBox.Icon.Information)
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            msg_box.exec()
+            return None
+        elif msg_type == "warning":
+            msg_box.setIcon(QMessageBox.Icon.Warning)
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            msg_box.exec()
+            return None
+        elif msg_type == "error":
+            msg_box.setIcon(QMessageBox.Icon.Critical)
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            msg_box.exec()
+            return None
+        elif msg_type == "question":
+            msg_box.setIcon(QMessageBox.Icon.Question)
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            return msg_box.exec()
+        else:
+            msg_box.setIcon(QMessageBox.Icon.Information)
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            msg_box.exec()
+            return None
 
     @staticmethod
     def apply_global_stylesheet(app) -> None:
@@ -1664,191 +1741,483 @@ class HTMLTheme:
     
     @staticmethod
     def get_styles() -> str:
-        """Get CSS styles for HTML content"""
+        """Get CSS styles for HTML content with Windows 10 system design alignment using theme constants"""
         return f"""
         <style>
+            /* Windows 10 Base Typography & Layout */
             body {{
-                font-family: '{AppFonts.DEFAULT_FAMILY}', Arial, sans-serif;
-                line-height: 1.6;
+                font-family: '{AppFonts.DEFAULT_FAMILY}', 'Segoe UI', system-ui, sans-serif;
+                line-height: 1.5;
                 color: {AppColors.TEXT_DEFAULT};
                 margin: 0;
-                padding: 0;
+                padding: {AppDimensions.PADDING_LARGE};
+                background-color: {AppColors.BACKGROUND_WHITE};
+                font-size: {AppFonts.DEFAULT_SIZE};
+                font-weight: {AppFonts.NORMAL_WEIGHT};
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
             }}
+            
+            /* Windows 10 Typography Scale */
             p {{
                 color: {AppColors.TEXT_DEFAULT};
-                margin-bottom: {AppDimensions.SPACING_LARGE}px;
+                margin: 0 0 {AppDimensions.SPACING_XLARGE}px 0;
+                line-height: 1.5;
+                font-size: {AppFonts.DEFAULT_SIZE};
+                font-weight: {AppFonts.NORMAL_WEIGHT};
             }}
+            
             i {{
                 color: {AppColors.TEXT_DEFAULT};
+                font-style: italic;
             }}
+            
+            /* Windows 10 Heading Hierarchy */
             h1, h2, h3, h4, h5, h6 {{
                 color: {AppColors.TEXT_DEFAULT};
-                margin-top: 0;
+                margin: {AppDimensions.SPACING_XXLARGE}px 0 {AppDimensions.SPACING_MEDIUM}px 0;
                 font-weight: {AppFonts.BOLD_WEIGHT};
+                line-height: 1.3;
+                letter-spacing: -0.01em;
             }}
+            
             h1 {{
                 font-size: {AppFonts.CAPTION_SIZE};
+                font-weight: {AppFonts.NORMAL_WEIGHT};
+                margin-top: 0;
+                margin-bottom: {AppDimensions.SPACING_XXLARGE}px;
             }}
+            
             h2 {{
                 color: {AppColors.ACCENT_BLUE};
+                font-size: {AppFonts.CAPTION_SIZE};
+                font-weight: {AppFonts.BOLD_WEIGHT};
                 text-align: center;
-                margin-bottom: {AppDimensions.SPACING_XXLARGE}px;
-                font-size: {AppFonts.DEFAULT_SIZE};
+                margin-bottom: {AppDimensions.SPACING_XLARGE}px;
+                padding-bottom: {AppDimensions.SPACING_MEDIUM}px;
+                border-bottom: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
             }}
+            
             h3 {{
                 font-size: {AppFonts.DEFAULT_SIZE};
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                color: {AppColors.TEXT_DEFAULT};
+                margin-top: {AppDimensions.SPACING_XLARGE}px;
+                margin-bottom: {AppDimensions.SPACING_MEDIUM}px;
             }}
+            
             h4 {{
-                font-size: 13px;
+                font-size: {AppFonts.DEFAULT_SIZE};
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                color: {AppColors.TEXT_DEFAULT};
+                margin-top: {AppDimensions.SPACING_LARGE}px;
+                margin-bottom: {AppDimensions.SPACING_SMALL}px;
             }}
+            
             h5 {{
-                font-size: 12px;
+                font-size: {AppFonts.SMALL_SIZE};
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                color: {AppColors.TEXT_DEFAULT};
+                margin-top: {AppDimensions.SPACING_LARGE}px;
+                margin-bottom: {AppDimensions.SPACING_SMALL}px;
             }}
+            
             h6 {{
-                font-size: 11px;
+                font-size: {AppFonts.SMALL_SIZE};
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                color: {AppColors.TEXT_DISABLED};
+                margin-top: {AppDimensions.SPACING_MEDIUM}px;
+                margin-bottom: {AppDimensions.SPACING_SMALL}px;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
             }}
+            /* Windows 10 Utility Classes */
             .center-text {{
                 text-align: center;
                 color: {AppColors.TEXT_DEFAULT};
-                margin-bottom: 20px;
-                font-size: 13px;
+                margin-bottom: {AppDimensions.SPACING_XLARGE}px;
+                font-size: {AppFonts.SMALL_SIZE};
             }}
+            
             .success {{
                 color: {AppColors.SUCCESS_PRIMARY};
                 font-weight: {AppFonts.BOLD_WEIGHT};
             }}
+            
+            /* Windows 10 Card Components */
             .info-box {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
-                border-left: 4px solid {AppColors.ACCENT_BLUE};
-                padding: 15px;
-                margin: 15px 0;
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+                border-left: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.INFO_PRIMARY};
+                padding: {AppDimensions.PADDING_BUTTON_LARGE};
+                margin: {AppDimensions.SPACING_XLARGE}px 0;
                 color: {AppColors.TEXT_DEFAULT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                box-shadow: 0 {AppDimensions.SPACING_TINY}px {AppDimensions.SPACING_SMALL}px rgba(0, 0, 0, 0.1);
+                position: relative;
             }}
+            
+            .info-box::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: {AppDimensions.BORDER_WIDTH_STANDARD}px;
+                background: linear-gradient(90deg, {AppColors.INFO_PRIMARY}, transparent);
+                opacity: 0.3;
+            }}
+            
             .warning-box {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
-                border-left: 4px solid {AppColors.WARNING_PRIMARY};
-                padding: 15px;
-                margin: 15px 0;
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+                border-left: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.WARNING_PRIMARY};
+                padding: {AppDimensions.PADDING_BUTTON_LARGE};
+                margin: {AppDimensions.SPACING_XLARGE}px 0;
                 color: {AppColors.TEXT_DEFAULT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                box-shadow: 0 {AppDimensions.SPACING_TINY}px {AppDimensions.SPACING_SMALL}px rgba(0, 0, 0, 0.1);
+                position: relative;
             }}
+            
+            .warning-box::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: {AppDimensions.BORDER_WIDTH_STANDARD}px;
+                background: linear-gradient(90deg, {AppColors.WARNING_PRIMARY}, transparent);
+                opacity: 0.3;
+            }}
+            
             .warning-box h3 {{
                 color: {AppColors.WARNING_PRIMARY};
+                margin-top: 0;
             }}
+            
             .footer-box {{
                 text-align: center;
-                margin-top: 20px;
-                padding: 10px;
-                background-color: {AppColors.BACKGROUND_LIGHT};
-                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
+                margin-top: {AppDimensions.SPACING_XXLARGE}px;
+                padding: {AppDimensions.PADDING_BUTTON_LARGE};
+                background-color: {AppColors.GRAY_100};
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                position: relative;
             }}
+            
+            .footer-box::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: {AppDimensions.BORDER_WIDTH_STANDARD}px;
+                background: linear-gradient(90deg, {AppColors.BORDER_LIGHT}, transparent);
+                opacity: 0.5;
+            }}
+            
             .footer-box p {{
                 margin: 0;
-                color: {AppColors.TEXT_DEFAULT};
-                font-size: 11px;
-                font-style: italic;
+                color: {AppColors.TEXT_DISABLED};
+                font-size: {AppFonts.SMALL_SIZE};
+                font-style: {AppFonts.ITALIC_STYLE};
+                line-height: 1.4;
             }}
+            /* Windows 10 Code & Inline Elements */
             code {{
                 background: {AppColors.GRAY_200};
-                padding: 2px 5px;
-                font-family: {AppFonts.CONSOLE.family()}, monospace;
-                font-size: 13px;
+                padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
+                font-family: {AppFonts.CONSOLE_FAMILY};
+                font-size: {AppFonts.SMALL_SIZE};
                 color: {AppColors.TEXT_DEFAULT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
             }}
+            
+            /* Windows 10 List Styling */
             ul {{
-                margin: 10px 0;
-                padding-left: 20px;
+                margin: {AppDimensions.SPACING_MEDIUM}px 0;
+                padding-left: {AppDimensions.SPACING_XLARGE}px;
                 color: {AppColors.TEXT_DEFAULT};
             }}
+            
             li {{
-                margin: 5px 0;
+                margin: {AppDimensions.SPACING_SMALL}px 0;
                 color: {AppColors.TEXT_DEFAULT};
+                line-height: 1.5;
             }}
+            
             .item-text {{
-                font-size: 13px;
+                font-size: {AppFonts.SMALL_SIZE};
                 color: {AppColors.TEXT_DEFAULT};
             }}
+            
             .success-icon {{
                 color: {AppColors.SUCCESS_PRIMARY};
                 font-weight: {AppFonts.BOLD_WEIGHT};
             }}
+            
             .code-inline {{
                 background: {AppColors.GRAY_200};
-                padding: 2px 5px;
-                font-family: {AppFonts.CONSOLE.family()}, monospace;
-                font-size: 13px;
+                padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
+                font-family: {AppFonts.CONSOLE_FAMILY};
+                font-size: {AppFonts.SMALL_SIZE};
                 color: {AppColors.TEXT_DEFAULT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
             }}
+            
+            /* Windows 10 Status Components */
             .status-box {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
-                border-left: 3px solid {AppColors.ACCENT_BLUE};
-                padding: 10px;
-                margin: 15px 0;
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+                border-left: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.ACCENT_BLUE};
+                padding: {AppDimensions.PADDING_MEDIUM};
+                margin: {AppDimensions.SPACING_XLARGE}px 0;
                 color: {AppColors.TEXT_DEFAULT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                position: relative;
+                transition: all 0.15s ease;
             }}
+            
+            .status-box:hover {{
+                background-color: {AppColors.GRAY_100};
+                border-left-color: {AppColors.HOT_TRACKING};
+            }}
+            
             .moxa-section {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
-                padding: 12px;
-                margin-top: 12px;
-                border: 1px solid {AppColors.BORDER_LIGHT};
+                background-color: {AppColors.GRAY_100};
+                padding: {AppDimensions.PADDING_BUTTON_LARGE};
+                margin-top: {AppDimensions.SPACING_XLARGE}px;
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
                 color: {AppColors.TEXT_DEFAULT};
+                box-shadow: 0 {AppDimensions.SPACING_TINY}px {AppDimensions.SPACING_SMALL}px rgba(0, 0, 0, 0.05);
             }}
+            
             .field {{
-                margin-bottom: 8px;
+                margin-bottom: {AppDimensions.SPACING_SMALL}px;
                 color: {AppColors.TEXT_DEFAULT};
+                line-height: 1.4;
             }}
+            
             .field-label {{
                 font-weight: {AppFonts.BOLD_WEIGHT};
                 display: inline-block;
-                min-width: 120px;
+                min-width: {AppDimensions.WIDTH_LABEL_PORT * 1.5}px;
                 color: {AppColors.TEXT_DEFAULT};
+                margin-right: {AppDimensions.SPACING_SMALL}px;
             }}
+            
             .section-header {{
                 font-weight: {AppFonts.BOLD_WEIGHT};
-                font-size: 12pt;
+                font-size: {AppFonts.DEFAULT_SIZE};
                 color: {AppColors.ACCENT_BLUE};
-                margin-top: 16px;
-                margin-bottom: 8px;
-                border-bottom: 1px solid {AppColors.BORDER_LIGHT};
-                padding-bottom: 4px;
+                margin-top: {AppDimensions.SPACING_XLARGE}px;
+                margin-bottom: {AppDimensions.SPACING_MEDIUM}px;
+                border-bottom: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+                padding-bottom: {AppDimensions.SPACING_SMALL}px;
+                position: relative;
             }}
+            
+            .section-header::after {{
+                content: '';
+                position: absolute;
+                bottom: -{AppDimensions.BORDER_WIDTH_STANDARD}px;
+                left: 0;
+                width: {AppDimensions.SPACING_XXLARGE}px;
+                height: {AppDimensions.BORDER_WIDTH_THICK}px;
+                background: {AppColors.ACCENT_BLUE};
+            }}
+            
             .port-details {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
-                padding: 8px;
-                margin: 4px 0;
-                border-left: 2px solid {AppColors.ACCENT_BLUE};
+                background-color: {AppColors.GRAY_100};
+                padding: {AppDimensions.PADDING_MEDIUM};
+                margin: {AppDimensions.SPACING_SMALL}px 0;
+                border-left: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ACCENT_BLUE};
                 color: {AppColors.TEXT_DEFAULT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+                border-left: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ACCENT_BLUE};
             }}
+            
+            /* Windows 10 Port Type Indicators */
             .port-type-physical {{
                 background-color: {AppColors.PORT_TYPE_PHYSICAL_BG};
                 color: {AppColors.PORT_TYPE_PHYSICAL_TEXT};
-                padding: 2px 6px;
-                border-radius: 3px;
-                font-size: 11px;
+                padding: {AppDimensions.PADDING_COMPACT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                font-size: {AppFonts.SMALL_SIZE};
                 font-weight: {AppFonts.BOLD_WEIGHT};
+                display: inline-block;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
             }}
+            
             .port-type-virtual {{
                 background-color: {AppColors.PORT_TYPE_VIRTUAL_BG};
                 color: {AppColors.PORT_TYPE_VIRTUAL_TEXT};
-                padding: 2px 6px;
-                border-radius: 3px;
-                font-size: 11px;
+                padding: {AppDimensions.PADDING_COMPACT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                font-size: {AppFonts.SMALL_SIZE};
                 font-weight: {AppFonts.BOLD_WEIGHT};
+                display: inline-block;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
             }}
+            
+            .port-type-moxa {{
+                background-color: {AppColors.PORT_TYPE_MOXA_BG};
+                color: {AppColors.PORT_TYPE_MOXA_TEXT};
+                padding: {AppDimensions.PADDING_COMPACT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                font-size: {AppFonts.SMALL_SIZE};
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                display: inline-block;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }}
+            
+            .port-type-other {{
+                background-color: {AppColors.PORT_TYPE_OTHER_BG};
+                color: {AppColors.PORT_TYPE_OTHER_TEXT};
+                padding: {AppDimensions.PADDING_COMPACT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                font-size: {AppFonts.SMALL_SIZE};
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                display: inline-block;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }}
+            /* Windows 10 Modern Table Styling */
             table {{
                 width: 100%;
-                border-collapse: collapse;
-                margin: 10px 0;
+                border-collapse: separate;
+                border-spacing: 0;
+                margin: {AppDimensions.SPACING_XLARGE}px 0;
                 color: {AppColors.TEXT_DEFAULT};
+                background-color: {AppColors.BACKGROUND_WHITE};
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                overflow: hidden;
+                box-shadow: 0 {AppDimensions.SPACING_TINY}px {AppDimensions.SPACING_SMALL}px rgba(0, 0, 0, 0.05);
             }}
+            
             th, td {{
-                padding: 8px;
+                padding: {AppDimensions.PADDING_MEDIUM};
                 text-align: left;
-                border-bottom: 1px solid {AppColors.BORDER_LIGHT};
+                border-bottom: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
+                transition: background-color 0.15s ease;
+                height: {AppDimensions.LIST_ITEM_HEIGHT}px;
             }}
+            
             th {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
+                background-color: {AppColors.CONTROL_PANEL_BACKGROUND};
                 font-weight: {AppFonts.BOLD_WEIGHT};
-                color: {AppColors.TEXT_DEFAULT};
+                color: {AppColors.CONTROL_PANEL_TEXT};
+                font-size: {AppFonts.SMALL_SIZE};
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                border-bottom: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.CONTROL_PANEL_BORDER};
+            }}
+            
+            tr:hover td {{
+                background-color: {AppColors.GRAY_100};
+            }}
+            
+            tr:last-child td {{
+                border-bottom: none;
+            }}
+            
+            /* Interactive Elements */
+            .interactive-element {{
+                transition: all 0.15s ease;
+                cursor: pointer;
+            }}
+            
+            .interactive-element:hover {{
+                background-color: {AppColors.BUTTON_HOVER};
+                transform: translateY(-{AppDimensions.SPACING_TINY}px);
+                box-shadow: 0 {AppDimensions.SPACING_SMALL}px {AppDimensions.SPACING_MEDIUM}px rgba(0, 0, 0, 0.1);
+            }}
+            
+            .interactive-element:focus {{
+                outline: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+                outline-offset: {AppDimensions.SPACING_TINY}px;
+            }}
+            
+            /* Link Styling */
+            a {{
+                color: {AppColors.ACCENT_BLUE};
+                text-decoration: none;
+                transition: color 0.15s ease;
+            }}
+            
+            a:hover {{
+                color: {AppColors.HOT_TRACKING};
+                text-decoration: underline;
+            }}
+            
+            a:focus {{
+                outline: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+                outline-offset: {AppDimensions.SPACING_TINY}px;
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+            }}
+            
+            /* Button-like Elements */
+            .btn-primary {{
+                background-color: {AppColors.BUTTON_BLUE_LIGHT};
+                color: {AppColors.BUTTON_ACCENT_TEXT};
+                padding: {AppDimensions.PADDING_BUTTON_STANDARD};
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BUTTON_BLUE_BORDER};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                text-decoration: none;
+                display: inline-block;
+                transition: all 0.15s ease;
+                cursor: pointer;
+                min-width: {AppDimensions.BUTTON_MIN_WIDTH}px;
+                height: {AppDimensions.BUTTON_HEIGHT_STANDARD}px;
+            }}
+            
+            .btn-primary:hover {{
+                background-color: {AppColors.BUTTON_BLUE_HOVER};
+                border-color: {AppColors.BUTTON_BLUE_BORDER_HOVER};
+                transform: translateY(-{AppDimensions.SPACING_TINY}px);
+                box-shadow: 0 {AppDimensions.SPACING_SMALL}px {AppDimensions.SPACING_MEDIUM}px rgba(0, 120, 215, 0.3);
+            }}
+            
+            .btn-primary:focus {{
+                outline: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+                outline-offset: {AppDimensions.SPACING_TINY}px;
+            }}
+            
+            .btn-secondary {{
+                background-color: {AppColors.BUTTON_TRANSPARENT};
+                color: {AppColors.ACCENT_BLUE};
+                padding: {AppDimensions.PADDING_BUTTON_STANDARD};
+                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ACCENT_BLUE};
+                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                text-decoration: none;
+                display: inline-block;
+                transition: all 0.15s ease;
+                cursor: pointer;
+                min-width: {AppDimensions.BUTTON_MIN_WIDTH}px;
+                height: {AppDimensions.BUTTON_HEIGHT_STANDARD}px;
+            }}
+            
+            .btn-secondary:hover {{
+                background-color: {AppColors.ACCENT_BLUE};
+                color: {AppColors.TEXT_WHITE};
+                transform: translateY(-{AppDimensions.SPACING_TINY}px);
+                box-shadow: 0 {AppDimensions.SPACING_SMALL}px {AppDimensions.SPACING_MEDIUM}px rgba(0, 120, 215, 0.2);
+            }}
+            
+            .btn-secondary:focus {{
+                outline: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
+                outline-offset: {AppDimensions.SPACING_TINY}px;
             }}
         </style>
         """

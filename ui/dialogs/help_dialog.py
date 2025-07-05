@@ -46,6 +46,9 @@ class HelpTopic(Enum):
     QUICK_TIPS = "quick_tips"
     COMMON_ISSUES = "common_issues"
     ERROR_MESSAGES = "error_messages"
+    
+    # About
+    ABOUT_INFO = "about_info"
 
 
 class HelpCategory:
@@ -56,6 +59,7 @@ class HelpCategory:
     CONFIGURATION = ("Configuration", "")
     REFERENCE = ("Reference", "")
     TROUBLESHOOTING = ("Troubleshooting", "")
+    ABOUT = ("About", "")
 
 
 class NavigationItem(QListWidgetItem):
@@ -241,6 +245,15 @@ class HelpContentRegistry:
                 "category": HelpCategory.TROUBLESHOOTING,
                 "keywords": ["error", "message", "warning", "alert"],
                 "related": [HelpTopic.COMMON_ISSUES, HelpTopic.QUICK_TIPS]
+            },
+
+            # About
+            HelpTopic.ABOUT_INFO: {
+                "title": "About",
+                "content": HelpContentRegistry._get_about_content(),
+                "category": HelpCategory.ABOUT,
+                "keywords": ["about", "info", "readme"],
+                "related": []
             }
         }
         
@@ -1141,6 +1154,101 @@ class HelpContentRegistry:
 </ul>
 """
 
+    @staticmethod
+    def _get_about_content() -> str:
+        """Get About section content with professional software information"""
+        return f"""
+{HTMLTheme.get_styles()}
+<div style="text-align: center; margin-bottom: 20px;">
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Serial Port Splitter</h1>
+    <p style="color: {AppColors.TEXT_DEFAULT}; font-size: 11pt; margin: 0;">Professional Serial Port Management Solution</p>
+    <p style="color: {AppColors.TEXT_DISABLED}; font-size: 10pt; margin: 5px 0 0 0;">Version 1.0</p>
+</div>
+
+<div class="info-box">
+    <h3 style="margin-top: 0;">Overview</h3>
+    <p>A professional Python PyQt6 GUI application for managing virtual serial ports using com0com and hub4com. 
+    This application provides a comprehensive interface for creating virtual serial port pairs and routing data 
+    between multiple ports, offering functionality similar to commercial products like FabulaTech's Serial Port Splitter.</p>
+</div>
+
+<h3>Key Features</h3>
+<ul>
+    <li><b>Virtual Port Management:</b> Automated setup of virtual port pairs with optimized settings</li>
+    <li><b>Multi-Port Routing:</b> Route data from one incoming port to multiple outgoing ports</li>
+    <li><b>Real-time Monitoring:</b> Live port status and data flow statistics</li>
+    <li><b>Modern Interface:</b> Professional dark theme with responsive design</li>
+    <li><b>Smart Detection:</b> Automatic classification of physical, virtual, and Moxa ports</li>
+    <li><b>Flexible Configuration:</b> Different baud rates and flow control options for each connection</li>
+</ul>
+
+<h3>Technical Information</h3>
+<div class="status-box">
+    <div class="field">
+        <span class="field-label">Framework:</span> PyQt6 with SVG support
+    </div>
+    <div class="field">
+        <span class="field-label">Platform:</span> Windows 10/11 (optimized)
+    </div>
+    <div class="field">
+        <span class="field-label">Dependencies:</span> com0com driver, hub4com utility
+    </div>
+    <div class="field">
+        <span class="field-label">Architecture:</span> Threaded operations with responsive UI
+    </div>
+    <div class="field">
+        <span class="field-label">License:</span> Open Source Software
+    </div>
+</div>
+
+<h3>Use Cases</h3>
+<ul>
+    <li><b>Development:</b> Test serial applications with multiple virtual ports</li>
+    <li><b>Industrial:</b> Route data between different baud rate devices</li>
+    <li><b>Networking:</b> Interface with Moxa device servers</li>
+    <li><b>Testing:</b> Monitor and log serial communication</li>
+    <li><b>Integration:</b> Bridge applications that need shared serial access</li>
+</ul>
+
+<div class="warning-box">
+    <h3>System Requirements</h3>
+    <ul>
+        <li>Windows 10 or later (for full functionality)</li>
+        <li>Administrator privileges (for driver installation)</li>
+        <li>com0com virtual serial port driver</li>
+        <li>Python 3.8+ with PyQt6, PyQt6-SVG, pyserial</li>
+    </ul>
+</div>
+
+<div class="footer-box" style="margin-top: 30px; background-color: {AppColors.BACKGROUND_LIGHT}; border-top: 2px solid {AppColors.BORDER_LIGHT}; padding: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div style="text-align: left;">
+            <p style="margin: 0; font-size: 10pt; color: {AppColors.TEXT_DEFAULT};">
+                © 2025 Serial Port Splitter
+            </p>
+            <p style="margin: 3px 0 0 0; font-size: 9pt; color: {AppColors.TEXT_DISABLED};">
+                Built with PyQt6 framework
+            </p>
+        </div>
+        <div style="text-align: right;">
+            <p style="margin: 0; font-size: 10pt; color: {AppColors.TEXT_DEFAULT};">
+                <b>Built By:</b> G.Nelson
+            </p>
+            <p style="margin: 3px 0 0 0; font-size: 9pt;">
+                <span style="color: {AppColors.ACCENT_BLUE}; font-size: 14px; margin-right: 4px;">🐙</span>
+                <a href="https://github.com/gregor-nelson" style="color: {AppColors.ACCENT_BLUE}; text-decoration: none; font-weight: 500;">
+                    GitHub Profile
+                </a>
+            </p>
+        </div>
+    </div>
+    <hr style="border: none; border-top: 1px solid {AppColors.BORDER_LIGHT}; margin: 12px 0 8px 0;">
+    <p style="text-align: center; margin: 0; font-size: 9pt; color: {AppColors.TEXT_DISABLED};">
+        Professional serial port management for Windows environments
+    </p>
+</div>
+"""
+
 
 class BreadcrumbWidget(QWidget):
     """Windows 10 style breadcrumb navigation"""
@@ -1435,6 +1543,9 @@ class UnifiedHelpDialog(QDialog):
         self.content_display.setMinimumHeight(480)
         self.content_display.setStyleSheet(self.content_display.styleSheet() + AppStyles.scrollbar())
         
+        # Enable links and connect to handler
+        self.content_display.anchorClicked.connect(self.handle_link_clicked)
+        
         # Related topics section
         self.related_widget = self.create_related_topics_section()
         self.related_widget.setVisible(False)
@@ -1483,7 +1594,8 @@ class UnifiedHelpDialog(QDialog):
             HelpCategory.ROUTING,
             HelpCategory.CONFIGURATION,
             HelpCategory.REFERENCE,
-            HelpCategory.TROUBLESHOOTING
+            HelpCategory.TROUBLESHOOTING,
+            HelpCategory.ABOUT
         ]
         
         for category in category_order:
@@ -1594,6 +1706,24 @@ class UnifiedHelpDialog(QDialog):
         """Handle breadcrumb navigation"""
         if target == "home":
             self.load_topic(HelpTopic.QUICK_START)
+    
+    def handle_link_clicked(self, url):
+        """Handle link clicks - open external URLs in default browser"""
+        import webbrowser
+        from PyQt6.QtCore import QUrl
+        
+        url_string = url.toString() if isinstance(url, QUrl) else str(url)
+        
+        # Only open external URLs (http/https)
+        if url_string.startswith(('http://', 'https://')):
+            try:
+                webbrowser.open(url_string)
+                # Prevent QTextBrowser from navigating away from current content
+                return True
+            except Exception as e:
+                print(f"Failed to open URL {url_string}: {e}")
+        
+        return False
             
     def go_back(self):
         """Navigate back (placeholder for history)"""

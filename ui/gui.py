@@ -3,7 +3,6 @@
 Main GUI window for Hub4com GUI Launcher
 Contains the primary application interface - Optimized version
 """
-
 import json
 import base64
 from pathlib import Path
@@ -37,7 +36,6 @@ from ui.dialogs.help_dialog import HelpManager, HelpTopic
 from ui.widgets import OutputPortWidget
 from ui.widgets.tab_manager_widget import SerialPortManagerWidget
 from ui.windows.command_formatter import CommandFormatter
-
 
 class FeatureIconDelegate(QStyledItemDelegate):
     """Custom delegate to render SVG icons inline with feature text"""
@@ -401,7 +399,6 @@ class CommandBuilder:
         if settings.get('disable_default_fc'):
             cmd.append(f'--no-default-fc-route=0:{output_indices}')
 
-
 # ============================================================================
 # MAIN GUI CLASS
 # ============================================================================
@@ -444,7 +441,6 @@ class Hub4comGUI(QMainWindow):
     # ========================================================================
     # UI INITIALIZATION
     # ========================================================================
-    
     def _init_ui(self):
         """Initialize the main UI"""
         self.setWindowTitle("Serial Port Splitter - COM0COM/HUB4COM")
@@ -715,14 +711,8 @@ class Hub4comGUI(QMainWindow):
             if widget:
                 widget.setText(message)
         else:
-            # Message box
-            msg_funcs = {
-                "info": QMessageBox.information,
-                "warning": QMessageBox.warning,
-                "error": QMessageBox.critical,
-                "question": QMessageBox.question
-            }
-            return msg_funcs.get(msg_type, QMessageBox.information)(self, title or "Information", message)
+            # Dark-themed message box
+            return ThemeManager.create_dark_message_box(self, title or "Information", message, msg_type)
     
     # Backward compatibility methods
     def _show_message(self, title: str, message: str, msg_type: str = "info"):
@@ -743,8 +733,7 @@ class Hub4comGUI(QMainWindow):
     def _create_virtual_ports_section(self) -> QGroupBox:
         """Create virtual ports management section with clean column-based layout"""
         group, layout = self._create_groupbox_with_layout("Com0com Configuration")
-        
-        
+
         # Define control panel structure
         columns = [
             ControlPanelColumn(
@@ -770,7 +759,7 @@ class Hub4comGUI(QMainWindow):
         status_indicators = [
             StatusIndicator("com0com_status", AppMessages.READY)
         ]
-        
+    
         # Create control panel using the builder
         control_panel = self.control_panel_builder.create_control_panel(columns, status_indicators)
         layout.addWidget(control_panel)
@@ -834,7 +823,7 @@ class Hub4comGUI(QMainWindow):
                 width_hint=150  # Increased width
             )
         ]
-        
+    
         # Define dual status indicators
         status_indicators = [
             StatusIndicator("port_status", AppMessages.SCANNING),
@@ -934,7 +923,6 @@ class Hub4comGUI(QMainWindow):
     # ========================================================================
     # PORT MANAGEMENT
     # ========================================================================
-    
     def _populate_baud_rates(self, combo: QComboBox):
         """Populate combo box with baud rates"""
         for rate in Config.BAUD_RATES:
@@ -1035,11 +1023,10 @@ class Hub4comGUI(QMainWindow):
         """Handle incoming baud rate change"""
         if self.ui_refs['sync_baud_rates'].isChecked():
             self.set_all_baud_rates(self.ui_refs['incoming_baud'].currentText())
-    
+  
     # ========================================================================
     # PORT SCANNING
     # ========================================================================
-    
     def _safe_refresh_ports(self):
         """Safely refresh port lists with error handling"""
         try:
@@ -1456,7 +1443,6 @@ class Hub4comGUI(QMainWindow):
     # ========================================================================
     # COM0COM MANAGEMENT
     # ========================================================================
-    
     def initialize_default_configuration(self):
         """Initialize application with default COM pair configuration"""
         if not WINREG_AVAILABLE:
@@ -1591,7 +1577,7 @@ class Hub4comGUI(QMainWindow):
                 "• Connect external applications to COM132 & COM142",
                 "info"
             )
-    
+
     def list_com0com_pairs(self):
         """List all com0com port pairs"""
         self._update_status(AppMessages.LISTING_PAIRS, component='com0com')
@@ -1624,11 +1610,10 @@ class Hub4comGUI(QMainWindow):
         if "CNCA" in text:
             pair_num = text.split("CNCA")[1].split()[0]
             
-            reply = QMessageBox.question(
-                self,
-                "Confirm Removal",
+            reply = self._ui_feedback(
                 f"Remove virtual port pair CNCA{pair_num} ↔ CNCB{pair_num}?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                "Confirm Removal",
+                "question"
             )
             
             if reply == QMessageBox.StandardButton.Yes:
