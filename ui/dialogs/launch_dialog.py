@@ -39,21 +39,15 @@ class LaunchDialog(QDialog):
         layout.setSpacing(AppDimensions.SPACING_LARGE)
         layout.setContentsMargins(*AppDimensions.MARGIN_DIALOG)
         
+        # Apply dark mode dialog styling
+        ThemeManager.style_dialog(self)
+        
         # Create scrollable text area for initialisation summary (matching help dialog)
         summary_text = QTextEdit()
         summary_text.setFont(AppFonts.CONSOLE_LARGE)
         summary_text.setReadOnly(True)
-        summary_text.setStyleSheet(f"""
-            QTextEdit {{
-                border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
-                padding: {AppDimensions.PADDING_MEDIUM};
-                background-color: {AppColors.BACKGROUND_WHITE};
-                color: {AppColors.TEXT_DEFAULT};
-                line-height: 1.4;
-                font-family: {AppFonts.DEFAULT_FAMILY};
-                font-size: 10pt;
-            }}
-        """)
+        # Apply dark mode styling using theme system
+        summary_text.setStyleSheet(AppStyles.textedit_html())
         
         summary_text.setHtml(self._generate_summary_content())
         layout.addWidget(summary_text)
@@ -73,12 +67,12 @@ class LaunchDialog(QDialog):
         <h3>Configured Components</h3>
         <ul>
             <li><b>Virtual Port Pairs:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">✓</span> {port_status_data['pairs_html']}</li>
-            <li><b>Baud Rate:</b> <code style="background: {AppColors.GRAY_200}; padding: 2px 4px;">{self.default_config.default_baud}</code></li>
+            <li><b>Baud Rate:</b> <code style="background: {AppColors.GRAY_100}; padding: 2px 4px; color: {AppColors.TEXT_DEFAULT};">{self.default_config.default_baud}</code></li>
             <li><b>Buffer Management:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">Enabled</span></li>
             <li><b>Timing Control:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">Enabled</span></li>
         </ul>
         
-        <div style="background-color: {AppColors.BACKGROUND_LIGHT}; border-left: 3px solid {AppColors.ACCENT_BLUE}; padding: 10px; margin: 15px 0;">
+        <div style="background-color: {AppColors.GRAY_100}; border-left: 3px solid {AppColors.ACCENT_BLUE}; padding: 10px; margin: 15px 0; color: {AppColors.TEXT_DEFAULT};">
             <h4>Application Connection</h4>
             <p>Applications should connect to {connection_ports} respectively.</p>
             <p>Data routing begins when the service is started.</p>
@@ -105,7 +99,7 @@ class LaunchDialog(QDialog):
         # Format pairs list simply
         formatted_pairs = []
         for pair in pairs_list:
-            formatted_pairs.append(f'<code style="background: {AppColors.GRAY_100}; padding: 2px 4px;">{pair}</code>')
+            formatted_pairs.append(f'<code style="background: {AppColors.GRAY_50}; padding: 2px 4px; color: {AppColors.TEXT_DEFAULT};">{pair}</code>')
         
         pairs_html = ", ".join(formatted_pairs)
         
@@ -119,7 +113,7 @@ class LaunchDialog(QDialog):
         ports = ["COM132", "COM142"]
         formatted_ports = []
         for port in ports:
-            formatted_ports.append(f'<code style="background: {AppColors.GRAY_200}; padding: 2px 4px;">{port}</code>')
+            formatted_ports.append(f'<code style="background: {AppColors.GRAY_100}; padding: 2px 4px; color: {AppColors.TEXT_DEFAULT};">{port}</code>')
         
         return " and ".join(formatted_ports)
     

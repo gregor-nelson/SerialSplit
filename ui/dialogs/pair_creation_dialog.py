@@ -32,7 +32,7 @@ class PairCreationDialog(QDialog):
         # Instructions
         instructions = QLabel(
             "Create a new pair of connected virtual serial ports.\n\n" +
-            "💡 TIP: Leave the names empty to let COM0COM automatically assign port names like COM3, COM4, etc.\n" +
+            "TIP: Leave the names empty to let COM0COM automatically assign port names like COM3, COM4, etc.\n" +
             "Or enter specific names like COM10, COM11 if you need particular port numbers."
         )
         instructions.setWordWrap(True)

@@ -446,3 +446,111 @@ class AppIcons:
         </g>
     </svg>
     """
+
+    # Com0com Settings Icons - Small 16x16 icons for inline display
+    TIMING_CLOCK = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+        <defs>
+            <filter id="timing-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
+                <feOffset dx="0" dy="0.5" result="offsetblur"/>
+                <feFlood flood-color="#000000" flood-opacity="0.1"/>
+                <feComposite in2="offsetblur" operator="in"/>
+                <feMerge>
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <!-- Clock face -->
+        <g filter="url(#timing-shadow)">
+            <circle cx="8" cy="8" r="6" fill="{_COLORS['WHITE']}" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1.5"/>
+            <!-- Clock hands -->
+            <circle cx="8" cy="8" r="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <path d="M8,8 L8,4" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1.2" stroke-linecap="round"/>
+            <path d="M8,8 L11,8" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1" stroke-linecap="round"/>
+        </g>
+    </svg>
+    """
+
+    BUFFER_STACK = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+        <defs>
+            <filter id="buffer-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
+                <feOffset dx="0" dy="0.5" result="offsetblur"/>
+                <feFlood flood-color="#000000" flood-opacity="0.1"/>
+                <feComposite in2="offsetblur" operator="in"/>
+                <feMerge>
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <!-- Buffer blocks -->
+        <g filter="url(#buffer-shadow)">
+            <rect x="2" y="10" width="4" height="4" rx="0.5" fill="{_COLORS['SUCCESS_GREEN']}"/>
+            <rect x="6" y="8" width="4" height="6" rx="0.5" fill="{_COLORS['SUCCESS_GREEN']}"/>
+            <rect x="10" y="6" width="4" height="8" rx="0.5" fill="{_COLORS['WARNING_ORANGE']}"/>
+        </g>
+    </svg>
+    """
+
+    EXCLUSIVE_LOCK = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+        <defs>
+            <filter id="lock-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
+                <feOffset dx="0" dy="0.5" result="offsetblur"/>
+                <feFlood flood-color="#000000" flood-opacity="0.1"/>
+                <feComposite in2="offsetblur" operator="in"/>
+                <feMerge>
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <!-- Lock -->
+        <g filter="url(#lock-shadow)">
+            <!-- Lock shackle -->
+            <path d="M5,6 L5,4 A3,3 0 0,1 11,4 L11,6" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- Lock body -->
+            <rect x="4" y="6" width="8" height="7" rx="1" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <!-- Keyhole -->
+            <circle cx="8" cy="9" r="1" fill="{_COLORS['WHITE']}"/>
+            <rect x="7.5" y="9" width="1" height="2" fill="{_COLORS['WHITE']}"/>
+        </g>
+    </svg>
+    """
+
+    PLUGIN_CONNECTOR = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+        <defs>
+            <filter id="plugin-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
+                <feOffset dx="0" dy="0.5" result="offsetblur"/>
+                <feFlood flood-color="#000000" flood-opacity="0.1"/>
+                <feComposite in2="offsetblur" operator="in"/>
+                <feMerge>
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <!-- Connector -->
+        <g filter="url(#plugin-shadow)">
+            <!-- Connector body -->
+            <rect x="3" y="6" width="10" height="4" rx="1" fill="{_COLORS['GRAY_MEDIUM']}" stroke="{_COLORS['GRAY_DARK']}" stroke-width="0.5"/>
+            <!-- Connector pins -->
+            <rect x="5" y="7" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="7" y="7" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="9" y="7" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="5" y="8.2" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="7" y="8.2" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="9" y="8.2" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <!-- Cable -->
+            <rect x="1" y="7" width="2" height="2" rx="1" fill="{_COLORS['GRAY_DARK']}"/>
+            <rect x="13" y="7" width="2" height="2" rx="1" fill="{_COLORS['GRAY_DARK']}"/>
+        </g>
+    </svg>
+    """

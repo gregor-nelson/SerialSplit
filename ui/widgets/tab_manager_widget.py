@@ -48,10 +48,10 @@ class SerialPortManagerWidget(QWidget):
                 font-family: {AppFonts.DEFAULT_FAMILY};
                 font-size: {AppFonts.DEFAULT_SIZE};
                 padding: {AppDimensions.PADDING_MEDIUM} {AppDimensions.PADDING_LARGE};
-                margin-right: 2px;
+                margin-right: {AppDimensions.TAB_MARGIN_RIGHT}px;
                 border: 1px solid {AppColors.BORDER_LIGHT};
                 border-bottom: none;
-                min-width: 80px;
+                min-width: {AppDimensions.TAB_MIN_WIDTH}px;
             }}
             QTabBar::tab:selected {{
                 background-color: {AppColors.BACKGROUND_WHITE};

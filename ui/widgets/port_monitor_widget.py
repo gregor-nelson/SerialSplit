@@ -20,7 +20,7 @@ class CombinedDataChart(QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumSize(150, 30)  # Reduced minimum size for better slider utilization
+        self.setMinimumSize(AppDimensions.CHART_MIN_WIDTH, AppDimensions.CHART_MIN_HEIGHT)  # Use theme dimensions
         self.setMaximumHeight(16777215)  # Remove height restrictions
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.rx_data = []
@@ -66,11 +66,11 @@ class CombinedDataChart(QWidget):
         # Background
         painter.fillRect(self.rect(), QColor(AppColors.BACKGROUND_LIGHT))
         
-        # Define margins for chart area
-        margin_top = 8
-        margin_bottom = 8
-        margin_left = 4
-        margin_right = 4
+        # Define margins for chart area using theme constants
+        margin_top = AppDimensions.CHART_MARGIN_TOP
+        margin_bottom = AppDimensions.CHART_MARGIN_BOTTOM
+        margin_left = AppDimensions.CHART_MARGIN_LEFT
+        margin_right = AppDimensions.CHART_MARGIN_RIGHT
         
         # Calculate chart area with margins
         chart_width = self.width() - margin_left - margin_right

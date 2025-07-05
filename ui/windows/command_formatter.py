@@ -8,6 +8,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QTextCharFormat, QColor, QFont, QTextCursor, QFontDatabase
 from PyQt6.QtWidgets import QTextEdit
 from typing import List, Dict, Optional
+from ui.theme.theme import AppColors, AppFonts
 
 
 class CommandFormatter:
@@ -15,18 +16,18 @@ class CommandFormatter:
     
     def __init__(self):
         """Initialize the command formatter with professional color scheme"""
-        # Muted professional color scheme
+        # Use theme colors for consistent styling
         self.colors = {
-            'default': '#2c2c2c',        # Dark gray for regular text
-            'command': '#0066cc',        # Subtle blue for commands
-            'port': '#2c5530',           # Dark green for ports
-            'parameter': '#5a5a5a',      # Medium gray for parameters
-            'value': '#2c2c2c',          # Same as default
-            'enabled': '#2a7f3e',        # Muted green for enabled
-            'disabled': '#994444',       # Muted red for disabled
-            'muted': '#7a7a7a',          # Light gray for separators
-            'highlight': '#1a1a1a',      # Darker for emphasis
-            'diagram': '#5a5a5a',        # Medium gray for ASCII diagrams
+            'default': AppColors.CMD_DEFAULT,        # Dark gray for regular text
+            'command': AppColors.CMD_COMMAND,        # Subtle blue for commands
+            'port': AppColors.CMD_PORT,              # Dark green for ports
+            'parameter': AppColors.CMD_PARAMETER,    # Medium gray for parameters
+            'value': AppColors.CMD_VALUE,            # Same as default
+            'enabled': AppColors.CMD_ENABLED,        # Muted green for enabled
+            'disabled': AppColors.CMD_DISABLED,      # Muted red for disabled
+            'muted': AppColors.CMD_MUTED,            # Light gray for separators
+            'highlight': AppColors.CMD_HIGHLIGHT,    # Darker for emphasis
+            'diagram': AppColors.CMD_DIAGRAM,        # Medium gray for ASCII diagrams
         }
         
         # Character formatting objects
@@ -38,17 +39,17 @@ class CommandFormatter:
         # Default format
         self.formats['default'] = QTextCharFormat()
         self.formats['default'].setForeground(QColor(self.colors['default']))
-        self.formats['default'].setFontFamily("Consolas, 'Courier New', monospace")
+        self.formats['default'].setFontFamily(AppFonts.CONSOLE_FAMILY)
         
         # Command format (subtle blue, no bold)
         self.formats['command'] = QTextCharFormat()
         self.formats['command'].setForeground(QColor(self.colors['command']))
-        self.formats['command'].setFontFamily("Consolas, 'Courier New', monospace")
+        self.formats['command'].setFontFamily(AppFonts.CONSOLE_FAMILY)
         
         # Port format (muted green)
         self.formats['port'] = QTextCharFormat()
         self.formats['port'].setForeground(QColor(self.colors['port']))
-        self.formats['port'].setFontFamily("Consolas, 'Courier New', monospace")
+        self.formats['port'].setFontFamily(AppFonts.CONSOLE_FAMILY)
         
         # Parameter format (gray)
         self.formats['parameter'] = QTextCharFormat()
@@ -77,7 +78,7 @@ class CommandFormatter:
         # Diagram format
         self.formats['diagram'] = QTextCharFormat()
         self.formats['diagram'].setForeground(QColor(self.colors['diagram']))
-        self.formats['diagram'].setFontFamily("Consolas, 'Courier New', monospace")
+        self.formats['diagram'].setFontFamily(AppFonts.CONSOLE_FAMILY)
     
     def format_command_preview(self, text_edit: QTextEdit, command: List[str], 
                              route_info: Dict) -> None:
@@ -87,7 +88,7 @@ class CommandFormatter:
         cursor = text_edit.textCursor()
         
         # Ensure monospace font for the entire widget
-        font = QFont("Consolas", 10)
+        font = QFont(AppFonts.CONSOLE.family(), AppFonts.FONT_SIZE_LARGE)
         font.setStyleHint(QFont.StyleHint.Monospace)
         text_edit.setFont(font)
         

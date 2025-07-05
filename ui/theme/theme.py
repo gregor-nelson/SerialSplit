@@ -6,15 +6,14 @@ Based on official Microsoft design specifications and system measurements
 """
 
 from PyQt6.QtGui import QFont, QColor, QIcon, QPixmap, QPainter
-from PyQt6.QtCore import QSize, QRect, Qt
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import (QPushButton, QComboBox, QGroupBox, QTextEdit, 
                              QLineEdit, QCheckBox, QLabel, QListWidget, 
                              QProgressBar, QWidget, QTableWidget, QFrame,
-                             QScrollArea, QDialog)
+                             QDialog)
 from dataclasses import dataclass
-from typing import Dict, Any, Optional, Callable
-import math
+from typing import Optional, Callable
 from .icons.icons import AppIcons
 
 
@@ -23,80 +22,103 @@ from .icons.icons import AppIcons
 class AppColors:
     """Exact Windows 10 system color palette from registry and theme specifications"""
     
-    # === PRIMARY WINDOWS 10 SYSTEM COLORS ===
-    # Background colors (from Windows 10 registry defaults)
-    BACKGROUND_LIGHT = "#f0f0f0"        # ButtonFace - Light gray (240, 240, 240)
-    BACKGROUND_WHITE = "#ffffff"        # Window - Pure white (255, 255, 255)
-    BACKGROUND_DISABLED = "#f0f0f0"     # Disabled keeps same background in Win10
-    BACKGROUND_DESKTOP = "#0063b1"      # Background - Desktop background (0, 99, 177)
-    BACKGROUND_MENU = "#f0f0f0"         # Menu - Menu background (240, 240, 240)
-    BACKGROUND_TOOLTIP = "#ffffe1"      # InfoWindow - Tooltip background (255, 255, 225)
-    BACKGROUND_APPWORKSPACE = "#ababab" # AppWorkspace - MDI background (171, 171, 171)
+    # === PRIMARY WINDOWS 10 SYSTEM COLORS - DARK MODE ===
+    # Background colors (Dark mode equivalents)
+    # Light mode: "#f0f0f0" → Dark mode: "#2d2d2d"
+    BACKGROUND_LIGHT = "#2d2d2d"        # ButtonFace - Dark gray (45, 45, 45)
+    # Light mode: "#ffffff" → Dark mode: "#1e1e1e"
+    BACKGROUND_WHITE = "#1e1e1e"        # Window - Dark background (30, 30, 30)
+    # Light mode: "#f0f0f0" → Dark mode: "#2d2d2d"
+    BACKGROUND_DISABLED = "#2d2d2d"     # Disabled keeps same background in dark mode
+    # Light mode: "#f0f0f0" → Dark mode: "#2d2d2d"
+    BACKGROUND_MENU = "#2d2d2d"         # Menu - Dark menu background (45, 45, 45)
+    # Light mode: "#ffffe1" → Dark mode: "#404040"
+    BACKGROUND_TOOLTIP = "#404040"      # InfoWindow - Dark tooltip background (64, 64, 64)
     
-    # Border colors (from Windows 10 system colors)
-    BORDER_DEFAULT = "#adadad"          # Default border - more accurate gray
-    BORDER_FOCUS = "#0078d7"            # Windows 10 accent blue (0, 120, 215)
-    BORDER_PRESSED = "#005a9e"          # Darker blue for pressed state
-    BORDER_DISABLED = "#d1d1d1"         # Lighter gray for disabled
-    BORDER_LIGHT = "#e5e5e5"            # ButtonLight - Light border (229, 229, 229)
-    BORDER_DARK_SHADOW = "#696969"      # ButtonDkShadow - Dark shadow (105, 105, 105)
-    BORDER_ACTIVE = "#b4b4b4"           # ActiveBorder - Active window border (180, 180, 180)
-    BORDER_INACTIVE = "#f4f7fc"         # InactiveBorder - Inactive window border (244, 247, 252)
-    BORDER_WINDOW_FRAME = "#646464"     # WindowFrame - Window frame (100, 100, 100)
+    # Border colors (Dark mode equivalents)
+    # Light mode: "#adadad" → Dark mode: "#555555"
+    BORDER_DEFAULT = "#555555"          # Default border - dark gray (85, 85, 85)
+    # Light mode: "#0078d7" → Dark mode: "#4cc2ff" (brighter for dark bg)
+    BORDER_FOCUS = "#4cc2ff"            # Windows 10 accent blue - brighter (76, 194, 255)
+    # Light mode: "#005a9e" → Dark mode: "#0088ff"
+    BORDER_PRESSED = "#0088ff"          # Brighter blue for pressed state (0, 136, 255)
+    # Light mode: "#d1d1d1" → Dark mode: "#404040"
+    BORDER_DISABLED = "#404040"         # Darker gray for disabled (64, 64, 64)
+    # Light mode: "#e5e5e5" → Dark mode: "#404040"
+    BORDER_LIGHT = "#404040"            # ButtonLight - Dark border (64, 64, 64)
+    # Light mode: "#b4b4b4" → Dark mode: "#666666"
+    BORDER_ACTIVE = "#666666"           # ActiveBorder - Active window border (102, 102, 102)
     
-    # Button colors (Windows 10 button system) - CORRECTED
-    BUTTON_DEFAULT = "#fdfdfd"          # Actual Win10 button color (253, 253, 253)
-    BUTTON_HOVER = "#e5e5e5"            # Gray hover, not blue! (229, 229, 229)
-    BUTTON_PRESSED = "#cccccc"          # Gray pressed, not blue! (204, 204, 204)
-    BUTTON_HIGHLIGHT = "#ffffff"        # ButtonHilight - Button highlight (255, 255, 255)
-    BUTTON_SHADOW = "#a0a0a0"           # ButtonShadow - Button shadow (160, 160, 160)
+    # Button colors (Dark mode button system)
+    # Light mode: "#fdfdfd" → Dark mode: "#404040"
+    BUTTON_DEFAULT = "#404040"          # Dark Win10 button color (64, 64, 64)
+    # Light mode: "#e5e5e5" → Dark mode: "#4a4a4a"
+    BUTTON_HOVER = "#4a4a4a"            # Dark gray hover (74, 74, 74)
+    # Light mode: "#cccccc" → Dark mode: "#353535"
+    BUTTON_PRESSED = "#353535"          # Dark gray pressed (53, 53, 53)
     
-    # Text colors (Windows 10 text system)
-    TEXT_DEFAULT = "#000000"            # WindowText/ButtonText - Black text (0, 0, 0)
-    TEXT_DISABLED = "#a0a0a0"           # GrayText - Corrected disabled text (160, 160, 160)
-    TEXT_WHITE = "#ffffff"              # HilightText - White text (255, 255, 255)
-    TEXT_CAPTION = "#000000"            # TitleText - Caption text (0, 0, 0)
-    TEXT_INACTIVE_CAPTION = "#000000"   # InactiveTitleText - Inactive caption (0, 0, 0)
-    TEXT_MENU = "#000000"               # MenuText - Menu text (0, 0, 0)
-    TEXT_TOOLTIP = "#000000"            # InfoText - Tooltip text (0, 0, 0)
+    # Text colors (Dark mode text system)
+    # Light mode: "#000000" → Dark mode: "#ffffff"
+    TEXT_DEFAULT = "#ffffff"            # WindowText/ButtonText - White text (255, 255, 255)
+    # Light mode: "#a0a0a0" → Dark mode: "#808080" (darker for dark bg)
+    TEXT_DISABLED = "#808080"           # GrayText - Dark mode disabled text (128, 128, 128)
+    # Light mode: "#ffffff" → Dark mode: "#000000" (inverted)
+    TEXT_WHITE = "#000000"              # HilightText - Black text for light backgrounds
+    # Light mode: "#000000" → Dark mode: "#ffffff"
+    TEXT_MENU = "#ffffff"               # MenuText - White menu text (255, 255, 255)
+    # Light mode: "#000000" → Dark mode: "#ffffff"
+    TEXT_TOOLTIP = "#ffffff"            # InfoText - White tooltip text (255, 255, 255)
     
-    # Icon colors (based on Windows 10 system)
-    ICON_DEFAULT = "#000000"            # Default icon color
-    ICON_HOVER = "#000000"              # Icons don't change color on hover in Win10
-    ICON_PRESSED = "#000000"            # Icons don't change color on press
-    ICON_DISABLED = "#a0a0a0"           # Matches disabled text
+    # Icon colors (Dark mode system)
+    # Light mode: "#000000" → Dark mode: "#ffffff"
+    ICON_DEFAULT = "#ffffff"            # Default icon color - white
+    # Light mode: "#a0a0a0" → Dark mode: "#808080"
+    ICON_DISABLED = "#808080"           # Matches disabled text
     
-    # Selection colors (Windows 10 selection system)
-    SELECTION_BG = "#0078d7"            # Active selection uses accent
-    SELECTION_INACTIVE = "#cccccc"      # Inactive selection is gray
+    # Selection colors (Dark mode selection system)
+    # Light mode: "#0078d7" → Dark mode: "#1e90ff" (brighter)
+    SELECTION_BG = "#1e90ff"            # Active selection uses brighter accent (30, 144, 255)
+    # Light mode: "#ffffff" → Dark mode: "#ffffff" (keep white)
     SELECTION_TEXT = "#ffffff"          # HilightText - Selection text (255, 255, 255)
-    SELECTION_MENU = "#91c9f7"          # Menu selection - lighter blue
+    # Light mode: "#91c9f7" → Dark mode: "#4a4a4a"
+    SELECTION_MENU = "#4a4a4a"          # Menu selection - dark gray (74, 74, 74)
     
-    # Windows 10 Accent Colors (official Microsoft palette)
-    ACCENT_BLUE = "#0078d7"             # Default Windows 10 accent (0, 120, 215)
-    ACCENT_BLUE_DARK = "#002050"        # Dark blue (0, 32, 80)
-    ACCENT_GREEN = "#107c10"            # Green accent (16, 124, 16)
-    ACCENT_ORANGE = "#d83b01"           # Orange accent (216, 59, 1)
-    ACCENT_RED = "#e81123"              # Red accent (232, 17, 35)
-    ACCENT_PURPLE = "#5c2d91"           # Purple accent (92, 45, 145)
-    ACCENT_MAGENTA = "#b4009e"          # Magenta accent (180, 0, 158)
-    ACCENT_YELLOW = "#ffb900"           # Yellow accent (255, 185, 0)
-    ACCENT_TEAL = "#008272"             # Teal accent (0, 130, 114)
+    # Windows 10 Accent Colors (Dark mode adjusted)
+    # Light mode: "#0078d7" → Dark mode: "#1e90ff" (brighter for dark bg)
+    ACCENT_BLUE = "#1e90ff"             # Default Windows 10 accent - brighter (30, 144, 255)
+    ACCENT_GREEN = "#107c10"            # Green accent - keep same (16, 124, 16)
+    ACCENT_ORANGE = "#d83b01"           # Orange accent - keep same (216, 59, 1)
+    ACCENT_RED = "#e81123"              # Red accent - keep same (232, 17, 35)
+    ACCENT_PURPLE = "#5c2d91"           # Purple accent - keep same (92, 45, 145)
+    ACCENT_MAGENTA = "#b4009e"          # Magenta accent - keep same (180, 0, 158)
+    ACCENT_YELLOW = "#ffb900"           # Yellow accent - keep same (255, 185, 0)
+    ACCENT_TEAL = "#008272"             # Teal accent - keep same (0, 130, 114)
+    # Light mode: "#0078d7" → Dark mode: "#1e90ff"
+    PRIMARY_BLUE = "#1e90ff"
     
-    # Title bar colors (Windows 10 gradient system)
-    TITLEBAR_ACTIVE = "#99b4d1"         # ActiveTitle - Active title (153, 180, 209)
-    TITLEBAR_INACTIVE = "#bfcddb"       # InactiveTitle - Inactive title (191, 205, 219)
-    TITLEBAR_GRADIENT_ACTIVE = "#b9d1ea"    # GradientActiveTitle (185, 209, 234)
-    TITLEBAR_GRADIENT_INACTIVE = "#d7e4f2"  # GradientInactiveTitle (215, 228, 242)
+    # Port Type Colors (Dark mode appropriate)
+    PORT_TYPE_PHYSICAL_BG = "#1a3b5c"      # Dark blue background for physical ports
+    PORT_TYPE_PHYSICAL_TEXT = "#4cc2ff"    # Light blue text for physical ports
+    PORT_TYPE_VIRTUAL_BG = "#1a3b1a"       # Dark green background for virtual ports
+    PORT_TYPE_VIRTUAL_TEXT = "#4cff4c"     # Light green text for virtual ports
+    PORT_TYPE_MOXA_BG = "#3b1a3b"          # Dark purple background for Moxa ports
+    PORT_TYPE_MOXA_TEXT = "#ff4cff"        # Light purple text for Moxa ports
+    PORT_TYPE_OTHER_BG = "#3b2a1a"         # Dark orange background for other ports
+    PORT_TYPE_OTHER_TEXT = "#ffaa4c"       # Light orange text for other ports
     
-    # Scrollbar colors
-    SCROLLBAR_BACKGROUND = "#f0f0f0"    # Scrollbar track background
-    SCROLLBAR_THUMB = "#cdcdcd"         # Scrollbar thumb color
-    SCROLLBAR_THUMB_HOVER = "#a8a8a8"   # Scrollbar thumb hover
-    SCROLLBAR_THUMB_PRESSED = "#787878" # Scrollbar thumb pressed
+    # Scrollbar colors (Dark mode)
+    # Light mode: "#f0f0f0" → Dark mode: "#2d2d2d"
+    SCROLLBAR_BACKGROUND = "#2d2d2d"    # Scrollbar track background - dark (45, 45, 45)
+    # Light mode: "#cdcdcd" → Dark mode: "#555555"
+    SCROLLBAR_THUMB = "#555555"         # Scrollbar thumb color - dark gray (85, 85, 85)
+    # Light mode: "#a8a8a8" → Dark mode: "#666666"
+    SCROLLBAR_THUMB_HOVER = "#666666"   # Scrollbar thumb hover - lighter gray (102, 102, 102)
+    # Light mode: "#787878" → Dark mode: "#777777"
+    SCROLLBAR_THUMB_PRESSED = "#777777" # Scrollbar thumb pressed - lighter gray (119, 119, 119)
     
-    # Hot tracking (hover) color
-    HOT_TRACKING = "#0066cc"            # HotTrackingColor - Hot tracking (0, 102, 204)
+    # Hot tracking (hover) color (Dark mode)
+    # Light mode: "#0066cc" → Dark mode: "#1a8cff" (brighter)
+    HOT_TRACKING = "#1a8cff"            # HotTrackingColor - Hot tracking brighter (26, 140, 255)
     
     # === SEMANTIC COLORS (Windows 10 Style) ===
     # Success colors - using system accent
@@ -124,17 +146,73 @@ class AppColors:
     PAIR_HIGHLIGHT = "#f0f8ff"          # Light blue for pairs with features
     PAIR_INFO = "#fffff8"               # Cream for info items
     
-    # Progressive colors for advanced theming
-    GRAY_50 = "#fafafa"                 # Lightest gray
-    GRAY_100 = "#f5f5f5"                # Very light gray
-    GRAY_200 = "#eeeeee"                # Light gray
-    GRAY_300 = "#e0e0e0"                # Medium light gray
-    GRAY_400 = "#bdbdbd"                # Medium gray
-    GRAY_500 = "#9e9e9e"                # True gray
-    GRAY_600 = "#757575"                # Medium dark gray
-    GRAY_700 = "#616161"                # Dark gray
-    GRAY_800 = "#424242"                # Very dark gray
-    GRAY_900 = "#212121"                # Darkest gray
+    # === CONTROL PANEL COLORS - DARK MODE ===
+    # Light mode: "#f8f8f8" → Dark mode: "#2a2a2a"
+    CONTROL_PANEL_BACKGROUND = "#2a2a2a"     # Control panel background - dark (42, 42, 42)
+    # Light mode: "#d0d0d0" → Dark mode: "#555555"
+    CONTROL_PANEL_BORDER = "#555555"         # Control panel border - dark gray (85, 85, 85)
+    # Light mode: "#333333" → Dark mode: "#ffffff"
+    CONTROL_PANEL_TEXT = "#ffffff"           # Control panel text - white (255, 255, 255)
+    # Light mode: "#d0d0d0" → Dark mode: "#555555"
+    CONTROL_PANEL_SEPARATOR = "#555555"      # Control panel separator - dark gray (85, 85, 85)
+    # Light mode: "#666666" → Dark mode: "#cccccc"
+    CONTROL_PANEL_STATUS_TEXT = "#cccccc"    # Status text in control panels - light gray (204, 204, 204)
+    
+    # === BUTTON COLORS (Extended) - DARK MODE ===
+    BUTTON_TRANSPARENT = "transparent"       # Transparent background
+    # Light mode: "#e5f3ff" → Dark mode: "#1a3d5c"
+    BUTTON_BLUE_LIGHT = "#1a3d5c"           # Dark blue button background (26, 61, 92)
+    # Light mode: "#cce4f7" → Dark mode: "#2a4d6b"
+    BUTTON_BLUE_BORDER = "#2a4d6b"          # Dark blue button border (42, 77, 107)
+    # Light mode: "#d0e7ff" → Dark mode: "#224466"
+    BUTTON_BLUE_HOVER = "#224466"           # Dark blue button hover (34, 68, 102)
+    # Light mode: "#bde0ff" → Dark mode: "#1a5577"
+    BUTTON_BLUE_PRESSED = "#1a5577"         # Dark blue button pressed (26, 85, 119)
+    # Light mode: "#9ac9e3" → Dark mode: "#3366aa"
+    BUTTON_BLUE_BORDER_HOVER = "#3366aa"    # Dark blue button border hover (51, 102, 170)
+    # Light mode: "#7bb8dd" → Dark mode: "#4477bb"
+    BUTTON_BLUE_BORDER_PRESSED = "#4477bb"  # Dark blue button border pressed (68, 119, 187)
+    # Light mode: "#0078d4" → Dark mode: "#1e90ff"
+    BUTTON_ACCENT_TEXT = "#1e90ff"          # Accent text on buttons - brighter blue (30, 144, 255)
+    
+    # === COMMAND FORMATTER COLORS - DARK MODE ===
+    # Professional bright color scheme for command preview on dark backgrounds
+    # Light mode: "#2c2c2c" → Dark mode: "#e0e0e0"
+    CMD_DEFAULT = "#e0e0e0"               # Light gray for regular text (224, 224, 224)
+    # Light mode: "#0066cc" → Dark mode: "#4dc3ff"
+    CMD_COMMAND = "#4dc3ff"               # Bright blue for commands (77, 195, 255)
+    # Light mode: "#2c5530" → Dark mode: "#66bb6a"
+    CMD_PORT = "#66bb6a"                 # Bright green for ports (102, 187, 106)
+    # Light mode: "#5a5a5a" → Dark mode: "#cccccc"
+    CMD_PARAMETER = "#cccccc"            # Light gray for parameters (204, 204, 204)
+    # Light mode: "#2c2c2c" → Dark mode: "#e0e0e0"
+    CMD_VALUE = "#e0e0e0"                # Same as default
+    # Light mode: "#2a7f3e" → Dark mode: "#66bb6a"
+    CMD_ENABLED = "#66bb6a"              # Bright green for enabled (102, 187, 106)
+    # Light mode: "#994444" → Dark mode: "#ff6b6b"
+    CMD_DISABLED = "#ff6b6b"             # Bright red for disabled (255, 107, 107)
+    # Light mode: "#7a7a7a" → Dark mode: "#999999"
+    CMD_MUTED = "#999999"                # Medium gray for separators (153, 153, 153)
+    # Light mode: "#1a1a1a" → Dark mode: "#ffffff"
+    CMD_HIGHLIGHT = "#ffffff"            # White for emphasis (255, 255, 255)
+    # Light mode: "#5a5a5a" → Dark mode: "#cccccc"
+    CMD_DIAGRAM = "#cccccc"              # Light gray for ASCII diagrams (204, 204, 204)
+    
+    # === CHECKBOX SVG COLORS - DARK MODE ===
+    # Light mode: "#999999" → Dark mode: "#666666"
+    CHECKBOX_BORDER_COLOR = "#666666"        # Checkbox border - dark gray (102, 102, 102)
+    # Light mode: "#0078D4" → Dark mode: "#1e90ff"
+    CHECKBOX_CHECK_BACKGROUND = "#1e90ff"    # Checkbox checked background - brighter blue (30, 144, 255)
+    # Light mode: "#ffffff" → Dark mode: "#ffffff" (keep white)
+    CHECKBOX_CHECK_COLOR = "#ffffff"         # Checkbox checkmark color - white (255, 255, 255)
+    
+    # Progressive colors for advanced theming (Dark mode)
+    # Light mode: "#fafafa" → Dark mode: "#1a1a1a"
+    GRAY_50 = "#1a1a1a"                 # Darkest gray (26, 26, 26)
+    # Light mode: "#f5f5f5" → Dark mode: "#2a2a2a"
+    GRAY_100 = "#2a2a2a"                # Very dark gray (42, 42, 42)
+    # Light mode: "#eeeeee" → Dark mode: "#3a3a3a"
+    GRAY_200 = "#3a3a3a"                # Dark gray (58, 58, 58)
 
 
 @dataclass
@@ -153,6 +231,14 @@ class AppFonts:
     BOLD_WEIGHT = "600"       # Semibold, not bold
     NORMAL_WEIGHT = "400"     # Regular
     ITALIC_STYLE = "italic"
+    
+    # Font size constants
+    FONT_SIZE_SMALL = 8           # Small font size (from gui.py)
+    FONT_SIZE_MEDIUM = 9          # Medium font size
+    FONT_SIZE_LARGE = 10          # Large font size (from launch_dialog.py)
+    
+    # Console font family
+    CONSOLE_FAMILY = "Consolas, 'Courier New', monospace"  # Console font family
 
 
 @dataclass 
@@ -256,8 +342,31 @@ class AppDimensions:
     HEIGHT_INLINE_STATUS = 20          # Inline status text height
     
     # === CONTROL BAR HEIGHTS ===
-    HEIGHT_CONTROL_BAR = 50            # Fixed height for control button bars
+    HEIGHT_CONTROL_BAR = 65            # Fixed height for control button bars (from gui.py)
     HEIGHT_BUTTON_CONTAINER = 45       # Button container height
+    
+    # === ADDITIONAL BUTTON DIMENSIONS ===
+    BUTTON_MIN_WIDTH = 90              # Minimum button width (from gui.py)
+    BUTTON_MAX_WIDTH = 120             # Maximum button width (from gui.py)
+    BUTTON_HEIGHT_CONTROL = 32         # Control button height (from gui.py)
+    
+    # === CHART & VISUALIZATION DIMENSIONS ===
+    CHART_MIN_WIDTH = 150              # Minimum chart width (from port_monitor_widget.py)
+    CHART_MIN_HEIGHT = 30              # Minimum chart height (from port_monitor_widget.py)
+    CHART_MARGIN_TOP = 8               # Chart top margin (from port_monitor_widget.py)
+    CHART_MARGIN_BOTTOM = 8            # Chart bottom margin
+    CHART_MARGIN_LEFT = 8              # Chart left margin
+    CHART_MARGIN_RIGHT = 8             # Chart right margin
+    
+    # === TAB WIDGET DIMENSIONS ===
+    TAB_MIN_WIDTH = 80                 # Minimum tab width (from tab_manager_widget.py)
+    TAB_MARGIN_RIGHT = 2               # Tab right margin (from tab_manager_widget.py)
+    
+    # === ADDITIONAL PADDING VALUES ===
+    PADDING_TAB = "4px 12px"            # Tab padding (from tab_manager_widget.py)
+    PADDING_COMPACT = "2px 0px"         # Compact padding (from gui.py)
+    PADDING_BUTTON_DETAILED = "4px 10px 4px 26px"  # Detailed button padding (from gui.py)
+    PADDING_LAYOUT_SMALL = "8px 4px"    # Small layout padding (from gui.py)
 
 
 class AppMessages:
@@ -827,21 +936,6 @@ class AppStyles:
             color: {AppColors.TEXT_TOOLTIP};
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.TEXT_DEFAULT};
             padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
-            font-family: {AppFonts.DEFAULT_FAMILY};
-            font-size: {AppFonts.DEFAULT_SIZE};
-        }}
-        """
-    
-    @staticmethod
-    def notification(notification_type: str = "info") -> str:
-        """Windows 10 notification panel styles - minimal styling"""
-        # Windows 10 doesn't use colored backgrounds for notifications
-        return f"""
-        QLabel {{
-            background-color: {AppColors.BACKGROUND_LIGHT};
-            color: {AppColors.TEXT_DEFAULT};
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
-            padding: {AppDimensions.PADDING_MEDIUM};
             font-family: {AppFonts.DEFAULT_FAMILY};
             font-size: {AppFonts.DEFAULT_SIZE};
         }}
@@ -1526,6 +1620,22 @@ class ThemeManager:
         QStatusBar::item {{
             border: none;
         }}
+        
+        /* Windows 10 Main Window */
+        QMainWindow {{
+            background-color: {AppColors.BACKGROUND_LIGHT};
+            color: {AppColors.TEXT_DEFAULT};
+        }}
+        
+        QMainWindow::separator {{
+            background-color: {AppColors.BORDER_DEFAULT};
+            width: 1px;
+            height: 1px;
+        }}
+        
+        QMainWindow::separator:hover {{
+            background-color: {AppColors.BORDER_FOCUS};
+        }}
         """
         
         app.setStyleSheet(global_style)
@@ -1613,6 +1723,86 @@ class HTMLTheme:
             }}
             .item-text {{
                 font-size: 13px;
+            }}
+            .success-icon {{
+                color: {AppColors.SUCCESS_PRIMARY};
+                font-weight: {AppFonts.BOLD_WEIGHT};
+            }}
+            .code-inline {{
+                background: {AppColors.GRAY_200};
+                padding: 2px 5px;
+                font-family: {AppFonts.CONSOLE.family()}, monospace;
+                font-size: 13px;
+            }}
+            .status-box {{
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                border-left: 3px solid {AppColors.ACCENT_BLUE};
+                padding: 10px;
+                margin: 15px 0;
+                color: {AppColors.TEXT_DEFAULT};
+            }}
+            .moxa-section {{
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                padding: 12px;
+                margin-top: 12px;
+                border: 1px solid {AppColors.BORDER_LIGHT};
+                color: {AppColors.TEXT_DEFAULT};
+            }}
+            .field {{
+                margin-bottom: 8px;
+                color: {AppColors.TEXT_DEFAULT};
+            }}
+            .field-label {{
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                display: inline-block;
+                min-width: 120px;
+                color: {AppColors.TEXT_DEFAULT};
+            }}
+            .section-header {{
+                font-weight: {AppFonts.BOLD_WEIGHT};
+                font-size: 12pt;
+                color: {AppColors.ACCENT_BLUE};
+                margin-top: 16px;
+                margin-bottom: 8px;
+                border-bottom: 1px solid {AppColors.BORDER_LIGHT};
+                padding-bottom: 4px;
+            }}
+            .port-details {{
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                padding: 8px;
+                margin: 4px 0;
+                border-left: 2px solid {AppColors.ACCENT_BLUE};
+            }}
+            .port-type-physical {{
+                background-color: {AppColors.PORT_TYPE_PHYSICAL_BG};
+                color: {AppColors.PORT_TYPE_PHYSICAL_TEXT};
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 11px;
+                font-weight: {AppFonts.BOLD_WEIGHT};
+            }}
+            .port-type-virtual {{
+                background-color: {AppColors.PORT_TYPE_VIRTUAL_BG};
+                color: {AppColors.PORT_TYPE_VIRTUAL_TEXT};
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 11px;
+                font-weight: {AppFonts.BOLD_WEIGHT};
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 10px 0;
+                color: {AppColors.TEXT_DEFAULT};
+            }}
+            th, td {{
+                padding: 8px;
+                text-align: left;
+                border-bottom: 1px solid {AppColors.BORDER_LIGHT};
+            }}
+            th {{
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                font-weight: {AppFonts.BOLD_WEIGHT};
             }}
         </style>
         """

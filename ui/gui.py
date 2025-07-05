@@ -5,20 +5,22 @@ Contains the primary application interface - Optimized version
 """
 
 import json
+import base64
 from pathlib import Path
 from typing import Optional, List, Dict, Callable, Any, Tuple
 from functools import partial
 from dataclasses import dataclass
 from enum import Enum
 
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
-                             QWidget, QLabel, QComboBox, QPushButton, QCheckBox, 
-                             QTextEdit, QFileDialog, QGroupBox, QGridLayout,
-                             QMessageBox, QProgressBar, QFrame, QSplitter,
+from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, 
+                             QWidget, QLabel, QComboBox, QPushButton,
+                             QGroupBox,
+                             QMessageBox,QFrame, QSplitter,
                              QTabWidget, QScrollArea, QListWidget, QListWidgetItem, 
-                             QAbstractItemView, QMenu, QDialog, QSizePolicy)
-from PyQt6.QtCore import QTimer, Qt, QSize, QByteArray
-from PyQt6.QtGui import QFont, QIcon, QColor, QAction, QPainter, QPixmap
+                             QAbstractItemView, QMenu, QDialog, QSizePolicy,
+                             QStyledItemDelegate, QStyle)
+from PyQt6.QtCore import QTimer, Qt, QSize, QByteArray, QRect, QRectF
+from PyQt6.QtGui import QFont, QIcon, QColor, QAction, QPainter, QPixmap, QFontMetrics
 from PyQt6.QtSvg import QSvgRenderer
 
 from core.core import (
@@ -29,14 +31,105 @@ from ui.theme.theme import (
     ThemeManager, AppStyles, AppFonts, AppDimensions, AppColors, 
     AppMessages, IconManager
 )
+from ui.theme.icons.icons import AppIcons
 from ui.dialogs import PortScanDialog, PairCreationDialog, ConfigurationSummaryDialog, LaunchDialog
 from ui.dialogs.help_dialog import HelpManager, HelpTopic
 from ui.widgets import OutputPortWidget
 from ui.widgets.tab_manager_widget import SerialPortManagerWidget
 from ui.windows.command_formatter import CommandFormatter
+
+
+class FeatureIconDelegate(QStyledItemDelegate):
+    """Custom delegate to render SVG icons inline with feature text"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+    
+    def paint(self, painter, option, index):
+        """Custom paint method to render SVG icons inline"""
+        # Get the text
+        text = index.data(Qt.ItemDataRole.DisplayRole)
+        if not text or "Features:" not in text:
+            # Use default painting for items without features
+            super().paint(painter, option, index)
+            return
+        
+        # Split text to find features section
+        parts = text.split("[Features: ")
+        if len(parts) < 2:
+            super().paint(painter, option, index)
+            return
+        
+        main_text = parts[0]
+        features_text = parts[1].rstrip("]")
+        
+        # Set up font and metrics
+        font = QFont(AppFonts.DEFAULT_FAMILY, AppFonts.FONT_SIZE_SMALL)
+        painter.setFont(font)
+        fm = QFontMetrics(font)
+        
+        # Draw background if selected
+        if option.state & QStyle.StateFlag.State_Selected:
+            painter.fillRect(option.rect, option.palette.highlight())
+            painter.setPen(option.palette.highlightedText().color())
+        else:
+            painter.setPen(option.palette.text().color())
+        
+        # Draw main text
+        main_rect = QRect(option.rect.x() + 4, option.rect.y(), 
+                         option.rect.width() - 8, option.rect.height())
+        main_width = fm.horizontalAdvance(main_text + "[Features: ")
+        painter.drawText(main_rect, Qt.AlignmentFlag.AlignVCenter, main_text + "[Features: ")
+        
+        # Draw features with custom SVG icons
+        features_x = option.rect.x() + main_width + 4
+        features_y = option.rect.y()
+        icon_size = 16
+        icon_gap = 6
+        
+        # Replace bullet points with actual SVG icons
+        current_x = features_x
+        for feature in features_text.split(", "):
+            if "●" in feature:
+                # Extract feature name and determine icon
+                feature_name = feature.replace("● ", "").strip()
+                icon_key, color = self._get_icon_for_feature(feature_name)
+                
+                if icon_key:
+                    # Draw SVG icon
+                    svg_template = getattr(AppIcons, icon_key)
+                    colored_svg = svg_template.replace(AppIcons._COLORS['PRIMARY_BLUE'], color)
+                    
+                    # Render SVG
+                    svg_bytes = QByteArray(colored_svg.encode('utf-8'))
+                    renderer = QSvgRenderer(svg_bytes)
+                    
+                    icon_rect = QRectF(current_x, features_y + (option.rect.height() - icon_size) // 2, 
+                                      icon_size, icon_size)
+                    renderer.render(painter, icon_rect)
+                    
+                    current_x += icon_size + icon_gap
+                
+                # Draw feature name
+                painter.setPen(QColor(color))
+                painter.drawText(current_x, features_y + option.rect.height() // 2 + fm.height() // 4, 
+                               feature_name)
+                current_x += fm.horizontalAdvance(feature_name) + 12
+        
+        # Draw closing bracket
+        painter.setPen(option.palette.text().color())
+        painter.drawText(current_x, features_y + option.rect.height() // 2 + fm.height() // 4, "]")
+    
+    def _get_icon_for_feature(self, feature_name):
+        """Get icon and color for feature name"""
+        feature_map = {
+            "Baud Rate Timing": ("TIMING_CLOCK", AppColors.PRIMARY_BLUE),
+            "Buffer Overrun": ("BUFFER_STACK", AppColors.ACCENT_YELLOW),
+            "Exclusive Mode": ("EXCLUSIVE_LOCK", AppColors.ACCENT_RED),
+            "Plug-In Mode": ("PLUGIN_CONNECTOR", AppColors.ACCENT_GREEN)
+        }
+        return feature_map.get(feature_name, (None, AppColors.TEXT_DEFAULT))
 from ui.windows.output_formatter import OutputLogFormatter
-
-
 
 class Config:
     """Application configuration constants"""
@@ -82,13 +175,14 @@ class ThreadRegistry:
             del self.threads[name]
             
     def stop_all(self, timeout: int = 1000) -> List[str]:
-        """Stop all threads and return list of threads that didn't stop"""
+        """Stop all threads safely and return list of threads that didn't stop"""
         failed = []
         for name, thread in self.threads.items():
             if thread and thread.isRunning():
-                thread.terminate()
+                thread.quit()  # Request graceful shutdown first
                 if not thread.wait(timeout):
                     failed.append(name)
+                    thread.terminate()  # Only as last resort
         self.threads.clear()
         return failed
 
@@ -146,16 +240,16 @@ class ControlPanelBuilder:
                            status_indicators: List[StatusIndicator] = None) -> QWidget:
         """Create a professional column-based control panel"""
         panel = QWidget()
-        panel.setStyleSheet("""
-            QWidget {
-                background-color: #f8f8f8;
-                border-bottom: 1px solid #d0d0d0;
-            }
+        panel.setStyleSheet(f"""
+            QWidget {{
+                background-color: {AppColors.CONTROL_PANEL_BACKGROUND};
+                border-bottom: 1px solid {AppColors.CONTROL_PANEL_BORDER};
+            }}
         """)
         
         layout = QHBoxLayout(panel)
         layout.setSpacing(16)  # Increased spacing between columns
-        layout.setContentsMargins(2, 2, 2, 2)  # Reduced margins for control panels
+        layout.setContentsMargins(*AppDimensions.MARGIN_SMALL)  # Use theme margins
         
         # Add columns
         for i, column in enumerate(columns):
@@ -175,7 +269,7 @@ class ControlPanelBuilder:
             status_widget = self._create_status_section(status_indicators)
             layout.addWidget(status_widget)
         
-        panel.setFixedHeight(65)  # Significantly increased height for full visibility
+        panel.setFixedHeight(AppDimensions.HEIGHT_CONTROL_BAR)  # Use theme height
         return panel
     
     def _create_column(self, column: ControlPanelColumn) -> QWidget:
@@ -189,8 +283,8 @@ class ControlPanelBuilder:
         
         # Column title
         title_label = QLabel(column.title)
-        title_label.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8, QFont.Weight.Bold))  # Use SMALL_SIZE from theme
-        title_label.setStyleSheet("QLabel { color: #333333; padding: 2px 0px; }")  # Minimal padding for compact headers
+        title_label.setFont(QFont(AppFonts.DEFAULT_FAMILY, AppFonts.FONT_SIZE_SMALL, QFont.Weight.Bold))  # Use theme font size
+        title_label.setStyleSheet(f"QLabel {{ color: {AppColors.CONTROL_PANEL_TEXT}; padding: {AppDimensions.PADDING_COMPACT}; }}")  # Use theme padding
         layout.addWidget(title_label)
         
         # Button row
@@ -215,7 +309,7 @@ class ControlPanelBuilder:
         """Create a vertical separator between columns"""
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.VLine)
-        separator.setStyleSheet("QFrame { color: #d0d0d0; margin: 2px 0px; }")
+        separator.setStyleSheet(f"QFrame {{ color: {AppColors.CONTROL_PANEL_SEPARATOR}; margin: 2px 0px; }}")
         separator.setMaximumHeight(55)  # Increased to match new panel height
         return separator
     
@@ -225,7 +319,7 @@ class ControlPanelBuilder:
             # Single status indicator
             status_label = QLabel(indicators[0].initial_text)
             status_label.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8))  # Use SMALL_SIZE
-            status_label.setStyleSheet("QLabel { color: #666666; padding: 4px 8px; font-style: italic; }")  # Compact padding
+            status_label.setStyleSheet(f"QLabel {{ color: {AppColors.CONTROL_PANEL_STATUS_TEXT}; padding: 4px 8px; font-style: italic; }}")  # Compact padding
             self.parent.ui_refs[indicators[0].key] = status_label
             return status_label
         else:
@@ -238,7 +332,7 @@ class ControlPanelBuilder:
             for indicator in indicators:
                 label = QLabel(indicator.initial_text)
                 label.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8))  # Use SMALL_SIZE
-                label.setStyleSheet("QLabel { color: #666666; padding: 2px 8px; font-style: italic; }")  # Compact padding
+                label.setStyleSheet(f"QLabel {{ color: {AppColors.CONTROL_PANEL_STATUS_TEXT}; padding: 2px 8px; font-style: italic; }}")  # Compact padding
                 layout.addWidget(label)
                 self.parent.ui_refs[indicator.key] = label
             
@@ -480,11 +574,11 @@ class Hub4comGUI(QMainWindow):
         for config in buttons:
             # Create base button with Windows Explorer styling
             btn = QPushButton()
-            btn.setMinimumWidth(90)  # Further increased
-            btn.setMaximumWidth(120)  # Further increased 
-            btn.setMinimumHeight(32)  # Much taller buttons
-            btn.setMaximumHeight(32)  # Much taller buttons
-            btn.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8))  # Use SMALL_SIZE for compact appearance
+            btn.setMinimumWidth(AppDimensions.BUTTON_MIN_WIDTH)  # Use theme width
+            btn.setMaximumWidth(AppDimensions.BUTTON_MAX_WIDTH)  # Use theme width
+            btn.setMinimumHeight(AppDimensions.BUTTON_HEIGHT_CONTROL)  # Use theme height
+            btn.setMaximumHeight(AppDimensions.BUTTON_HEIGHT_CONTROL)  # Use theme height
+            btn.setFont(QFont(AppFonts.DEFAULT_FAMILY, AppFonts.FONT_SIZE_SMALL))  # Use theme font size
             
             # Set button text
             button_text = button_text_map.get(config.icon_name, config.icon_name.title())
@@ -507,59 +601,59 @@ class Hub4comGUI(QMainWindow):
                     print(f"Warning: Could not load icon {svg_name}: {e}")
             
             # Apply Windows Explorer button styling - subtle and compact
-            btn.setStyleSheet("""
-                QPushButton {
-                    background-color: transparent;
-                    border: 1px solid transparent;
-                    padding: 4px 10px 4px 26px;  /* More generous padding */
+            btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {AppColors.BUTTON_TRANSPARENT};
+                    border: 1px solid {AppColors.BUTTON_TRANSPARENT};
+                    padding: {AppDimensions.PADDING_BUTTON_DETAILED};  /* Use theme padding */
                     text-align: left;
-                    font-family: "Segoe UI";
-                    font-size: 8pt;  /* Match button font */
-                    color: #333333;
+                    font-family: {AppFonts.DEFAULT_FAMILY};
+                    font-size: {AppFonts.FONT_SIZE_SMALL}pt;  /* Use theme font size */
+                    color: {AppColors.CONTROL_PANEL_TEXT};
                     line-height: 1.2;
-                }
-                QPushButton:hover {
-                    background-color: #e5f3ff;
-                    border-color: #cce4f7;
-                }
-                QPushButton:pressed {
-                    background-color: #cce4f7;
-                    border-color: #9ac9e3;
-                }
-                QPushButton:disabled {
-                    background-color: transparent;
-                    color: #999999;
-                    border-color: transparent;
-                }
+                }}
+                QPushButton:hover {{
+                    background-color: {AppColors.BUTTON_BLUE_LIGHT};
+                    border-color: {AppColors.BUTTON_BLUE_BORDER};
+                }}
+                QPushButton:pressed {{
+                    background-color: {AppColors.BUTTON_BLUE_BORDER};
+                    border-color: {AppColors.BUTTON_BLUE_BORDER_HOVER};
+                }}
+                QPushButton:disabled {{
+                    background-color: {AppColors.BUTTON_TRANSPARENT};
+                    color: {AppColors.TEXT_DISABLED};
+                    border-color: {AppColors.BUTTON_TRANSPARENT};
+                }}
             """)
             
             # Special styling for primary actions
             if config.icon_name in ["play", "create"]:
-                btn.setStyleSheet("""
-                    QPushButton {
-                        background-color: #e5f3ff;
-                        border: 1px solid #cce4f7;
-                        padding: 4px 10px 4px 26px;  /* More generous padding */
+                btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: {AppColors.BUTTON_BLUE_LIGHT};
+                        border: 1px solid {AppColors.BUTTON_BLUE_BORDER};
+                        padding: {AppDimensions.PADDING_BUTTON_DETAILED};  /* Use theme padding */
                         text-align: left;
                         font-family: "Segoe UI";
                         font-size: 8pt;  /* Match button font */
-                        color: #0078d4;
+                        color: {AppColors.BUTTON_ACCENT_TEXT};
                         font-weight: normal;
                         line-height: 1.2;
-                    }
-                    QPushButton:hover {
-                        background-color: #d0e7ff;
-                        border-color: #9ac9e3;
-                    }
-                    QPushButton:pressed {
-                        background-color: #bde0ff;
-                        border-color: #7bb8dd;
-                    }
-                    QPushButton:disabled {
-                        background-color: #f5f5f5;
-                        color: #999999;
-                        border-color: #d0d0d0;
-                    }
+                    }}
+                    QPushButton:hover {{
+                        background-color: {AppColors.BUTTON_BLUE_HOVER};
+                        border-color: {AppColors.BUTTON_BLUE_BORDER_HOVER};
+                    }}
+                    QPushButton:pressed {{
+                        background-color: {AppColors.BUTTON_BLUE_PRESSED};
+                        border-color: {AppColors.BUTTON_BLUE_BORDER_PRESSED};
+                    }}
+                    QPushButton:disabled {{
+                        background-color: {AppColors.GRAY_100};
+                        color: {AppColors.TEXT_DISABLED};
+                        border-color: {AppColors.BORDER_DISABLED};
+                    }}
                 """)
             
             btn.clicked.connect(config.callback)
@@ -574,14 +668,14 @@ class Hub4comGUI(QMainWindow):
     def checkbox_icon(self, checked: bool) -> QIcon:
         """Generate Windows 10 style checkbox icon"""
         if checked:
-            svg = '''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-                <rect x="0.5" y="0.5" width="15" height="15" fill="white" stroke="#999" stroke-width="1"/>
-                <rect x="2" y="2" width="12" height="12" fill="#0078D4"/>
-                <path d="M4 8l2 2 6-6" stroke="white" stroke-width="1" fill="none" stroke-linecap="round"/>
+            svg = f'''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.CHECKBOX_CHECK_COLOR}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
+                <rect x="2" y="2" width="12" height="12" fill="{AppColors.CHECKBOX_CHECK_BACKGROUND}"/>
+                <path d="M4 8l2 2 6-6" stroke="{AppColors.CHECKBOX_CHECK_COLOR}" stroke-width="1" fill="none" stroke-linecap="round"/>
             </svg>'''
         else:
-            svg = '''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-                <rect x="0.5" y="0.5" width="15" height="15" fill="white" stroke="#999" stroke-width="1"/>
+            svg = f'''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.CHECKBOX_CHECK_COLOR}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
             </svg>'''
         
         renderer = QSvgRenderer(QByteArray(svg.encode()))
@@ -656,17 +750,23 @@ class Hub4comGUI(QMainWindow):
         control_panel = self.control_panel_builder.create_control_panel(columns, status_indicators)
         layout.addWidget(control_panel)
         
-        # Port pairs list
+        # Port pairs list with custom icon delegate
         self.ui_refs['port_pairs_list'] = ThemeManager.create_listwidget()
         self.ui_refs['port_pairs_list'].itemSelectionChanged.connect(self.on_pair_selected)
         self.ui_refs['port_pairs_list'].itemDoubleClicked.connect(self.on_pair_double_clicked)
-        self.ui_refs['port_pairs_list'].setMaximumHeight(AppDimensions.HEIGHT_LIST_MEDIUM)
+        
+        # Apply custom delegate for inline SVG icons
+        feature_delegate = FeatureIconDelegate(self)
+        self.ui_refs['port_pairs_list'].setItemDelegate(feature_delegate)
+        
+        # Set size policy to allow expansion
+        self.ui_refs['port_pairs_list'].setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         # Add right-click context menu support
         self.ui_refs['port_pairs_list'].setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui_refs['port_pairs_list'].customContextMenuRequested.connect(self.show_port_pair_context_menu)
         
-        layout.addWidget(self.ui_refs['port_pairs_list'])
+        layout.addWidget(self.ui_refs['port_pairs_list'], 1)  # Add stretch factor
         
         # Progress bar
         self.ui_refs['com0com_progress'] = ThemeManager.create_progress_bar()
@@ -916,9 +1016,13 @@ class Hub4comGUI(QMainWindow):
         try:
             self.refresh_port_lists()
         except Exception as e:
-            print(f"Error during auto-scan: {e}")
-            self._update_status(AppMessages.NO_DEVICES, component='port')
+            # Log the actual error for debugging
+            error_msg = str(e)[:100]  # Truncate long errors
+            print(f"Error during auto-scan: {error_msg}")
+            self._update_status(f"Port scan failed: {error_msg[:50]}...", component='port')
             self._update_port_combos_no_devices()
+            # Don't continue with potentially broken state
+            return
     
     def show_port_scanner(self):
         """Show the port scanner dialog"""
@@ -1041,12 +1145,24 @@ class Hub4comGUI(QMainWindow):
         incoming = self.ui_refs['incoming_port'].currentData() or self.ui_refs['incoming_port'].currentText()
         incoming_baud = self.ui_refs['incoming_baud'].currentText()
         
-        # Get output configs
+        # Add input validation
+        if not incoming or not incoming.strip():
+            return None
+        if "No COM" in incoming:
+            return None
+        if not incoming_baud or not incoming_baud.strip():
+            return None
+        
+        # Get output configs with validation
         output_configs = []
         for widget in self.app_state['output_port_widgets']:
             config = widget.get_config()
-            if config.port_name and "No COM" not in config.port_name:
+            if config.port_name and "No COM" not in config.port_name and config.port_name.strip():
                 output_configs.append(config)
+        
+        # Ensure we have at least one output port
+        if not output_configs:
+            return None
         
         return self.command_builder.build(
             incoming, incoming_baud, output_configs,
@@ -1111,6 +1227,14 @@ class Hub4comGUI(QMainWindow):
         # Perform pre-start checks
         if not self._perform_pre_start_checks(cmd):
             return
+        
+        # Clean up any existing process first
+        if self.app_state['hub4com_process']:
+            try:
+                self.app_state['hub4com_process'].stop_process()
+                self.app_state['hub4com_process'] = None
+            except Exception as e:
+                print(f"Warning: Error stopping previous process: {e}")
         
         # Start process
         self.ui_refs['start_btn'].setEnabled(False)
@@ -1535,12 +1659,12 @@ class Hub4comGUI(QMainWindow):
         else:
             main_text = f"{port_a} ↔ {port_b}"
         
-        # Add status indicators
-        status_indicators = self._get_status_indicators(params_a, params_b)
-        if status_indicators:
-            main_text += f"  [Features: {', '.join(status_indicators)}]"
+        # Get status indicators with colorful icons for display
+        status_indicators_html = self._get_status_indicators_with_icons(params_a, params_b)
+        if status_indicators_html:
+            main_text += f"  [Features: {status_indicators_html}]"
         
-        # Create list item
+        # Create list item (custom delegate will handle SVG icon rendering)
         item = QListWidgetItem(main_text)
         tooltip = HelpManager.get_tooltip("pair_tooltip",
             port_a=port_a, 
@@ -1550,7 +1674,7 @@ class Hub4comGUI(QMainWindow):
         )
         item.setToolTip(tooltip)
         
-        if status_indicators:
+        if status_indicators_html:
             item.setBackground(ThemeManager.get_accent_color('pair_highlight'))
         
         self.ui_refs['port_pairs_list'].addItem(item)
@@ -1589,6 +1713,28 @@ class Hub4comGUI(QMainWindow):
                 indicators.append(name)
         
         return indicators
+    
+    def _get_status_indicators_with_icons(self, params_a: str, params_b: str) -> str:
+        """Generate text with Unicode icons for features"""
+        indicators = []
+        params = params_a + " " + params_b
+        
+        # Custom SVG icon mapping with distinct colors
+        indicators_map = {
+            "EmuBR=yes": ("Baud Rate Timing", "TIMING_CLOCK", AppColors.PRIMARY_BLUE),      # Blue
+            "EmuOverrun=yes": ("Buffer Overrun", "BUFFER_STACK", AppColors.ACCENT_YELLOW),   # Yellow/Orange  
+            "ExclusiveMode=yes": ("Exclusive Mode", "EXCLUSIVE_LOCK", AppColors.ACCENT_RED), # Red
+            "PlugInMode=yes": ("Plug-In Mode", "PLUGIN_CONNECTOR", AppColors.ACCENT_GREEN)  # Green
+        }
+        
+        for param, (name, icon_key, color) in indicators_map.items():
+            if param in params:
+                # Use simple icon prefix with colored text for now
+                # We'll create actual SVG icons in the list item itself
+                indicators.append(f'● {name}')
+        
+        return ', '.join(indicators)
+    
     
     def on_pair_selected(self):
         """Handle port pair selection"""

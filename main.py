@@ -14,6 +14,7 @@ from PyQt6.QtGui import QPalette, QColor, QIcon, QPixmap, QPainter, QBrush, QPen
 from PyQt6.QtCore import Qt
 from PyQt6.QtSvg import QSvgRenderer # <-- Import for SVG rendering
 from ui.gui import Hub4comGUI
+from ui.theme.theme import ThemeManager  # Import for dark mode global styling
 
 # --- SVG Icon Content ---
 # The polished SVG icon is stored here as a multi-line string.
@@ -202,6 +203,10 @@ def main():
     """Main entry point for the Hub4com Launcher application"""
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False) # Prevent app from quitting when window is closed
+    
+    # Apply dark mode global stylesheet to entire application
+    # This ensures context menus, system tray menus, and all global UI elements use dark theme
+    ThemeManager.apply_global_stylesheet(app)
     
     # Use Windows 10 system fonts (Segoe UI) - no custom font loading needed
     # load_inter_font()

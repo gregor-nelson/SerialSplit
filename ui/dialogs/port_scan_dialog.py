@@ -367,7 +367,7 @@ class PortScanDialog(QDialog):
                 QLabel {{
                     font-family: {AppFonts.DEFAULT_FAMILY};
                     font-size: 10pt;
-                    color: #D32F2F;
+                    color: {AppColors.ERROR_PRIMARY};
                     margin: 0;
                     padding: 0;
                     font-weight: 500;
@@ -502,69 +502,11 @@ class PortScanDialog(QDialog):
     
     def show_port_details(self, port: SerialPortInfo):
         """Show detailed information about selected port with rich formatting"""
-        # Create professional HTML-formatted details
-        html_content = f"""
-        <style>
-            body {{
-                font-family: {AppFonts.DEFAULT_FAMILY};
-                font-size: 10pt;
-                line-height: 1.5;
-                color: {AppColors.TEXT_DEFAULT};
-                margin: 0;
-                padding: 0;
-            }}
-            .section-header {{
-                font-weight: 600;
-                font-size: 12pt;
-                color: {AppColors.ACCENT_BLUE};
-                margin-top: 16px;
-                margin-bottom: 8px;
-                border-bottom: 1px solid {AppColors.BORDER_LIGHT};
-                padding-bottom: 4px;
-            }}
-            .field {{
-                margin-bottom: 8px;
-            }}
-            .field-label {{
-                font-weight: 600;
-                color: {AppColors.TEXT_DEFAULT};
-                display: inline-block;
-                min-width: 120px;
-            }}
-            .field-value {{
-                color: {AppColors.TEXT_DEFAULT};
-                font-family: 'Segoe UI', sans-serif;
-            }}
-            .moxa-section {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
-                padding: 12px;
-                margin-top: 12px;
-            }}
-            .recommendation {{
-                margin-left: 16px;
-                margin-bottom: 4px;
-                color: {AppColors.TEXT_DEFAULT};
-            }}
-            .port-type {{
-                display: inline-block;
-                padding: 4px 8px;
-                font-size: 9pt;
-                font-weight: 500;
-        """
+        # Create professional HTML-formatted details using HTMLTheme
+        port_type_class = "port-type-physical" if port.port_type == "Physical" else "port-type-virtual"
         
-        # Add type-specific styling
-        if port.port_type == "Physical":
-            html_content += f"background-color: #E8F4FD; color: #1565C0;"
-        elif port.port_type == "Virtual (Moxa)":
-            html_content += f"background-color: #F8E8FF; color: #8E24AA;"
-        elif "Virtual" in port.port_type:
-            html_content += f"background-color: #EDF7ED; color: #2E7D32;"
-        else:
-            html_content += f"background-color: #FFF8E1; color: #EF6C00;"
-            
-        html_content += f"""
-            }}
-        </style>
+        html_content = f"""
+        {HTMLTheme.get_styles()}
         
         <div class="section-header">Port Information</div>
         
@@ -575,7 +517,7 @@ class PortScanDialog(QDialog):
         
         <div class="field">
             <span class="field-label">Type:</span>
-            <span class="port-type">{port.port_type}</span>
+            <span class="{port_type_class}">{port.port_type}</span>
         </div>
         
         <div class="field">
