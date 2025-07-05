@@ -2,79 +2,130 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## Overview
 
-Serial Port Splitter is a Python GUI application that provides a user-friendly interface for managing virtual serial ports using `com0com` and `hub4com`. It allows users to create virtual serial port pairs and route data between multiple ports, offering functionality similar to commercial serial port splitters.
+SerialSplit is a Python PyQt6 GUI application for managing virtual serial ports using `com0com` and `hub4com`. It provides a user-friendly interface for creating virtual serial port pairs and routing data between multiple ports, similar to commercial products like FabulaTech's Serial Port Splitter.
 
-## Application Architecture
+## Key Commands
 
-### Core Components (core/components.py)
-- **ResponsiveWindowManager**: Handles adaptive UI sizing for different screen sizes
-- **PortScanner**: Scans Windows registry for serial ports and classifies them (Physical, Virtual COM0COM, Virtual Moxa, etc.)
-- **Hub4comProcess**: Manages the `hub4com.exe` subprocess for port routing
-- **Com0comProcess**: Manages `com0com` `setupc.exe` commands for virtual port pair management
-- **DefaultConfig**: Defines default virtual port pairs (COM131/132, COM141/142) with baud rate timing
-
-### UI Architecture
-- **main.py**: Application entry point with PyQt6 GUI and system tray functionality
-- **ui/gui.py**: Main GUI window (Hub4comGUI class) with comprehensive port management interface
-- **ui/dialogs/**: Modal dialogs for port scanning, pair creation, configuration summary, launch options, and help
-- **ui/widgets/**: Reusable components like OutputPortWidget for port configuration
-- **ui/theme/**: Comprehensive theming system with colors, fonts, dimensions, and icon management
-- **ui/windows/**: Command formatting and output log formatting utilities
-
-## Running the Application
-
+### Running the Application
 ```bash
 # Run the main application
 python main.py
 ```
 
-## Building Executables
-
-The project uses PyInstaller for creating standalone executables:
-
+### Building Executable
 ```bash
-# Build with PyInstaller using spec files
+# Build Windows executable using PyInstaller
 pyinstaller "Serial Port Splitter.spec"
-pyinstaller "Hub4comLauncher.spec"
 ```
 
-## Dependencies
+The application uses PyInstaller with the following configuration:
+- Entry point: `main.py`
+- Includes UI assets from `ui/` directory
+- Admin privileges required (`uac_admin=True`)
+- Windows GUI application (no console)
+- Uses `icon.ico` for application icon
 
-- **PyQt6**: GUI framework with SVG support (PyQt6-Svg)
-- **winreg**: Windows Registry access for port detection
-- **subprocess**: Managing external executables (hub4com.exe, setupc.exe)
+## Architecture
 
-## Key Features Implementation
+### Core Components
 
-### Virtual Port Management
-- Creates/removes com0com virtual port pairs via setupc.exe commands
-- Default pairs: CNCA31/CNCB31 (COM131/132) and CNCA41/CNCB41 (COM141/142)
-- Automatic pair creation with baud rate timing emulation enabled
+**main.py** - Application entry point that:
+- Initializes PyQt6 application with dark theme
+- Creates system tray functionality
+- Embeds SVG icon data directly in code
+- Manages application lifecycle
 
-### Port Detection & Classification
-- Registry scanning to detect all serial ports
-- Classifies ports as Physical, Virtual (COM0COM), Virtual (Moxa), or Virtual (Other)
-- Special handling for Moxa RealCOM virtual ports with network connectivity recommendations
+**core/core.py** - Business logic layer containing:
+- `ResponsiveWindowManager`: Adaptive UI sizing for different screen sizes
+- `PortScanner`: Windows registry scanner for serial port detection
+- `Hub4comProcess`: Manages `hub4com.exe` subprocess execution
+- `Com0comProcess`: Manages `com0com` setupc.exe commands for virtual port creation
+- `SerialPortMonitor`: Real-time port monitoring with statistics
+- `SerialPortTester`: Port testing and diagnostics
+- Data classes for port configuration and window management
 
-### Hub4com Integration
-- Command line generation for hub4com.exe routing
-- Support for different baud rates per port
-- CTS handshaking control options
-- Real-time process output monitoring
+### UI Layer Structure
 
-## File Structure Notes
+**ui/gui.py** - Main GUI window with comprehensive port management interface
 
-- Batch files (*.bat) provide command-line alternatives for com2tcp operations
-- Build artifacts are stored in build/ directory
-- UI fonts directory contains Inter and Poppins font families
-- System tray functionality with application minimize-to-tray behavior
-- Built-in SVG icon rendering for high-quality application icons
+**ui/dialogs/** - Modal dialogs:
+- `PortScanDialog`: Registry-based port scanning
+- `PairCreationDialog`: Virtual port pair creation
+- `ConfigurationSummaryDialog`: Configuration overview
+- `LaunchDialog`: Application startup dialog
+- `HelpDialog`: Contextual help system
+
+**ui/widgets/** - Reusable UI components:
+- `OutputPortWidget`: Individual port configuration
+- `TabManagerWidget`: Serial port management tabs
+- `PortTestWidget`: Port testing functionality
+- `PortMonitorWidget`: Real-time monitoring display
+
+**ui/theme/** - Theming system:
+- `ThemeManager`: Global dark theme management
+- `AppStyles`, `AppFonts`, `AppDimensions`, `AppColors`: Style constants
+- `IconManager`: SVG icon management
+- `ui/theme/icons/icons.py`: SVG icon definitions
+
+**ui/windows/** - Window utilities:
+- `CommandFormatter`: Hub4com command formatting
+- `OutputFormatter`: Process output formatting
+
+### Key Dependencies
+
+The application requires:
+- **PyQt6**: GUI framework
+- **PyQt6-SVG**: SVG rendering support
+- **winreg**: Windows registry access (Windows only)
+- **pyserial**: Serial port communication (optional for monitoring)
+- **subprocess**: External process management
+
+### External Tools Integration
+
+The application integrates with:
+- **com0com**: Virtual serial port driver (`setupc.exe`)
+- **hub4com**: Serial port routing utility (`hub4com.exe`)
+
+Default installation paths:
+- com0com: `C:\Program Files (x86)\com0com\setupc.exe`
+- hub4com: `hub4com.exe` (bundled with application)
+
+### Default Configuration
+
+The application automatically creates default virtual port pairs:
+- CNCA31 <-> CNCB31 (COM131 <-> COM132)
+- CNCA41 <-> CNCB41 (COM141 <-> COM142)
+
+Both pairs are configured with:
+- Baud rate timing emulation (`EmuBR=yes`)
+- Buffer overrun protection (`EmuOverrun=yes`)
+- Default baud rate: 115200
+
+### Cross-Platform Considerations
+
+- Windows-specific features: Registry scanning, com0com integration
+- Graceful degradation on non-Windows platforms
+- Font loading uses system fonts as fallback
+- Responsive design adapts to different screen sizes
 
 ## Development Notes
 
-- The application requires Windows for com0com and hub4com integration
-- Registry access requires appropriate Windows permissions
-- PyInstaller builds require UAC admin privileges (uac_admin=True in spec files)
-- Theme system supports adaptive font sizing and responsive layouts for different screen sizes
+### Code Style
+- Uses dataclasses for configuration objects
+- Implements PyQt6 threading for non-blocking operations
+- Follows PyQt6 signal/slot pattern for event handling
+- Uses pathlib for file path management
+
+### Error Handling
+- Graceful fallback when optional dependencies unavailable
+- Comprehensive error reporting for serial port operations
+- Timeout handling for subprocess operations
+- Registry access error handling
+
+### UI Responsiveness
+- Small screen detection and adaptive sizing
+- Threaded operations for port scanning and process management
+- Real-time status updates via Qt signals
+- System tray integration for background operation

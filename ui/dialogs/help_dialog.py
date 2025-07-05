@@ -14,7 +14,7 @@ from enum import Enum
 import os
 from typing import Dict, List, Optional, Tuple
 from ui.theme.theme import (AppDimensions, ThemeManager,AppFonts, 
-                           AppColors, HTMLTheme)
+                           AppColors, HTMLTheme, AppStyles)
 
 class HelpTopic(Enum):
     """Enumeration of all available help topics"""
@@ -1432,6 +1432,7 @@ class UnifiedHelpDialog(QDialog):
         # Content display
         self.content_display = ThemeManager.create_html_content_widget(max_height=1200)
         self.content_display.setMinimumHeight(480)
+        self.content_display.setStyleSheet(self.content_display.styleSheet() + AppStyles.scroll_area())
         
         # Related topics section
         self.related_widget = self.create_related_topics_section()

@@ -2,54 +2,116 @@
 
 ![Git Screenshot](https://github.com/user-attachments/assets/6c6aea1b-2b3d-4ad0-81f4-0a9b8f3df953)
 
-This Python GUI application provides a user-friendly interface for managing virtual serial ports using `com0com` and `hub4com`. The application allows users to create virtual serial port pairs and route data between multiple ports. It is designed to offer similar functionality to commercial products like FabulaTech's Serial Port Splitter, which allows sharing of a single serial port among multiple applications by creating virtual COM ports.
+A professional Python PyQt6 GUI application for managing virtual serial ports using `com0com` and `hub4com`. This application provides a comprehensive interface for creating virtual serial port pairs and routing data between multiple ports, offering similar functionality to commercial products like FabulaTech's Serial Port Splitter.
 
 ## Key Features
 
 ### Virtual Port Management
+- **Automated Setup**: Creates default virtual port pairs (COM131↔COM132, COM141↔COM142) with optimized settings
+- **Advanced Configuration**: Baud rate timing emulation and buffer overrun protection
+- **Real-time Monitoring**: Live port status and data flow statistics
+- **Registry Integration**: Automatic detection of all system serial ports
 
-* **Create and remove `com0com` virtual port pairs**: The application can create virtual serial port pairs such as `CNCA0`/`CNCB0`, `CNCA1`/`CNCB1`, etc.
-* **Real-time port pair listing and status monitoring**: Users can view the status of all created virtual port pairs.
+### Port Routing & Splitting
+- **Multi-Port Routing**: Route data from one incoming port to multiple outgoing ports
+- **Flexible Baud Rates**: Different baud rates for each port connection
+- **Handshake Control**: CTS handshaking and flow control options
+- **Command Preview**: Review hub4com commands before execution
 
-### Port Routing with `hub4com`
+### Modern Interface
+- **Dark Theme**: Professional dark UI with SVG icons
+- **Responsive Design**: Adaptive layout for different screen sizes
+- **System Tray**: Background operation with system tray integration
+- **Contextual Help**: Built-in help system with detailed guides
 
-* **Data Routing**: Route data from one incoming port to multiple outgoing ports.
-* **Differing Baud Rates**: Supports different baud rates for each port.
-* **Handshake Control**: Offers CTS handshaking control.
-* **Command Preview**: Allows users to preview the command before starting the `hub4com` process.
+### Port Detection & Testing
+- **Smart Classification**: Distinguishes between physical, virtual, and Moxa ports
+- **Port Testing**: Comprehensive port diagnostics and parameter detection
+- **Real-time Statistics**: Monitor RX/TX rates, byte counts, and error rates
 
-### Port Detection
+## Installation & Setup
 
-* **Windows Registry Scanning**: The application scans the Windows registry to detect all available serial ports.
-* **Port Classification**: It can classify ports as either physical or virtual.
+### Prerequisites
+- Windows 10/11 (required for com0com integration)
+- Python 3.8 or higher
+- com0com virtual serial port driver
+
+### Dependencies
+```bash
+pip install PyQt6 PyQt6-SVG pyserial
+```
+
+### Required External Tools
+- **com0com**: Virtual serial port driver (auto-detected at `C:\Program Files (x86)\com0com\setupc.exe`)
+- **hub4com**: Serial port routing utility (bundled with application)
+
+## Usage
+
+### Run from Source
+```bash
+python main.py
+```
+
+### Build Executable
+```bash
+pyinstaller "Serial Port Splitter.spec"
+```
+
+### Default Configuration
+The application automatically creates optimized virtual port pairs:
+- **CNCA31 ↔ CNCB31** (COM131 ↔ COM132)
+- **CNCA41 ↔ CNCB41** (COM141 ↔ COM142)
+
+Both pairs include:
+- Baud rate timing emulation (`EmuBR=yes`)
+- Buffer overrun protection (`EmuOverrun=yes`)
+- Default baud rate: 115200
 
 ## Architecture
 
 ### Core Components
+- **`main.py`**: Application entry point with system tray integration
+- **`core/core.py`**: Business logic layer with threading support
+  - `ResponsiveWindowManager`: Adaptive UI sizing
+  - `PortScanner`: Windows registry-based port detection
+  - `Hub4comProcess`: Subprocess management for hub4com
+  - `Com0comProcess`: Virtual port pair management
+  - `SerialPortMonitor`: Real-time port monitoring
 
-* **`main.py`**: The application's entry point, which launches the PyQt6 GUI.
-* **`core/components.py`**: Contains the core business logic, including:
-    * `ResponsiveWindowManager`: Manages the adaptive UI sizing.
-    * `PortScanner`: Scans the Windows registry for available serial ports.
-    * `Hub4comProcess`: Manages the `hub4com.exe` subprocess.
-    * `Com0comProcess`: Manages `com0com` `setupc.exe` commands.
-    * Data classes for port configuration and window management.
+### UI Structure
+- **`ui/gui.py`**: Main application window
+- **`ui/dialogs/`**: Modal dialogs (port scanning, configuration, help)
+- **`ui/widgets/`**: Reusable components (port widgets, tabs, monitoring)
+- **`ui/theme/`**: Dark theme system with SVG icon management
 
-### UI Layer
+## Technical Features
 
-* **`ui/gui.py`**: The main GUI window that provides a comprehensive interface for port management.
-* **`ui/dialogs/`**: Contains modal dialogs for port scanning, pair creation, and help.
-* **`ui/widgets/`**: Includes reusable UI components like output port widgets.
-* **`ui/theme/`**: A theming system with customizable colors, fonts, and styles.
+### Cross-Platform Considerations
+- Windows-specific features with graceful degradation
+- Registry scanning with fallback mechanisms
+- Optional dependency handling (pyserial, winreg)
 
-## Dependencies
+### Performance Optimizations
+- Threaded operations for non-blocking UI
+- Efficient port scanning and monitoring
+- Responsive design with adaptive layouts
 
-* **PyQt6**: Used for the GUI framework.
-* **`winreg`**: The `winreg` module is used for port detection via Windows Registry access.
-* **`subprocess`**: This module is used to manage external executables like `hub4com.exe` and `setupc.exe`.
+### Error Handling
+- Comprehensive error reporting
+- Timeout handling for subprocess operations
+- Graceful fallback when dependencies unavailable
 
-## Running the Application
+## System Requirements
 
-```bash
-# Run the main application
-python3 main.py
+- **OS**: Windows 10/11 (for full functionality)
+- **Python**: 3.8+
+- **Dependencies**: PyQt6, PyQt6-SVG, pyserial (optional)
+- **External Tools**: com0com driver, hub4com utility
+
+## Use Cases
+
+- **Development**: Test serial applications with multiple virtual ports
+- **Industrial**: Route data between different baud rate devices
+- **Networking**: Interface with Moxa device servers
+- **Testing**: Monitor and log serial communication
+- **Integration**: Bridge applications that need shared serial access

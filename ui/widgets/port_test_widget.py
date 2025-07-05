@@ -13,7 +13,7 @@ from PyQt6.QtGui import QTransform, QPainter, QResizeEvent
 
 from core.core import SerialPortInfo, SerialPortTester
 from ui.theme.theme import (
-    ThemeManager, AppDimensions, AppColors, AppFonts
+    ThemeManager, AppDimensions, AppColors, AppFonts, AppStyles 
 )
 from ui.theme.icons.icons import AppIcons
 
@@ -207,24 +207,7 @@ class SerialPortTestWidget(QWidget):
         self.results_scroll.setWidgetResizable(True)
         self.results_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.results_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.results_scroll.setStyleSheet(f"""
-            QScrollArea {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
-                border: none;
-            }}
-            QScrollBar:vertical {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
-                border: none;
-                width: 12px;
-            }}
-            QScrollBar::handle:vertical {{
-                background-color: {AppColors.BORDER_DEFAULT};
-                min-height: 20px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background-color: {AppColors.TEXT_DISABLED};
-            }}
-        """)
+        self.results_scroll.setStyleSheet(AppStyles.scroll_area())
         
         # Results container widget with grid layout for responsiveness
         self.results_widget = QWidget()

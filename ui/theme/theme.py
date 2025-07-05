@@ -877,20 +877,23 @@ class AppStyles:
     
     @staticmethod
     def scroll_area() -> str:
-        """Windows 10 system scroll area"""
+        """Windows 10 system scroll area with a modern, minimalist look."""
         return f"""
         QScrollArea {{
-            border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
-            background-color: {AppColors.BACKGROUND_WHITE};
+            border: none; /* Remove border from the container */
+            background-color: transparent;
         }}
+
         QScrollBar:vertical {{
-            background-color: {AppColors.SCROLLBAR_BACKGROUND};
-            width: 17px;
             border: none;
+            background: transparent; /* Make the track invisible */
+            width: 12px; /* Thinner scrollbar */
+            margin: 0px;
         }}
         QScrollBar::handle:vertical {{
             background-color: {AppColors.SCROLLBAR_THUMB};
-            min-height: 20px;
+            min-height: 25px;
+            border-radius: 6px; /* Rounded corners */
             margin: 2px;
         }}
         QScrollBar::handle:vertical:hover {{
@@ -900,18 +903,23 @@ class AppStyles:
             background-color: {AppColors.SCROLLBAR_THUMB_PRESSED};
         }}
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-            border: none;
+            height: 0px; /* Hide arrows */
             background: none;
-            height: 0px;
         }}
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+            background: none; /* Hide the page area */
+        }}
+
         QScrollBar:horizontal {{
-            background-color: {AppColors.SCROLLBAR_BACKGROUND};
-            height: 17px;
             border: none;
+            background: transparent; /* Make the track invisible */
+            height: 12px; /* Thinner scrollbar */
+            margin: 0px;
         }}
         QScrollBar::handle:horizontal {{
             background-color: {AppColors.SCROLLBAR_THUMB};
-            min-width: 20px;
+            min-width: 25px;
+            border-radius: 6px; /* Rounded corners */
             margin: 2px;
         }}
         QScrollBar::handle:horizontal:hover {{
@@ -921,9 +929,11 @@ class AppStyles:
             background-color: {AppColors.SCROLLBAR_THUMB_PRESSED};
         }}
         QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
-            border: none;
+            width: 0px; /* Hide arrows */
             background: none;
-            width: 0px;
+        }}
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+            background: none; /* Hide the page area */
         }}
         """
     

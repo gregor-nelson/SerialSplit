@@ -61,18 +61,19 @@ class LaunchDialog(QDialog):
         connection_ports = self._get_connection_ports()
         
         content = f"""
+        {HTMLTheme.get_styles()}
         <h2>Serial Port Configuration Complete</h2>
         <p><i>The system has been initialised with default routing parameters.</i></p>
         
         <h3>Configured Components</h3>
         <ul>
-            <li><b>Virtual Port Pairs:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">✓</span> {port_status_data['pairs_html']}</li>
-            <li><b>Baud Rate:</b> <code style="background: {AppColors.GRAY_100}; padding: 2px 4px; color: {AppColors.TEXT_DEFAULT};">{self.default_config.default_baud}</code></li>
-            <li><b>Buffer Management:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">Enabled</span></li>
-            <li><b>Timing Control:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">Enabled</span></li>
+            <li><b>Virtual Port Pairs:</b> <span class="success-icon">✓</span> {port_status_data['pairs_html']}</li>
+            <li><b>Baud Rate:</b> <code>{self.default_config.default_baud}</code></li>
+            <li><b>Buffer Management:</b> <span class="success-icon">Enabled</span></li>
+            <li><b>Timing Control:</b> <span class="success-icon">Enabled</span></li>
         </ul>
         
-        <div style="background-color: {AppColors.GRAY_100}; border-left: 3px solid {AppColors.ACCENT_BLUE}; padding: 10px; margin: 15px 0; color: {AppColors.TEXT_DEFAULT};">
+        <div class="status-box">
             <h4>Application Connection</h4>
             <p>Applications should connect to {connection_ports} respectively.</p>
             <p>Data routing begins when the service is started.</p>
@@ -80,7 +81,7 @@ class LaunchDialog(QDialog):
         </div>
         
         <h3>System Status</h3>
-        <p><b><span style="color: {AppColors.SUCCESS_PRIMARY};">●</span> System parameters are optimised for standard serial communication protocols.</b></p>
+        <p><b><span class="success-icon">●</span> System parameters are optimised for standard serial communication protocols.</b></p>
         
         <p><i>Click "View Technical Details" for comprehensive configuration information.</i></p>
         """
@@ -99,7 +100,7 @@ class LaunchDialog(QDialog):
         # Format pairs list simply
         formatted_pairs = []
         for pair in pairs_list:
-            formatted_pairs.append(f'<code style="background: {AppColors.GRAY_50}; padding: 2px 4px; color: {AppColors.TEXT_DEFAULT};">{pair}</code>')
+            formatted_pairs.append(f'<code>{pair}</code>')
         
         pairs_html = ", ".join(formatted_pairs)
         
@@ -113,7 +114,7 @@ class LaunchDialog(QDialog):
         ports = ["COM132", "COM142"]
         formatted_ports = []
         for port in ports:
-            formatted_ports.append(f'<code style="background: {AppColors.GRAY_100}; padding: 2px 4px; color: {AppColors.TEXT_DEFAULT};">{port}</code>')
+            formatted_ports.append(f'<code>{port}</code>')
         
         return " and ".join(formatted_ports)
     

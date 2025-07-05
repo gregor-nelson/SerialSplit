@@ -538,132 +538,141 @@ class Hub4comGUI(QMainWindow):
             layout.setContentsMargins(8, 4, 8, 8)  # Minimal top margin
         return group, layout
     
+    # Button configuration constants
+    BUTTON_CONFIG = {
+        'icons': {
+            "refresh": "REFRESH", "create": "CREATE", "delete": "DELETE", "settings": "SETTINGS",
+            "help": "HELP", "list": "SEARCH", "play": "PLAY", "stop": "STOP", 
+            "port": "PORT", "configure": "CONFIGURE"
+        },
+        'text': {
+            "refresh": "Refresh", "create": "New", "delete": "Delete", "settings": "Settings",
+            "help": "Help", "list": "Scan", "play": "Start", "stop": "Stop", 
+            "port": "Ports", "configure": "Config"
+        },
+        'primary_actions': ["play", "create"]
+    }
+    
     def _create_icon_button_group(self, buttons: List[ButtonConfig], 
                                   layout: QHBoxLayout) -> Dict[str, QPushButton]:
         """Create a group of Windows Explorer style compact buttons with SVG icons"""
         created_buttons = {}
         
-        # Icon mapping to SVG names
-        icon_svg_map = {
-            "refresh": "REFRESH",
-            "create": "CREATE", 
-            "delete": "DELETE",
-            "settings": "SETTINGS",
-            "help": "HELP",
-            "list": "SEARCH",  # Use search icon for port scanning
-            "play": "PLAY",
-            "stop": "STOP",
-            "port": "PORT",
-            "configure": "CONFIGURE"
-        }
-        
-        # Button text mapping
-        button_text_map = {
-            "refresh": "Refresh",
-            "create": "New",
-            "delete": "Delete",
-            "settings": "Settings",
-            "help": "Help",
-            "list": "Scan",
-            "play": "Start",
-            "stop": "Stop",
-            "port": "Ports",
-            "configure": "Config"
-        }
-        
         for config in buttons:
-            # Create base button with Windows Explorer styling
-            btn = QPushButton()
-            btn.setMinimumWidth(AppDimensions.BUTTON_MIN_WIDTH)  # Use theme width
-            btn.setMaximumWidth(AppDimensions.BUTTON_MAX_WIDTH)  # Use theme width
-            btn.setMinimumHeight(AppDimensions.BUTTON_HEIGHT_CONTROL)  # Use theme height
-            btn.setMaximumHeight(AppDimensions.BUTTON_HEIGHT_CONTROL)  # Use theme height
-            btn.setFont(QFont(AppFonts.DEFAULT_FAMILY, AppFonts.FONT_SIZE_SMALL))  # Use theme font size
-            
-            # Set button text
-            button_text = button_text_map.get(config.icon_name, config.icon_name.title())
-            btn.setText(button_text)
-            btn.setToolTip(config.tooltip)
-            
-            # Add SVG icon if available using the ThemeManager system
-            svg_name = icon_svg_map.get(config.icon_name)
-            if svg_name:
-                try:
-                    # Use the IconManager directly to create the icon
-                    from ui.theme.icons.icons import AppIcons
-                    icon_template = getattr(AppIcons, svg_name, None)
-                    if icon_template:
-                        icon_size = QSize(16, 16)
-                        icon = IconManager.create_svg_icon(icon_template, AppColors.ICON_DEFAULT, icon_size)
-                        btn.setIcon(icon)
-                        btn.setIconSize(icon_size)
-                except Exception as e:
-                    print(f"Warning: Could not load icon {svg_name}: {e}")
-            
-            # Apply Windows Explorer button styling - subtle and compact
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {AppColors.BUTTON_TRANSPARENT};
-                    border: 1px solid {AppColors.BUTTON_TRANSPARENT};
-                    padding: {AppDimensions.PADDING_BUTTON_DETAILED};  /* Use theme padding */
-                    text-align: left;
-                    font-family: {AppFonts.DEFAULT_FAMILY};
-                    font-size: {AppFonts.FONT_SIZE_SMALL}pt;  /* Use theme font size */
-                    color: {AppColors.CONTROL_PANEL_TEXT};
-                    line-height: 1.2;
-                }}
-                QPushButton:hover {{
-                    background-color: {AppColors.BUTTON_BLUE_LIGHT};
-                    border-color: {AppColors.BUTTON_BLUE_BORDER};
-                }}
-                QPushButton:pressed {{
-                    background-color: {AppColors.BUTTON_BLUE_BORDER};
-                    border-color: {AppColors.BUTTON_BLUE_BORDER_HOVER};
-                }}
-                QPushButton:disabled {{
-                    background-color: {AppColors.BUTTON_TRANSPARENT};
-                    color: {AppColors.TEXT_DISABLED};
-                    border-color: {AppColors.BUTTON_TRANSPARENT};
-                }}
-            """)
-            
-            # Special styling for primary actions
-            if config.icon_name in ["play", "create"]:
-                btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background-color: {AppColors.BUTTON_BLUE_LIGHT};
-                        border: 1px solid {AppColors.BUTTON_BLUE_BORDER};
-                        padding: {AppDimensions.PADDING_BUTTON_DETAILED};  /* Use theme padding */
-                        text-align: left;
-                        font-family: "Segoe UI";
-                        font-size: 8pt;  /* Match button font */
-                        color: {AppColors.BUTTON_ACCENT_TEXT};
-                        font-weight: normal;
-                        line-height: 1.2;
-                    }}
-                    QPushButton:hover {{
-                        background-color: {AppColors.BUTTON_BLUE_HOVER};
-                        border-color: {AppColors.BUTTON_BLUE_BORDER_HOVER};
-                    }}
-                    QPushButton:pressed {{
-                        background-color: {AppColors.BUTTON_BLUE_PRESSED};
-                        border-color: {AppColors.BUTTON_BLUE_BORDER_PRESSED};
-                    }}
-                    QPushButton:disabled {{
-                        background-color: {AppColors.GRAY_100};
-                        color: {AppColors.TEXT_DISABLED};
-                        border-color: {AppColors.BORDER_DISABLED};
-                    }}
-                """)
-            
-            btn.clicked.connect(config.callback)
-            btn.setEnabled(config.enabled)
+            btn = self._create_single_button(config)
             layout.addWidget(btn)
             
             if config.reference_name:
                 created_buttons[config.reference_name] = btn
                 
         return created_buttons
+    
+    def _create_single_button(self, config: ButtonConfig) -> QPushButton:
+        """Create a single button with consistent styling"""
+        btn = QPushButton()
+        self._configure_button_size(btn)
+        self._configure_button_content(btn, config)
+        self._configure_button_style(btn, config.icon_name)
+        
+        btn.clicked.connect(config.callback)
+        btn.setEnabled(config.enabled)
+        return btn
+    
+    def _configure_button_size(self, btn: QPushButton):
+        """Configure button size using theme dimensions"""
+        btn.setMinimumWidth(AppDimensions.BUTTON_MIN_WIDTH)
+        btn.setMaximumWidth(AppDimensions.BUTTON_MAX_WIDTH)
+        btn.setMinimumHeight(AppDimensions.BUTTON_HEIGHT_CONTROL)
+        btn.setMaximumHeight(AppDimensions.BUTTON_HEIGHT_CONTROL)
+        btn.setFont(QFont(AppFonts.DEFAULT_FAMILY, AppFonts.FONT_SIZE_SMALL))
+    
+    def _configure_button_content(self, btn: QPushButton, config: ButtonConfig):
+        """Configure button text, tooltip, and icon"""
+        button_text = self.BUTTON_CONFIG['text'].get(config.icon_name, config.icon_name.title())
+        btn.setText(button_text)
+        btn.setToolTip(config.tooltip)
+        
+        # Add SVG icon if available
+        svg_name = self.BUTTON_CONFIG['icons'].get(config.icon_name)
+        if svg_name:
+            self._add_button_icon(btn, svg_name)
+    
+    def _add_button_icon(self, btn: QPushButton, svg_name: str):
+        """Add SVG icon to button"""
+        try:
+            from ui.theme.icons.icons import AppIcons
+            icon_template = getattr(AppIcons, svg_name, None)
+            if icon_template:
+                icon_size = QSize(16, 16)
+                icon = IconManager.create_svg_icon(icon_template, AppColors.ICON_DEFAULT, icon_size)
+                btn.setIcon(icon)
+                btn.setIconSize(icon_size)
+        except Exception as e:
+            print(f"Warning: Could not load icon {svg_name}: {e}")
+    
+    def _configure_button_style(self, btn: QPushButton, icon_name: str):
+        """Apply appropriate styling based on button type"""
+        if icon_name in self.BUTTON_CONFIG['primary_actions']:
+            self._apply_primary_button_style(btn)
+        else:
+            self._apply_default_button_style(btn)
+    
+    def _apply_default_button_style(self, btn: QPushButton):
+        """Apply default button styling"""
+        btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {AppColors.BUTTON_TRANSPARENT};
+                border: 1px solid {AppColors.BUTTON_TRANSPARENT};
+                padding: {AppDimensions.PADDING_BUTTON_DETAILED};
+                text-align: left;
+                font-family: {AppFonts.DEFAULT_FAMILY};
+                font-size: {AppFonts.FONT_SIZE_SMALL}pt;
+                color: {AppColors.CONTROL_PANEL_TEXT};
+                line-height: 1.2;
+            }}
+            QPushButton:hover {{
+                background-color: {AppColors.BUTTON_BLUE_LIGHT};
+                border-color: {AppColors.BUTTON_BLUE_BORDER};
+            }}
+            QPushButton:pressed {{
+                background-color: {AppColors.BUTTON_BLUE_BORDER};
+                border-color: {AppColors.BUTTON_BLUE_BORDER_HOVER};
+            }}
+            QPushButton:disabled {{
+                background-color: {AppColors.BUTTON_TRANSPARENT};
+                color: {AppColors.TEXT_DISABLED};
+                border-color: {AppColors.BUTTON_TRANSPARENT};
+            }}
+        """)
+    
+    def _apply_primary_button_style(self, btn: QPushButton):
+        """Apply primary button styling"""
+        btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {AppColors.BUTTON_BLUE_LIGHT};
+                border: 1px solid {AppColors.BUTTON_BLUE_BORDER};
+                padding: {AppDimensions.PADDING_BUTTON_DETAILED};
+                text-align: left;
+                font-family: "Segoe UI";
+                font-size: 8pt;
+                color: {AppColors.BUTTON_ACCENT_TEXT};
+                font-weight: normal;
+                line-height: 1.2;
+            }}
+            QPushButton:hover {{
+                background-color: {AppColors.BUTTON_BLUE_HOVER};
+                border-color: {AppColors.BUTTON_BLUE_BORDER_HOVER};
+            }}
+            QPushButton:pressed {{
+                background-color: {AppColors.BUTTON_BLUE_PRESSED};
+                border-color: {AppColors.BUTTON_BLUE_BORDER_PRESSED};
+            }}
+            QPushButton:disabled {{
+                background-color: {AppColors.GRAY_100};
+                color: {AppColors.TEXT_DISABLED};
+                border-color: {AppColors.BORDER_DISABLED};
+            }}
+        """)
     
     def checkbox_icon(self, checked: bool) -> QIcon:
         """Generate Windows 10 style checkbox icon"""
@@ -691,25 +700,38 @@ class Hub4comGUI(QMainWindow):
         separator = ThemeManager.create_separator(orientation)
         layout.addWidget(separator)
     
+    def _ui_feedback(self, message: str, title: str = None, msg_type: str = "status", component: str = None):
+        """Unified UI feedback method for status updates and messages"""
+        if msg_type == "status":
+            # Status update
+            widget = None
+            if component:
+                widget = self.ui_refs.get(f'{component}_status')
+            if not widget:
+                widget = self.ui_refs.get('status_label')
+            if widget:
+                widget.setText(message)
+        else:
+            # Message box
+            msg_funcs = {
+                "info": QMessageBox.information,
+                "warning": QMessageBox.warning,
+                "error": QMessageBox.critical,
+                "question": QMessageBox.question
+            }
+            return msg_funcs.get(msg_type, QMessageBox.information)(self, title or "Information", message)
+    
+    # Backward compatibility methods
     def _show_message(self, title: str, message: str, msg_type: str = "info"):
         """Show message box with specified type"""
-        msg_funcs = {
-            "info": QMessageBox.information,
-            "warning": QMessageBox.warning,
-            "error": QMessageBox.critical,
-            "question": QMessageBox.question
-        }
-        return msg_funcs.get(msg_type, QMessageBox.information)(self, title, message)
+        return self._ui_feedback(message, title, msg_type)
     
     def _update_status(self, message: str, widget: QLabel = None, component: str = None):
         """Update status label - unified status management"""
-        if not widget:
-            widget = self.ui_refs.get(f'{component}_status') if component else None
-            if not widget:
-                widget = self.ui_refs.get('status_label')
-        
         if widget:
             widget.setText(message)
+        else:
+            self._ui_feedback(message, component=component)
     
     # ========================================================================
     # UI SECTION BUILDERS
@@ -946,17 +968,8 @@ class Hub4comGUI(QMainWindow):
     def remove_output_port(self, widget: OutputPortWidget):
         """Remove an output port configuration"""
         if len(self.app_state['output_port_widgets']) > Config.MIN_OUTPUT_PORTS:
-            self.app_state['output_port_widgets'].remove(widget)
-            self.output_ports_layout.removeWidget(widget)
-            widget.deleteLater()
-            
-            # Remove existing stretch and re-add to maintain consistent layout
-            if hasattr(self, '_output_stretch_item'):
-                self.output_ports_layout.removeItem(self._output_stretch_item)
-            self._output_stretch_item = self.output_ports_layout.addStretch()
-            
-            self.renumber_output_ports()
-            self.update_preview()
+            self._remove_widget_from_layout(widget)
+            self._finalize_port_removal()
         else:
             self._show_message("Cannot Remove", "At least one output port is required.")
     
@@ -968,10 +981,19 @@ class Hub4comGUI(QMainWindow):
         
         widgets_to_remove = self.app_state['output_port_widgets'][Config.MIN_OUTPUT_PORTS:]
         for widget in widgets_to_remove:
-            self.app_state['output_port_widgets'].remove(widget)
-            self.output_ports_layout.removeWidget(widget)
-            widget.deleteLater()
+            self._remove_widget_from_layout(widget)
         
+        self._finalize_port_removal()
+    
+    def _remove_widget_from_layout(self, widget: OutputPortWidget):
+        """Remove a single widget from layout and state"""
+        if widget in self.app_state['output_port_widgets']:
+            self.app_state['output_port_widgets'].remove(widget)
+        self.output_ports_layout.removeWidget(widget)
+        widget.deleteLater()
+    
+    def _finalize_port_removal(self):
+        """Finalize port removal with layout updates"""
         # Remove existing stretch and re-add to maintain consistent layout
         if hasattr(self, '_output_stretch_item'):
             self.output_ports_layout.removeItem(self._output_stretch_item)
@@ -1047,6 +1069,27 @@ class Hub4comGUI(QMainWindow):
             self._update_status(AppMessages.NO_DEVICES, component='port')
             self._update_port_combos_no_devices()
     
+    def _handle_port_scan_results(self, ports):
+        """Handle port scan results with unified logic"""
+        self.app_state['scanned_ports'] = ports
+        
+        if not ports:
+            self._handle_no_ports_found()
+        else:
+            self._handle_ports_found(ports)
+    
+    def _handle_no_ports_found(self):
+        """Handle case when no ports are found"""
+        self._update_status(AppMessages.NO_DEVICES, component='port')
+        self._update_port_combos_no_devices()
+    
+    def _handle_ports_found(self, ports):
+        """Handle case when ports are found"""
+        self._update_status(f"Found {len(ports)} ports", component='port')
+        self._update_incoming_port_combo(ports)
+        self._update_output_port_widgets(ports)
+        self.update_port_type_indicator()
+    
     def _update_port_combos_no_devices(self):
         """Update port combos when no devices are found"""
         incoming = self.ui_refs['incoming_port']
@@ -1057,40 +1100,15 @@ class Hub4comGUI(QMainWindow):
         for widget in self.app_state['output_port_widgets']:
             widget.populate_ports([])
     
-    def on_ports_scanned(self, ports):
-        """Handle completed port scan for combo boxes"""
-        self.app_state['scanned_ports'] = ports
-        
-        if not ports:
-            self._update_status(AppMessages.NO_DEVICES, component='port')
-            self._update_port_combos_no_devices()
-            return
-        
-        self._update_status(f"Found {len(ports)} ports", component='port')
-        
-        # Update incoming port combo
+    def _update_incoming_port_combo(self, ports):
+        """Update incoming port combo with enhanced display"""
         incoming = self.ui_refs['incoming_port']
         current_incoming = incoming.currentText()
         incoming.clear()
         incoming.setEnabled(True)
         
         for port in ports:
-            # Create enhanced display text with status indicator
-            display_text = port.port_name
-            
-            # Add device type and status information
-            if port.is_moxa:
-                display_text += "  •  Moxa Device"
-                if port.device_name and port.device_name != "Unknown":
-                    display_text += f"  •  {port.device_name}"
-            elif port.port_type.startswith("Virtual"):
-                virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
-                display_text += f"  •  {virtual_type} Port"
-            else:
-                display_text += "  •  Hardware Port"
-                if port.device_name and port.device_name != "Unknown":
-                    display_text += f"  •  {port.device_name}"
-            
+            display_text = self._create_port_display_text(port)
             incoming.addItem(display_text, port.port_name)
         
         # Restore selection
@@ -1099,12 +1117,33 @@ class Hub4comGUI(QMainWindow):
             incoming.setCurrentIndex(index)
         elif incoming.count() > 0:
             incoming.setCurrentIndex(0)
+    
+    def _create_port_display_text(self, port):
+        """Create enhanced display text for port"""
+        display_text = port.port_name
         
-        # Update output port widgets
+        if port.is_moxa:
+            display_text += "  •  Moxa Device"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        elif port.port_type.startswith("Virtual"):
+            virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
+            display_text += f"  •  {virtual_type} Port"
+        else:
+            display_text += "  •  Hardware Port"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        
+        return display_text
+    
+    def _update_output_port_widgets(self, ports):
+        """Update all output port widgets"""
         for widget in self.app_state['output_port_widgets']:
             widget.populate_ports_enhanced(ports)
-        
-        self.update_port_type_indicator()
+    
+    def on_ports_scanned(self, ports):
+        """Handle completed port scan for combo boxes"""
+        self._handle_port_scan_results(ports)
     
     def update_port_type_indicator(self):
         """Update the port type indicator using theme messages - now integrated with tab manager"""
@@ -1253,42 +1292,58 @@ class Hub4comGUI(QMainWindow):
         process.error_occurred.connect(lambda msg: self._handle_process_event('error', msg))
         process.start()
     
+    # Pre-start check configuration
+    PRE_START_CHECKS = {
+        'hub4com_paths': [
+            "hub4com.exe",
+            "C:/Program Files (x86)/com0com/hub4com.exe", 
+            "C:/Program Files/com0com/hub4com.exe"
+        ]
+    }
+    
     def _perform_pre_start_checks(self, cmd: List[str]) -> bool:
-        """Perform all pre-start checks"""
-        # Check hub4com.exe exists
-        if not self._verify_hub4com_exe(cmd):
-            return False
+        """Perform all pre-start checks with unified logic"""
+        checks = [
+            ('hub4com_exe', self._verify_hub4com_exe, cmd),
+            ('moxa_port', self._check_moxa_port, None),
+            ('baud_rates', self._check_baud_rates, None)
+        ]
         
-        # Check for Moxa port
-        if not self._check_moxa_port():
-            return False
-        
-        # Check for baud rate mismatches
-        if not self._check_baud_rates():
-            return False
+        for check_name, check_func, param in checks:
+            try:
+                if param is not None:
+                    result = check_func(param)
+                else:
+                    result = check_func()
+                
+                if not result:
+                    return False
+            except Exception as e:
+                print(f"Error in {check_name} check: {e}")
+                return False
         
         return True
     
     def _verify_hub4com_exe(self, cmd: List[str]) -> bool:
         """Verify hub4com.exe exists"""
         exe_path = cmd[0]
-        if not Path(exe_path).exists():
-            possible_paths = [
-                Path.cwd() / "hub4com.exe",
-                Path("C:/Program Files (x86)/com0com/hub4com.exe"),
-                Path("C:/Program Files/com0com/hub4com.exe"),
-            ]
+        if Path(exe_path).exists():
+            return True
+        
+        # Try alternative paths
+        for path_str in self.PRE_START_CHECKS['hub4com_paths']:
+            path = Path(path_str) if not path_str.startswith('C:') else Path(path_str)
+            if not path_str.startswith('C:'):
+                path = Path.cwd() / path_str
             
-            for path in possible_paths:
-                if path.exists():
-                    cmd[0] = str(path)
-                    return True
-            
-            self._show_message("Error", 
-                             "hub4com.exe not found. Please ensure it's in the current directory or installed with COM0COM.", 
-                             "warning")
-            return False
-        return True
+            if path.exists():
+                cmd[0] = str(path)
+                return True
+        
+        self._show_message("Error", 
+                         "hub4com.exe not found. Please ensure it's in the current directory or installed with COM0COM.", 
+                         "warning")
+        return False
     
     def _check_moxa_port(self) -> bool:
         """Check for Moxa port and give advice"""
@@ -1296,36 +1351,48 @@ class Hub4comGUI(QMainWindow):
         port_info = next((p for p in self.app_state['scanned_ports'] if p.port_name == incoming_port), None)
         
         if port_info and port_info.is_moxa and not self.ui_refs['disable_cts'].isChecked():
-            reply = QMessageBox.question(
-                self,
+            return self._prompt_user_choice(
                 "Moxa Port Detected",
                 "You're using a Moxa virtual port. It's recommended to disable CTS handshaking.\n\nDisable CTS handshaking now?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                lambda: self.ui_refs['disable_cts'].setChecked(True)
             )
-            if reply == QMessageBox.StandardButton.Yes:
-                self.ui_refs['disable_cts'].setChecked(True)
         return True
     
     def _check_baud_rates(self) -> bool:
         """Check for baud rate mismatches"""
         all_baud_rates = [self.ui_refs['incoming_baud'].currentText()]
-        for widget in self.app_state['output_port_widgets']:
-            all_baud_rates.append(widget.baud_combo.currentText())
+        all_baud_rates.extend(widget.baud_combo.currentText() for widget in self.app_state['output_port_widgets'])
         
         if len(set(all_baud_rates)) > 1:
-            baud_info = f"Incoming: {self.ui_refs['incoming_baud'].currentText()}\n"
-            for i, widget in enumerate(self.app_state['output_port_widgets']):
-                baud_info += f"Output {i+1}: {widget.baud_combo.currentText()}\n"
-            
-            reply = QMessageBox.question(
-                self,
+            baud_info = self._format_baud_rate_info()
+            return self._prompt_user_choice(
                 "Baud Rate Mismatch",
-                f"Baud rates don't match:\n{baud_info}\n"
-                f"This may cause communication issues. Continue anyway?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                f"Baud rates don't match:\n{baud_info}\nThis may cause communication issues. Continue anyway?",
+                None,
+                allow_no=True
             )
-            return reply == QMessageBox.StandardButton.Yes
         return True
+    
+    def _format_baud_rate_info(self) -> str:
+        """Format baud rate information for display"""
+        baud_info = f"Incoming: {self.ui_refs['incoming_baud'].currentText()}\n"
+        for i, widget in enumerate(self.app_state['output_port_widgets']):
+            baud_info += f"Output {i+1}: {widget.baud_combo.currentText()}\n"
+        return baud_info
+    
+    def _prompt_user_choice(self, title: str, message: str, yes_action: callable = None, allow_no: bool = False) -> bool:
+        """Prompt user with yes/no choice and optionally execute action"""
+        reply = QMessageBox.question(
+            self, title, message,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            if yes_action:
+                yes_action()
+            return True
+        
+        return not allow_no
     
     def stop_hub4com(self):
         """Stop the hub4com process"""

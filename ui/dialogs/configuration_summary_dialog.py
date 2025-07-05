@@ -8,7 +8,7 @@ Preserves essential visual elements for serial port routing explanation
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton
 from PyQt6.QtCore import Qt
 
-from ui.theme.theme import ThemeManager, AppStyles, AppFonts, AppDimensions, AppColors
+from ui.theme.theme import ThemeManager, AppStyles, AppFonts, AppDimensions, AppColors, HTMLTheme
 from core.core import DefaultConfig
 
 
@@ -63,11 +63,12 @@ class ConfigurationSummaryDialog(QDialog):
         routing_data = self._get_routing_configuration_data()
         
         content = f"""
+        {HTMLTheme.get_styles()}
         <h2>Virtual COM Port Configuration Summary</h2>
         <p><i>Configuration completed successfully - System ready for operation</i></p>
         
         <h3>Virtual COM Port Infrastructure</h3>
-        <p><b>Status:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">✓</span> {port_data['status_text']}</p>
+        <p><b>Status:</b> <span class="success-icon">✓</span> {port_data['status_text']}</p>
         
         <h4>Configured Port Pairs:</h4>
         <ul>
@@ -77,7 +78,7 @@ class ConfigurationSummaryDialog(QDialog):
         <p><b>Technical Configuration:</b> Baud rate timing synchronisation enabled, buffer overrun protection active, bidirectional data flow configured</p>
         
         <h3>Hub4com Routing Service</h3>
-        <p><b>Status:</b> <span style="color: {AppColors.SUCCESS_PRIMARY};">✓</span> Routing service configured and operational</p>
+        <p><b>Status:</b> <span class="success-icon">✓</span> Routing service configured and operational</p>
         
         <h4>Output Port Configuration:</h4>
         <ul>
@@ -88,15 +89,15 @@ class ConfigurationSummaryDialog(QDialog):
         
         <h3>External Application Configuration</h3>
         
-        <div style="background-color: {AppColors.BACKGROUND_LIGHT}; border-left: 3px solid {AppColors.WARNING_PRIMARY}; padding: 10px; margin: 15px 0;">
+        <div class="warning-box">
             <p><b>Important Configuration Requirement</b></p>
             <p>External applications must connect to the designated client ports for proper data routing functionality.</p>
         </div>
         
         <h4>Application Connection Configuration:</h4>
         <ul>
-            <li>For routing via <code style="background: {AppColors.GRAY_200}; padding: 2px 4px;">COM131</code> → Configure external application to use <code style="background: {AppColors.GRAY_200}; padding: 2px 4px;">COM132</code></li>
-            <li>For routing via <code style="background: {AppColors.GRAY_200}; padding: 2px 4px;">COM141</code> → Configure external application to use <code style="background: {AppColors.GRAY_200}; padding: 2px 4px;">COM142</code></li>
+            <li>For routing via <code>COM131</code> → Configure external application to use <code>COM132</code></li>
+            <li>For routing via <code>COM141</code> → Configure external application to use <code>COM142</code></li>
         </ul>
         
         <h4>System Architecture:</h4>
@@ -107,14 +108,14 @@ class ConfigurationSummaryDialog(QDialog):
         </ul>
         
         <h4>Data Flow Diagram:</h4>
-        <div style="background-color: {AppColors.GRAY_50}; border: 1px solid {AppColors.BORDER_LIGHT}; padding: 10px; font-family: '{AppFonts.DEFAULT_FAMILY}', monospace; font-size: 9pt; text-align: center; margin: 10px 0;">
+        <div class="info-box" style="text-align: center; font-family: monospace; font-size: 9pt;">
             [Application A] ↔ COM132 ↔ COM131 ↔ Hub4com ↔ COM141 ↔ COM142 ↔ [Application B]
             <br><br>
             <i>Bidirectional Data Flow | Error Handling | Automatic Reconnection</i>
         </div>
         
-        <div style="background-color: {AppColors.BACKGROUND_LIGHT}; border: 1px solid {AppColors.BORDER_LIGHT}; padding: 10px; text-align: center; margin-top: 20px;">
-            <p><b><span style="color: {AppColors.SUCCESS_PRIMARY};">●</span> System configured and ready for external application connections</b></p>
+        <div class="footer-box">
+            <p><b><span class="success-icon">●</span> System configured and ready for external application connections</b></p>
         </div>
         """
         
@@ -135,7 +136,7 @@ class ConfigurationSummaryDialog(QDialog):
         # Simple list format
         pairs_html = ""
         for pair in pairs_list:
-            pairs_html += f'<li><code style="background: {AppColors.GRAY_100}; padding: 2px 4px;">{pair}</code></li>\n'
+            pairs_html += f'<li><code>{pair}</code></li>\n'
         
         return {
             'status_text': status_text,
@@ -147,7 +148,7 @@ class ConfigurationSummaryDialog(QDialog):
         routing_html = ""
         for port_config in self.default_config.output_mapping:
             port_info = f"Output Port: {port_config['port']} @ {port_config['baud']} baud"
-            routing_html += f'<li><code style="background: {AppColors.GRAY_100}; ">{port_info}</code></li>\n'
+            routing_html += f'<li><code>{port_info}</code></li>\n'
         
         return routing_html
     

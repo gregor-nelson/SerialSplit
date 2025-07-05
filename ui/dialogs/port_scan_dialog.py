@@ -16,7 +16,7 @@ from PyQt6.QtGui import QColor
 
 from core.core import (ResponsiveWindowManager, SerialPortInfo, PortScanner, 
                            WINREG_AVAILABLE)
-from ui.theme.theme import AppFonts, AppColors, ThemeManager, AppStyles, AppDimensions
+from ui.theme.theme import AppFonts, AppColors, ThemeManager, AppStyles, AppDimensions, HTMLTheme
 
 
 class PortScanDialog(QDialog):
@@ -199,38 +199,38 @@ class PortScanDialog(QDialog):
         # Professional table styling matching help dialog
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {AppColors.BACKGROUND_WHITE};
-                border: 1px solid {AppColors.BORDER_LIGHT};
-                selection-background-color: {AppColors.SELECTION_BG};
+                background-color: {{AppColors.BACKGROUND_WHITE}};
+                border: 1px solid {{AppColors.BORDER_LIGHT}};
+                selection-background-color: {{AppColors.SELECTION_BG}};
                 gridline-color: transparent;
-                font-family: {AppFonts.DEFAULT_FAMILY};
-                font-size: {AppFonts.DEFAULT_SIZE};
+                font-family: {{AppFonts.DEFAULT_FAMILY}};
+                font-size: {{AppFonts.DEFAULT_SIZE}};
                 outline: none;
             }}
             QTableWidget::item {{
                 padding: 12px 16px;
                 border: none;
-                border-bottom: 1px solid {AppColors.BORDER_LIGHT};
-                color: {AppColors.TEXT_DEFAULT};
+                border-bottom: 1px solid {{AppColors.BORDER_LIGHT}};
+                color: {{AppColors.TEXT_DEFAULT}};
             }}
             QTableWidget::item:selected {{
-                background-color: {AppColors.SELECTION_BG};
-                color: {AppColors.SELECTION_TEXT};
+                background-color: {{AppColors.SELECTION_BG}};
+                color: {{AppColors.SELECTION_TEXT}};
             }}
             QTableWidget::item:hover:!selected {{
-                background-color: {AppColors.BUTTON_HOVER};
+                background-color: {{AppColors.BUTTON_HOVER}};
             }}
             QTableWidget::item:first {{
             }}
             QHeaderView::section {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
-                color: {AppColors.TEXT_DEFAULT};
+                background-color: {{AppColors.BACKGROUND_LIGHT}};
+                color: {{AppColors.TEXT_DEFAULT}};
                 font-weight: 600;
                 font-size: 11pt;
                 padding: 12px 16px;
                 border: none;
-                border-bottom: 2px solid {AppColors.BORDER_DEFAULT};
-                border-right: 1px solid {AppColors.BORDER_LIGHT};
+                border-bottom: 2px solid {{AppColors.BORDER_DEFAULT}};
+                border-right: 1px solid {{AppColors.BORDER_LIGHT}};
             }}
             QHeaderView::section:first {{
             }}
@@ -238,8 +238,9 @@ class PortScanDialog(QDialog):
                 border-right: none;
             }}
             QHeaderView::section:hover {{
-                background-color: {AppColors.BUTTON_HOVER};
+                background-color: {{AppColors.BUTTON_HOVER}};
             }}
+            {AppStyles.scroll_area()}
         """)
         
         # Enhanced column configuration
