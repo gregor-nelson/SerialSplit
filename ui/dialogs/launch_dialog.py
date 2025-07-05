@@ -47,7 +47,7 @@ class LaunchDialog(QDialog):
         summary_text.setFont(AppFonts.CONSOLE_LARGE)
         summary_text.setReadOnly(True)
         # Apply dark mode styling using theme system
-        summary_text.setStyleSheet(AppStyles.textedit_html())
+        summary_text.setStyleSheet(AppStyles.textedit_html() + AppStyles.scrollbar())
         
         summary_text.setHtml(self._generate_summary_content())
         layout.addWidget(summary_text)

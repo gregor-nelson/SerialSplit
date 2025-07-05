@@ -199,48 +199,44 @@ class PortScanDialog(QDialog):
         # Professional table styling matching help dialog
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {{AppColors.BACKGROUND_WHITE}};
-                border: 1px solid {{AppColors.BORDER_LIGHT}};
-                selection-background-color: {{AppColors.SELECTION_BG}};
+                background-color: {AppColors.BACKGROUND_WHITE};
+                border: 1px solid {AppColors.BORDER_LIGHT};
+                selection-background-color: {AppColors.SELECTION_BG};
                 gridline-color: transparent;
-                font-family: {{AppFonts.DEFAULT_FAMILY}};
-                font-size: {{AppFonts.DEFAULT_SIZE}};
+                font-family: {AppFonts.DEFAULT_FAMILY};
+                font-size: {AppFonts.DEFAULT_SIZE};
                 outline: none;
             }}
             QTableWidget::item {{
                 padding: 12px 16px;
                 border: none;
-                border-bottom: 1px solid {{AppColors.BORDER_LIGHT}};
-                color: {{AppColors.TEXT_DEFAULT}};
+                border-bottom: 1px solid {AppColors.BORDER_LIGHT};
+                color: {AppColors.TEXT_DEFAULT};
             }}
             QTableWidget::item:selected {{
-                background-color: {{AppColors.SELECTION_BG}};
-                color: {{AppColors.SELECTION_TEXT}};
+                background-color: {AppColors.SELECTION_BG};
+                color: {AppColors.SELECTION_TEXT};
             }}
             QTableWidget::item:hover:!selected {{
-                background-color: {{AppColors.BUTTON_HOVER}};
-            }}
-            QTableWidget::item:first {{
+                background-color: {AppColors.BUTTON_HOVER};
             }}
             QHeaderView::section {{
-                background-color: {{AppColors.BACKGROUND_LIGHT}};
-                color: {{AppColors.TEXT_DEFAULT}};
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                color: {AppColors.TEXT_DEFAULT};
                 font-weight: 600;
                 font-size: 11pt;
                 padding: 12px 16px;
                 border: none;
-                border-bottom: 2px solid {{AppColors.BORDER_DEFAULT}};
-                border-right: 1px solid {{AppColors.BORDER_LIGHT}};
-            }}
-            QHeaderView::section:first {{
+                border-bottom: 2px solid {AppColors.BORDER_DEFAULT};
+                border-right: 1px solid {AppColors.BORDER_LIGHT};
             }}
             QHeaderView::section:last {{
                 border-right: none;
             }}
             QHeaderView::section:hover {{
-                background-color: {{AppColors.BUTTON_HOVER}};
+                background-color: {AppColors.BUTTON_HOVER};
             }}
-            {AppStyles.scroll_area()}
+            {AppStyles.scrollbar()}
         """)
         
         # Enhanced column configuration
@@ -317,6 +313,7 @@ class PortScanDialog(QDialog):
                 border-color: {AppColors.ACCENT_BLUE};
                 outline: none;
             }}
+            {AppStyles.scrollbar()}
         """)
         self.details_text.setPlaceholderText("Select a port to view detailed information...")
         layout.addWidget(self.details_text)
@@ -460,17 +457,17 @@ class PortScanDialog(QDialog):
             
             # Professional color coding with refined contrast
             if port.port_type == "Physical":
-                type_item.setBackground(QColor("#E8F4FD"))  # Softer blue
-                type_item.setForeground(QColor("#1565C0"))  # Professional blue
+                type_item.setBackground(QColor(AppColors.PORT_TYPE_PHYSICAL_BG))
+                type_item.setForeground(QColor(AppColors.PORT_TYPE_PHYSICAL_TEXT))
             elif port.port_type == "Virtual (Moxa)":
-                type_item.setBackground(QColor("#F8E8FF"))  # Softer purple
-                type_item.setForeground(QColor("#8E24AA"))  # Professional purple
+                type_item.setBackground(QColor(AppColors.PORT_TYPE_MOXA_BG))
+                type_item.setForeground(QColor(AppColors.PORT_TYPE_MOXA_TEXT))
             elif "Virtual" in port.port_type:
-                type_item.setBackground(QColor("#EDF7ED"))  # Softer green
-                type_item.setForeground(QColor("#2E7D32"))  # Professional green
+                type_item.setBackground(QColor(AppColors.PORT_TYPE_VIRTUAL_BG))
+                type_item.setForeground(QColor(AppColors.PORT_TYPE_VIRTUAL_TEXT))
             else:
-                type_item.setBackground(QColor("#FFF8E1"))  # Softer orange
-                type_item.setForeground(QColor("#EF6C00"))  # Professional orange
+                type_item.setBackground(QColor(AppColors.PORT_TYPE_OTHER_BG))
+                type_item.setForeground(QColor(AppColors.PORT_TYPE_OTHER_TEXT))
                 
             self.table.setItem(row, 1, type_item)
             

@@ -6,10 +6,10 @@ Handles creation of new COM0COM virtual port pairs
 
 from typing import Tuple, Optional
 
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextEdit
 from PyQt6.QtCore import Qt
 
-from ui.theme.theme import ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts
+from ui.theme.theme import ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts, HTMLTheme
 
 
 class PairCreationDialog(QDialog):
@@ -25,68 +25,67 @@ class PairCreationDialog(QDialog):
     def init_ui(self):
         """Initialize the user interface"""
         self.setWindowTitle("Create Virtual Port Pair")
-        self.setFixedSize(400, 200)
+        self.setMinimumSize(400, 300)
+        
+        ThemeManager.style_dialog(self)
         
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(*AppDimensions.MARGIN_DIALOG)
+        layout.setSpacing(AppDimensions.SPACING_LARGE)
         
-        # Instructions
-        instructions = QLabel(
-            "Create a new pair of connected virtual serial ports.\n\n" +
-            "TIP: Leave the names empty to let COM0COM automatically assign port names like COM3, COM4, etc.\n" +
-            "Or enter specific names like COM10, COM11 if you need particular port numbers."
-        )
-        instructions.setWordWrap(True)
-        instructions.setStyleSheet(f"""
-            padding: 10px; 
-            background-color: {AppColors.BACKGROUND_LIGHT}; 
-            border: 1px solid {AppColors.BORDER_DEFAULT}; 
-            color: {AppColors.TEXT_DEFAULT};
-            font-family: {AppFonts.DEFAULT_FAMILY};
-            font-size: {AppFonts.DEFAULT_SIZE};
-        """)
+        # Instructions using QTextEdit for rich text
+        instructions = QTextEdit()
+        instructions.setReadOnly(True)
+        instructions.setStyleSheet(AppStyles.textedit_html() + AppStyles.scrollbar())
+        instructions.setHtml(self._get_instructions_html())
         layout.addWidget(instructions)
         
         # Port A input
         port_a_layout = QHBoxLayout()
-        port_a_label = QLabel("Port A Name:")
-        port_a_label.setStyleSheet(AppStyles.label())
+        port_a_label = ThemeManager.create_label("Port A Name:")
         port_a_layout.addWidget(port_a_label)
         
-        self.port_a_input = QLineEdit()
+        self.port_a_input = ThemeManager.create_lineedit()
         self.port_a_input.setPlaceholderText("e.g., COM5 or leave empty")
-        self.port_a_input.setStyleSheet(AppStyles.lineedit())
         port_a_layout.addWidget(self.port_a_input)
         
         layout.addLayout(port_a_layout)
         
         # Port B input
         port_b_layout = QHBoxLayout()
-        port_b_label = QLabel("Port B Name:")
-        port_b_label.setStyleSheet(AppStyles.label())
+        port_b_label = ThemeManager.create_label("Port B Name:")
         port_b_layout.addWidget(port_b_label)
         
-        self.port_b_input = QLineEdit()
+        self.port_b_input = ThemeManager.create_lineedit()
         self.port_b_input.setPlaceholderText("e.g., COM6 or leave empty")
-        self.port_b_input.setStyleSheet(AppStyles.lineedit())
         port_b_layout.addWidget(self.port_b_input)
         
         layout.addLayout(port_b_layout)
         
         # Buttons
         buttons = QHBoxLayout()
+        buttons.addStretch()
         
-        self.create_btn = QPushButton("Create")
-        self.create_btn.setStyleSheet(AppStyles.button("primary"))
-        self.create_btn.clicked.connect(self.accept)
+        self.create_btn = ThemeManager.create_button("Create", self.accept, "primary")
         buttons.addWidget(self.create_btn)
         
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.setStyleSheet(AppStyles.button())
-        self.cancel_btn.clicked.connect(self.reject)
+        self.cancel_btn = ThemeManager.create_button("Cancel", self.reject)
         buttons.addWidget(self.cancel_btn)
         
         layout.addLayout(buttons)
     
+    def _get_instructions_html(self) -> str:
+        """Get instructions in HTML format using the theme"""
+        return f"""
+        {HTMLTheme.get_styles()}
+        <h3>Create Virtual Port Pair</h3>
+        <p>Create a new pair of connected virtual serial ports.</p>
+        <div class="info-box">
+            <p><b>TIP:</b> Leave the names empty to let COM0COM automatically assign port names like <code>COM3</code>, <code>COM4</code>, etc.</p>
+            <p>Or enter specific names like <code>COM10</code>, <code>COM11</code> if you need particular port numbers.</p>
+        </div>
+        """
+
     def get_port_names(self) -> Tuple[Optional[str], Optional[str]]:
         """Get the entered port names, or None if empty"""
         port_a = self.port_a_input.text().strip() or None

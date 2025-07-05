@@ -137,26 +137,7 @@ class OutputPortWidget(QWidget):
             # Add item with custom data
             self.port_combo.addItem(display_text, port.port_name)
             
-            # Color code based on port type using enhanced theme colors
-            index = self.port_combo.count() - 1
-            if port.is_moxa:
-                self.port_combo.setItemData(
-                    index, 
-                    ThemeManager.get_accent_color('purple'), 
-                    Qt.ItemDataRole.ForegroundRole
-                )
-            elif port.port_type == "Physical":
-                self.port_combo.setItemData(
-                    index, 
-                    ThemeManager.get_accent_color('green'), 
-                    Qt.ItemDataRole.ForegroundRole
-                )
-            else:  # Virtual
-                self.port_combo.setItemData(
-                    index, 
-                    ThemeManager.get_accent_color('blue'), 
-                    Qt.ItemDataRole.ForegroundRole
-                )
+            
         
         # Restore previous selection if possible
         if current_port:

@@ -95,7 +95,7 @@ class SearchHighlighter:
         # Setup highlight format
         format = cursor.charFormat()
         format.setBackground(QColor(AppColors.ACCENT_YELLOW))
-        format.setForeground(QColor(AppColors.TEXT_DEFAULT))
+        format.setForeground(QColor(AppColors.TEXT_WHITE))
         
         # Find and highlight all occurrences
         while not cursor.isNull() and not cursor.atEnd():
@@ -1409,6 +1409,7 @@ class UnifiedHelpDialog(QDialog):
                 padding: {AppDimensions.PADDING_LARGE} {AppDimensions.PADDING_LARGE} {AppDimensions.PADDING_MEDIUM} {AppDimensions.PADDING_LARGE};
                 background-color: transparent;
             }}
+            {AppStyles.scrollbar()}
         """)
         
         # Populate navigation
@@ -1432,7 +1433,7 @@ class UnifiedHelpDialog(QDialog):
         # Content display
         self.content_display = ThemeManager.create_html_content_widget(max_height=1200)
         self.content_display.setMinimumHeight(480)
-        self.content_display.setStyleSheet(self.content_display.styleSheet() + AppStyles.scroll_area())
+        self.content_display.setStyleSheet(self.content_display.styleSheet() + AppStyles.scrollbar())
         
         # Related topics section
         self.related_widget = self.create_related_topics_section()

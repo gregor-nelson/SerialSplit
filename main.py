@@ -14,7 +14,7 @@ from PyQt6.QtGui import QPalette, QColor, QIcon, QPixmap, QPainter, QBrush, QPen
 from PyQt6.QtCore import Qt
 from PyQt6.QtSvg import QSvgRenderer # <-- Import for SVG rendering
 from ui.gui import Hub4comGUI
-from ui.theme.theme import ThemeManager  # Import for dark mode global styling
+from ui.theme.theme import ThemeManager, AppColors  # Import for dark mode global styling
 
 # --- SVG Icon Content ---
 # The polished SVG icon is stored here as a multi-line string.
@@ -199,10 +199,81 @@ class Hub4comGUIWithTray(Hub4comGUI):
                 2000
             )
 
+def setup_dark_mode_palette(app):
+    """Apply a comprehensive dark mode QPalette for all native window elements."""
+    palette = QPalette()
+    
+    # === MAIN COLOR ROLES ===
+    # Window colors
+    palette.setColor(QPalette.ColorRole.Window, QColor(AppColors.BACKGROUND_LIGHT))  # #2d2d2d
+    palette.setColor(QPalette.ColorRole.WindowText, QColor(AppColors.TEXT_DEFAULT))  # #ffffff
+    
+    # Base colors for input fields
+    palette.setColor(QPalette.ColorRole.Base, QColor(AppColors.BACKGROUND_WHITE))  # #1e1e1e
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(AppColors.BACKGROUND_LIGHT))  # #2d2d2d
+    
+    # Text colors
+    palette.setColor(QPalette.ColorRole.Text, QColor(AppColors.TEXT_DEFAULT))  # #ffffff
+    palette.setColor(QPalette.ColorRole.BrightText, QColor("#ff6b6b"))  # Bright red for warnings
+    
+    # Button colors
+    palette.setColor(QPalette.ColorRole.Button, QColor(AppColors.BUTTON_DEFAULT))  # #404040
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor(AppColors.TEXT_DEFAULT))  # #ffffff
+    
+    # Selection colors
+    palette.setColor(QPalette.ColorRole.Highlight, QColor(AppColors.SELECTION_BG))  # #1e90ff
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor(AppColors.SELECTION_TEXT))  # #ffffff
+    
+    # === MISSING COLOR ROLES (Critical for complete dark mode) ===
+    # Tooltip colors
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(AppColors.BACKGROUND_TOOLTIP))  # #404040
+    palette.setColor(QPalette.ColorRole.ToolTipText, QColor(AppColors.TEXT_TOOLTIP))  # #ffffff
+    
+    # Link colors
+    palette.setColor(QPalette.ColorRole.Link, QColor(AppColors.ACCENT_BLUE))  # #1e90ff
+    palette.setColor(QPalette.ColorRole.LinkVisited, QColor(AppColors.ACCENT_PURPLE))  # #5c2d91
+    
+    # Placeholder text (Qt 5.12+)
+    palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(AppColors.TEXT_DISABLED))  # #808080
+    
+    # === 3D EFFECT COLORS (Essential for borders and shadows) ===
+    palette.setColor(QPalette.ColorRole.Light, QColor("#555555"))      # Lighter than button
+    palette.setColor(QPalette.ColorRole.Midlight, QColor("#4a4a4a"))   # Between button and light
+    palette.setColor(QPalette.ColorRole.Dark, QColor("#2a2a2a"))       # Darker than button
+    palette.setColor(QPalette.ColorRole.Mid, QColor("#353535"))        # Between button and dark
+    palette.setColor(QPalette.ColorRole.Shadow, QColor("#1a1a1a"))     # Very dark shadow
+    
+    # === COLOR GROUP STATES (Essential for dialogs and popups) ===
+    
+    # DISABLED state colors
+    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, QColor(AppColors.TEXT_DISABLED))
+    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(AppColors.TEXT_DISABLED))
+    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(AppColors.TEXT_DISABLED))
+    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, QColor(AppColors.BACKGROUND_DISABLED))
+    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, QColor(AppColors.BACKGROUND_DISABLED))
+    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Window, QColor(AppColors.BACKGROUND_DISABLED))
+    
+    # INACTIVE state colors (for unfocused windows and dialogs)
+    palette.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Window, QColor(AppColors.BACKGROUND_LIGHT))
+    palette.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.WindowText, QColor(AppColors.TEXT_DEFAULT))
+    palette.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Base, QColor(AppColors.BACKGROUND_WHITE))
+    palette.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Text, QColor(AppColors.TEXT_DEFAULT))
+    palette.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Button, QColor(AppColors.BUTTON_DEFAULT))
+    palette.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.ButtonText, QColor(AppColors.TEXT_DEFAULT))
+    palette.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.Highlight, QColor("#4a4a4a"))  # Dimmed selection
+    palette.setColor(QPalette.ColorGroup.Inactive, QPalette.ColorRole.HighlightedText, QColor(AppColors.TEXT_DEFAULT))
+    
+    # Set the palette to the application
+    app.setPalette(palette)
+
+
 def main():
     """Main entry point for the Hub4com Launcher application"""
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False) # Prevent app from quitting when window is closed
+    
+    # Apply dark mode palette as a fallback for native components
+    setup_dark_mode_palette(app)
     
     # Apply dark mode global stylesheet to entire application
     # This ensures context menus, system tray menus, and all global UI elements use dark theme

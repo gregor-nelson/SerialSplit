@@ -86,7 +86,7 @@ class AppColors:
     # Windows 10 Accent Colors (Dark mode adjusted)
     # Light mode: "#0078d7" → Dark mode: "#1e90ff" (brighter for dark bg)
     ACCENT_BLUE = "#1e90ff"             # Default Windows 10 accent - brighter (30, 144, 255)
-    ACCENT_GREEN = "#107c10"            # Green accent - keep same (16, 124, 16)
+    ACCENT_GREEN = "#66bb6a"            # Bright green for dark mode (102, 187, 106)
     ACCENT_ORANGE = "#d83b01"           # Orange accent - keep same (216, 59, 1)
     ACCENT_RED = "#e81123"              # Red accent - keep same (232, 17, 35)
     ACCENT_PURPLE = "#5c2d91"           # Purple accent - keep same (92, 45, 145)
@@ -618,6 +618,7 @@ class AppStyles:
             min-height: {AppDimensions.LIST_ITEM_HEIGHT}px;
             padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
             border-bottom: 1px solid {AppColors.BORDER_LIGHT};
+            color: {AppColors.TEXT_DEFAULT};
         }}
         QComboBox QAbstractItemView::item:hover {{
             background-color: {AppColors.SELECTION_MENU};
@@ -876,24 +877,19 @@ class AppStyles:
         """
     
     @staticmethod
-    def scroll_area() -> str:
-        """Windows 10 system scroll area with a modern, minimalist look."""
+    def scrollbar() -> str:
+        """Modern, minimalist scrollbar style for any scrollable widget."""
         return f"""
-        QScrollArea {{
-            border: none; /* Remove border from the container */
-            background-color: transparent;
-        }}
-
         QScrollBar:vertical {{
             border: none;
-            background: transparent; /* Make the track invisible */
-            width: 12px; /* Thinner scrollbar */
+            background: transparent;
+            width: 12px;
             margin: 0px;
         }}
         QScrollBar::handle:vertical {{
             background-color: {AppColors.SCROLLBAR_THUMB};
             min-height: 25px;
-            border-radius: 6px; /* Rounded corners */
+            border-radius: 6px;
             margin: 2px;
         }}
         QScrollBar::handle:vertical:hover {{
@@ -903,23 +899,22 @@ class AppStyles:
             background-color: {AppColors.SCROLLBAR_THUMB_PRESSED};
         }}
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-            height: 0px; /* Hide arrows */
+            height: 0px;
             background: none;
         }}
         QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
-            background: none; /* Hide the page area */
+            background: none;
         }}
-
         QScrollBar:horizontal {{
             border: none;
-            background: transparent; /* Make the track invisible */
-            height: 12px; /* Thinner scrollbar */
+            background: transparent;
+            height: 12px;
             margin: 0px;
         }}
         QScrollBar::handle:horizontal {{
             background-color: {AppColors.SCROLLBAR_THUMB};
             min-width: 25px;
-            border-radius: 6px; /* Rounded corners */
+            border-radius: 6px;
             margin: 2px;
         }}
         QScrollBar::handle:horizontal:hover {{
@@ -929,12 +924,23 @@ class AppStyles:
             background-color: {AppColors.SCROLLBAR_THUMB_PRESSED};
         }}
         QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
-            width: 0px; /* Hide arrows */
+            width: 0px;
             background: none;
         }}
         QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
-            background: none; /* Hide the page area */
+            background: none;
         }}
+        """
+
+    @staticmethod
+    def scroll_area() -> str:
+        """Windows 10 system scroll area with a modern, minimalist look."""
+        return f"""
+        QScrollArea {{
+            border: none; /* Remove border from the container */
+            background-color: transparent;
+        }}
+        {AppStyles.scrollbar()}
         """
     
     @staticmethod
@@ -1127,6 +1133,7 @@ class AppStyles:
         return f"""
         QTextEdit {{
             background-color: {AppColors.BACKGROUND_WHITE};
+            color: {AppColors.TEXT_DEFAULT};
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_DEFAULT};
             padding: 12px;
             font-family: {AppFonts.DEFAULT_FAMILY};
@@ -1601,9 +1608,10 @@ class ThemeManager:
         }}
         
         QMenu::item {{
-            padding: 5px 20px 5px 20px;
-            margin: 0px;
+            QMenu::item {{
+            margin: 2px;
             min-height: {AppDimensions.LIST_ITEM_HEIGHT - 10}px;
+        }}
         }}
         
         QMenu::item:selected {{
@@ -1666,18 +1674,38 @@ class HTMLTheme:
                 margin: 0;
                 padding: 0;
             }}
+            p {{
+                color: {AppColors.TEXT_DEFAULT};
+                margin-bottom: {AppDimensions.SPACING_LARGE}px;
+            }}
+            i {{
+                color: {AppColors.TEXT_DEFAULT};
+            }}
+            h1, h2, h3, h4, h5, h6 {{
+                color: {AppColors.TEXT_DEFAULT};
+                margin-top: 0;
+                font-weight: {AppFonts.BOLD_WEIGHT};
+            }}
+            h1 {{
+                font-size: {AppFonts.CAPTION_SIZE};
+            }}
             h2 {{
                 color: {AppColors.ACCENT_BLUE};
                 text-align: center;
-                margin-bottom: 20px;
-                font-size: 16px;
-                font-weight: {AppFonts.BOLD_WEIGHT};
+                margin-bottom: {AppDimensions.SPACING_XXLARGE}px;
+                font-size: {AppFonts.DEFAULT_SIZE};
             }}
             h3 {{
-                color: {AppColors.TEXT_DEFAULT};
-                margin-top: 0;
-                font-size: 14px;
-                font-weight: {AppFonts.BOLD_WEIGHT};
+                font-size: {AppFonts.DEFAULT_SIZE};
+            }}
+            h4 {{
+                font-size: 13px;
+            }}
+            h5 {{
+                font-size: 12px;
+            }}
+            h6 {{
+                font-size: 11px;
             }}
             .center-text {{
                 text-align: center;
@@ -1694,12 +1722,14 @@ class HTMLTheme:
                 border-left: 4px solid {AppColors.ACCENT_BLUE};
                 padding: 15px;
                 margin: 15px 0;
+                color: {AppColors.TEXT_DEFAULT};
             }}
             .warning-box {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
                 border-left: 4px solid {AppColors.WARNING_PRIMARY};
                 padding: 15px;
                 margin: 15px 0;
+                color: {AppColors.TEXT_DEFAULT};
             }}
             .warning-box h3 {{
                 color: {AppColors.WARNING_PRIMARY};
@@ -1722,6 +1752,7 @@ class HTMLTheme:
                 padding: 2px 5px;
                 font-family: {AppFonts.CONSOLE.family()}, monospace;
                 font-size: 13px;
+                color: {AppColors.TEXT_DEFAULT};
             }}
             ul {{
                 margin: 10px 0;
@@ -1730,9 +1761,11 @@ class HTMLTheme:
             }}
             li {{
                 margin: 5px 0;
+                color: {AppColors.TEXT_DEFAULT};
             }}
             .item-text {{
                 font-size: 13px;
+                color: {AppColors.TEXT_DEFAULT};
             }}
             .success-icon {{
                 color: {AppColors.SUCCESS_PRIMARY};
@@ -1743,6 +1776,7 @@ class HTMLTheme:
                 padding: 2px 5px;
                 font-family: {AppFonts.CONSOLE.family()}, monospace;
                 font-size: 13px;
+                color: {AppColors.TEXT_DEFAULT};
             }}
             .status-box {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
@@ -1782,6 +1816,7 @@ class HTMLTheme:
                 padding: 8px;
                 margin: 4px 0;
                 border-left: 2px solid {AppColors.ACCENT_BLUE};
+                color: {AppColors.TEXT_DEFAULT};
             }}
             .port-type-physical {{
                 background-color: {AppColors.PORT_TYPE_PHYSICAL_BG};
@@ -1813,6 +1848,7 @@ class HTMLTheme:
             th {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
                 font-weight: {AppFonts.BOLD_WEIGHT};
+                color: {AppColors.TEXT_DEFAULT};
             }}
         </style>
         """

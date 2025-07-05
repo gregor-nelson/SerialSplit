@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout,
                              QAbstractItemView, QMenu, QDialog, QSizePolicy,
                              QStyledItemDelegate, QStyle)
 from PyQt6.QtCore import QTimer, Qt, QSize, QByteArray, QRect, QRectF
-from PyQt6.QtGui import QFont, QIcon, QColor, QAction, QPainter, QPixmap, QFontMetrics
+from PyQt6.QtGui import QFont, QIcon, QColor, QAction, QPainter, QPixmap, QFontMetrics, QPalette
 from PyQt6.QtSvg import QSvgRenderer
 
 from core.core import (
@@ -73,7 +73,7 @@ class FeatureIconDelegate(QStyledItemDelegate):
             painter.fillRect(option.rect, option.palette.highlight())
             painter.setPen(option.palette.highlightedText().color())
         else:
-            painter.setPen(option.palette.text().color())
+            painter.setPen(QColor(AppColors.TEXT_DEFAULT))
         
         # Draw main text
         main_rect = QRect(option.rect.x() + 4, option.rect.y(), 
@@ -111,13 +111,16 @@ class FeatureIconDelegate(QStyledItemDelegate):
                     current_x += icon_size + icon_gap
                 
                 # Draw feature name
-                painter.setPen(QColor(color))
+                if option.state & QStyle.StateFlag.State_Selected:
+                    painter.setPen(option.palette.highlightedText().color())
+                else:
+                    painter.setPen(QColor(color))
                 painter.drawText(current_x, features_y + option.rect.height() // 2 + fm.height() // 4, 
                                feature_name)
                 current_x += fm.horizontalAdvance(feature_name) + 12
         
         # Draw closing bracket
-        painter.setPen(option.palette.text().color())
+        painter.setPen(QColor(AppColors.TEXT_DEFAULT))
         painter.drawText(current_x, features_y + option.rect.height() // 2 + fm.height() // 4, "]")
     
     def _get_icon_for_feature(self, feature_name):
@@ -949,6 +952,10 @@ class Hub4comGUI(QMainWindow):
         widget.baud_combo.currentTextChanged.connect(self.update_preview)
         widget.port_changed.connect(self.update_preview)
         
+        # If ports have already been scanned, populate the new widget immediately
+        if self.app_state['scanned_ports']:
+            widget.populate_ports_enhanced(self.app_state['scanned_ports'])
+        
         self.app_state['output_port_widgets'].append(widget)
         
         # Remove any existing stretch to recalculate layout
@@ -1694,6 +1701,12 @@ class Hub4comGUI(QMainWindow):
         list_widget = self.ui_refs['port_pairs_list']
         list_widget.clear()
         
+        # Set the palette for the list widget to ensure correct text color
+        palette = list_widget.palette()
+        palette.setColor(QPalette.ColorRole.Text, QColor(AppColors.TEXT_DEFAULT))
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(AppColors.TEXT_DEFAULT))
+        list_widget.setPalette(palette)
+
         if not pairs:
             self._update_status("No port pairs configured", component='com0com')
             no_pairs_item = QListWidgetItem(
@@ -1702,6 +1715,7 @@ class Hub4comGUI(QMainWindow):
                 "This allows two applications to communicate through simulated serial ports."
             )
             no_pairs_item.setBackground(ThemeManager.get_accent_color('pair_info'))
+            no_pairs_item.setForeground(QColor(AppColors.TEXT_WHITE))
             list_widget.addItem(no_pairs_item)
             return
         
@@ -1741,8 +1755,13 @@ class Hub4comGUI(QMainWindow):
         )
         item.setToolTip(tooltip)
         
+        # Always set default text color to white for dark mode
+        item.setForeground(QColor(AppColors.TEXT_DEFAULT))
+
         if status_indicators_html:
             item.setBackground(ThemeManager.get_accent_color('pair_highlight'))
+            # If there are status indicators, and thus a light background, set text to black
+            item.setForeground(QColor(AppColors.TEXT_WHITE))
         
         self.ui_refs['port_pairs_list'].addItem(item)
     
@@ -1818,56 +1837,74 @@ class Hub4comGUI(QMainWindow):
         dialog.exec()
     
     def _create_pair_details_dialog(self, item: QListWidgetItem) -> QDialog:
-        """Create port pair details dialog using theme system"""
-        dialog = ThemeManager.create_dialog_window("Port Pair Details", 500, 300)
-        
+        """Create port pair details dialog using theme system and HTMLTheme."""
+        dialog = ThemeManager.create_dialog_window("Port Pair Details", 600, 450)
+        ThemeManager.style_dialog(dialog)
+
         layout = QVBoxLayout(dialog)
         ThemeManager.set_widget_margins(layout, "dialog")
         layout.setSpacing(AppDimensions.SPACING_MEDIUM)
+
+        details_text = ThemeManager.create_html_content_widget(max_height=800)
         
-        details_text = ThemeManager.create_textedit("console_large")
-        details_text.setReadOnly(True)
-        
-        # Format information
+        # Generate HTML content
+        from ui.theme.theme import HTMLTheme
         tooltip = item.toolTip()
-        formatted_text = "COM0COM Virtual Port Pair Details\n"
-        formatted_text += "=" * 40 + "\n\n"
-        formatted_text += tooltip.replace("Port A (", "📍 Port A (").replace("Port B (", "📍 Port B (")
-        formatted_text += "\n\n"
         
-        # Add parameter explanations
+        port_a_info = ""
+        port_b_info = ""
+        
+        lines = tooltip.split('\n')
+        if len(lines) > 0:
+            port_a_info = lines[0].replace("Port A ", "")
+        if len(lines) > 1:
+            port_b_info = lines[1].replace("Port B ", "")
+
         param_explanations = {
-            "EmuBR=yes": ("BAUD RATE TIMING: ENABLED\n"
-                        "   - Port behaves with realistic serial port timing\n\n"),
-            "EmuOverrun=yes": ("BUFFER OVERRUN PROTECTION: ENABLED\n"
-                            "   - Data can be lost if not read fast enough (like real ports)\n\n"),
-            "ExclusiveMode=yes": ("EXCLUSIVE ACCESS MODE: ENABLED\n"
-                                "   - Port is hidden until the paired port is opened\n\n"),
-            "PlugInMode=yes": ("PLUG-IN MODE: ENABLED\n"
-                            "   - Port appears/disappears when paired port opens/closes\n\n")
+            "EmuBR=yes": ("Baud Rate Timing", "Port behaves with realistic serial port timing."),
+            "EmuOverrun=yes": ("Buffer Overrun Protection", "Data can be lost if not read fast enough (like real ports)."),
+            "ExclusiveMode=yes": ("Exclusive Access Mode", "Port is hidden until the paired port is opened."),
+            "PlugInMode=yes": ("Plug-In Mode", "Port appears/disappears when paired port opens/closes.")
         }
         
-        for param, explanation in param_explanations.items():
+        features_html = ""
+        for param, (title, desc) in param_explanations.items():
             if param in tooltip:
-                formatted_text += explanation
+                features_html += f"<h3>{title}: <span class='success'>ENABLED</span></h3><p>{desc}</p>"
+
+        html_content = f"""
+        {HTMLTheme.get_styles()}
+        <body>
+            <h2>Port Pair Details</h2>
+            <div class="status-box">
+                <p><strong>Port A:</strong> <code>{port_a_info}</code></p>
+                <p><strong>Port B:</strong> <code>{port_b_info}</code></p>
+            </div>
+            
+            {features_html}
+            
+            <div class="info-box">
+                <h3>Helpful Tips</h3>
+                <ul>
+                    <li>Turn ON 'Baud Rate Timing' for applications that need realistic serial timing.</li>
+                    <li>Turn ON 'Buffer Overrun Protection' to test how apps handle data loss.</li>
+                    <li>For most users: Leave all settings OFF for best performance.</li>
+                    <li>Check Device Manager to verify port names are correct.</li>
+                </ul>
+            </div>
+        </body>
+        """
         
-        formatted_text += "\nHELPFUL TIPS:\n"
-        formatted_text += "• Turn ON 'Baud Rate Timing' for applications that need realistic serial timing\n"
-        formatted_text += "• Turn ON 'Buffer Overrun Protection' to test how apps handle data loss\n"
-        formatted_text += "• For most users: Leave all settings OFF for best performance\n"
-        formatted_text += "• Check Device Manager to verify port names are correct"
-        
-        details_text.setPlainText(formatted_text)
+        details_text.setHtml(html_content)
         layout.addWidget(details_text)
-        
+
         # Close button
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         button_layout.addStretch()
-        close_btn = ThemeManager.create_button("Close", dialog.accept)
+        close_btn = ThemeManager.create_button("Close", dialog.accept, "primary")
         button_layout.addWidget(close_btn)
         layout.addLayout(button_layout)
-        
+
         return dialog
     
     def show_settings_menu(self):

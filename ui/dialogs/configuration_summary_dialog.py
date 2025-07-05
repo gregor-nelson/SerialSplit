@@ -49,6 +49,7 @@ class ConfigurationSummaryDialog(QDialog):
                 font-family: {AppFonts.DEFAULT_FAMILY};
                 font-size: 10pt;
             }}
+            {AppStyles.scrollbar()}
         """)
         
         summary_text.setHtml(self._generate_summary_content())
