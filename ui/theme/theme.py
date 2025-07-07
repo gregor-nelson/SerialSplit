@@ -1746,7 +1746,7 @@ class HTMLTheme:
         <style>
             /* Windows 10 Base Typography & Layout */
             body {{
-                font-family: '{AppFonts.DEFAULT_FAMILY}', 'Segoe UI', system-ui, sans-serif;
+                font-family: '{AppFonts.DEFAULT_FAMILY}';
                 line-height: 1.5;
                 color: {AppColors.TEXT_DEFAULT};
                 margin: 0;
@@ -1754,14 +1754,12 @@ class HTMLTheme:
                 background-color: {AppColors.BACKGROUND_WHITE};
                 font-size: {AppFonts.DEFAULT_SIZE};
                 font-weight: {AppFonts.NORMAL_WEIGHT};
-                -webkit-font-smoothing: antialiased;
-                -moz-osx-font-smoothing: grayscale;
             }}
             
-            /* Windows 10 Typography Scale */
+            
             p {{
                 color: {AppColors.TEXT_DEFAULT};
-                margin: 0 0 {AppDimensions.SPACING_XLARGE}px 0;
+                margin: 0 0 {AppDimensions.SPACING_XLARGE};
                 line-height: 1.5;
                 font-size: {AppFonts.DEFAULT_SIZE};
                 font-weight: {AppFonts.NORMAL_WEIGHT};
@@ -1828,7 +1826,6 @@ class HTMLTheme:
                 color: {AppColors.TEXT_DISABLED};
                 margin-top: {AppDimensions.SPACING_MEDIUM}px;
                 margin-bottom: {AppDimensions.SPACING_SMALL}px;
-                text-transform: uppercase;
                 letter-spacing: 0.05em;
             }}
             /* Windows 10 Utility Classes */
@@ -1887,8 +1884,6 @@ class HTMLTheme:
                 left: 0;
                 right: 0;
                 height: {AppDimensions.BORDER_WIDTH_STANDARD}px;
-                background: linear-gradient(90deg, {AppColors.WARNING_PRIMARY}, transparent);
-                opacity: 0.3;
             }}
             
             .warning-box h3 {{
@@ -1900,7 +1895,7 @@ class HTMLTheme:
                 text-align: center;
                 margin-top: {AppDimensions.SPACING_XXLARGE}px;
                 padding: {AppDimensions.PADDING_BUTTON_LARGE};
-                background-color: {AppColors.GRAY_100};
+                background-color: {AppColors.BACKGROUND_LIGHT};
                 border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
                 border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
                 position: relative;
@@ -1981,11 +1976,6 @@ class HTMLTheme:
                 transition: all 0.15s ease;
             }}
             
-            .status-box:hover {{
-                background-color: {AppColors.GRAY_100};
-                border-left-color: {AppColors.HOT_TRACKING};
-            }}
-            
             .moxa-section {{
                 background-color: {AppColors.GRAY_100};
                 padding: {AppDimensions.PADDING_BUTTON_LARGE};
@@ -2051,7 +2041,6 @@ class HTMLTheme:
                 font-size: {AppFonts.SMALL_SIZE};
                 font-weight: {AppFonts.BOLD_WEIGHT};
                 display: inline-block;
-                text-transform: uppercase;
                 letter-spacing: 0.05em;
             }}
             
@@ -2063,7 +2052,6 @@ class HTMLTheme:
                 font-size: {AppFonts.SMALL_SIZE};
                 font-weight: {AppFonts.BOLD_WEIGHT};
                 display: inline-block;
-                text-transform: uppercase;
                 letter-spacing: 0.05em;
             }}
             
@@ -2075,7 +2063,6 @@ class HTMLTheme:
                 font-size: {AppFonts.SMALL_SIZE};
                 font-weight: {AppFonts.BOLD_WEIGHT};
                 display: inline-block;
-                text-transform: uppercase;
                 letter-spacing: 0.05em;
             }}
             
@@ -2087,7 +2074,6 @@ class HTMLTheme:
                 font-size: {AppFonts.SMALL_SIZE};
                 font-weight: {AppFonts.BOLD_WEIGHT};
                 display: inline-block;
-                text-transform: uppercase;
                 letter-spacing: 0.05em;
             }}
             /* Windows 10 Modern Table Styling */
@@ -2117,15 +2103,10 @@ class HTMLTheme:
                 font-weight: {AppFonts.BOLD_WEIGHT};
                 color: {AppColors.CONTROL_PANEL_TEXT};
                 font-size: {AppFonts.SMALL_SIZE};
-                text-transform: uppercase;
                 letter-spacing: 0.05em;
                 border-bottom: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.CONTROL_PANEL_BORDER};
             }}
-            
-            tr:hover td {{
-                background-color: {AppColors.GRAY_100};
-            }}
-            
+
             tr:last-child td {{
                 border-bottom: none;
             }}
@@ -2135,34 +2116,13 @@ class HTMLTheme:
                 transition: all 0.15s ease;
                 cursor: pointer;
             }}
-            
-            .interactive-element:hover {{
-                background-color: {AppColors.BUTTON_HOVER};
-                transform: translateY(-{AppDimensions.SPACING_TINY}px);
-                box-shadow: 0 {AppDimensions.SPACING_SMALL}px {AppDimensions.SPACING_MEDIUM}px rgba(0, 0, 0, 0.1);
-            }}
-            
-            .interactive-element:focus {{
-                outline: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
-                outline-offset: {AppDimensions.SPACING_TINY}px;
-            }}
-            
+     
             /* Link Styling */
             a {{
                 color: {AppColors.ACCENT_BLUE};
+                background-color: {AppColors.BACKGROUND_WHITE};
                 text-decoration: none;
                 transition: color 0.15s ease;
-            }}
-            
-            a:hover {{
-                color: {AppColors.HOT_TRACKING};
-                text-decoration: underline;
-            }}
-            
-            a:focus {{
-                outline: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.BORDER_FOCUS};
-                outline-offset: {AppDimensions.SPACING_TINY}px;
-                border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
             }}
             
             /* Button-like Elements */

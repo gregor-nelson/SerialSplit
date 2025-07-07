@@ -1224,20 +1224,17 @@ class HelpContentRegistry:
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
         <div style="text-align: left;">
             <p style="margin: 0; font-size: 10pt; color: {AppColors.TEXT_DEFAULT};">
-                © 2025 Serial Port Splitter
+                © G.N 2025 Serial Port Splitter
             </p>
             <p style="margin: 3px 0 0 0; font-size: 9pt; color: {AppColors.TEXT_DISABLED};">
                 Built with PyQt6 framework
             </p>
         </div>
         <div style="text-align: right;">
-            <p style="margin: 0; font-size: 10pt; color: {AppColors.TEXT_DEFAULT};">
-                <b>Built By:</b> G.Nelson
-            </p>
             <p style="margin: 3px 0 0 0; font-size: 9pt;">
                 <span style="color: {AppColors.ACCENT_BLUE}; font-size: 14px; margin-right: 4px;">🐙</span>
                 <a href="https://github.com/gregor-nelson" style="color: {AppColors.ACCENT_BLUE}; text-decoration: none; font-weight: 500;">
-                    GitHub Profile
+                    GitHub=
                 </a>
             </p>
         </div>

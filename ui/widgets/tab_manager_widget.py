@@ -12,6 +12,7 @@ from PyQt6.QtCore import pyqtSlot
 from core.core import SerialPortInfo
 from ui.widgets.port_monitor_widget import EnhancedPortInfoWidget
 from ui.widgets.port_test_widget import SerialPortTestWidget
+from ui.widgets.terminal_stream_widget import TerminalStreamWidget
 from ui.theme.theme import (
     ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts
 )
@@ -71,6 +72,10 @@ class SerialPortManagerWidget(QWidget):
         self.test_widget = SerialPortTestWidget()
         self.tab_widget.addTab(self.test_widget, "Port Test")
         
+        # Terminal tab - data stream functionality
+        self.terminal_widget = TerminalStreamWidget()
+        self.tab_widget.addTab(self.terminal_widget, "Terminal")
+        
         main_layout.addWidget(self.tab_widget)
     
     def connect_signals(self):
@@ -79,8 +84,9 @@ class SerialPortManagerWidget(QWidget):
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
     
     def set_current_port(self, port_name: str, port_info: Optional[SerialPortInfo] = None):
-        """Set the current port in the test widget (called from main GUI)"""
+        """Set the current port in the test and terminal widgets (called from main GUI)"""
         self.test_widget.set_current_port(port_name, port_info)
+        self.terminal_widget.set_current_port(port_name, port_info)
     
     def get_current_port(self) -> Optional[str]:
         """Get the currently set port from the test widget"""
@@ -98,8 +104,9 @@ class SerialPortManagerWidget(QWidget):
         # Update monitor widget
         self.monitor_widget.update_port_info(port_info, enhanced_display)
         
-        # Update test widget with current port
+        # Update test and terminal widgets with current port
         self.test_widget.set_current_port(port_info.port_name, port_info)
+        self.terminal_widget.set_current_port(port_info.port_name, port_info)
     
     def set_port_type(self, port_type: str):
         """Set the port type display"""
@@ -116,6 +123,7 @@ class SerialPortManagerWidget(QWidget):
         """Hide all port information"""
         self.monitor_widget.hide_all()
         self.test_widget.set_current_port("", None)
+        self.terminal_widget.hide_all()
     
     def get_current_tab_name(self) -> str:
         """Get the name of the currently active tab"""
@@ -129,3 +137,7 @@ class SerialPortManagerWidget(QWidget):
     def switch_to_test_tab(self):
         """Switch to the test tab"""
         self.tab_widget.setCurrentIndex(1)
+    
+    def switch_to_terminal_tab(self):
+        """Switch to the terminal tab"""
+        self.tab_widget.setCurrentIndex(2)
