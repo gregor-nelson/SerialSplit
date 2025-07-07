@@ -7,6 +7,7 @@ applying consistent styling and color-coding based on log levels.
 
 from PyQt6.QtGui import QTextCharFormat, QColor, QFont, QTextCursor
 from PyQt6.QtWidgets import QTextEdit
+from ui.theme.theme import AppColors, AppFonts
 
 
 class OutputLogFormatter:
@@ -18,15 +19,15 @@ class OutputLogFormatter:
     
     def __init__(self):
         """Initialize the formatter with color definitions for different log levels."""
-        # Professional muted color scheme matching CommandFormatter style
+        # Use exact same colors as CommandFormatter for consistency
         self.colors = {
-            'info': '#2c2c2c',        # Dark gray for regular info
-            'success': '#2a7f3e',     # Muted green for success
-            'warning': '#cc6600',     # Muted orange for warnings
-            'error': '#994444',       # Muted red for errors
-            'debug': '#7a7a7a',       # Light gray for debug
-            'highlight': '#0066cc',   # Subtle blue for emphasis
-            'default': '#2c2c2c',     # Default text color
+            'info': AppColors.CMD_DEFAULT,        # Light gray for regular info
+            'success': AppColors.CMD_ENABLED,     # Bright green for success
+            'warning': AppColors.CMD_VALUE,       # Light gray for warnings (no CMD_WARNING available)
+            'error': AppColors.CMD_DISABLED,      # Bright red for errors
+            'debug': AppColors.CMD_MUTED,         # Medium gray for debug
+            'highlight': AppColors.CMD_HIGHLIGHT, # White for emphasis
+            'default': AppColors.CMD_DEFAULT,     # Default text color
         }
         
         # Create format cache for performance
@@ -49,7 +50,7 @@ class OutputLogFormatter:
             fmt = QTextCharFormat()
             fmt.setForeground(QColor(color))
             # Use the same font family as CommandFormatter for consistency
-            fmt.setFontFamily("Consolas, 'Courier New', monospace")
+            fmt.setFontFamily(AppFonts.CONSOLE_FAMILY)
             if bold:
                 fmt.setFontWeight(QFont.Weight.Bold)
             self._format_cache[cache_key] = fmt
@@ -66,7 +67,7 @@ class OutputLogFormatter:
             level: The log level (info, success, warning, error, debug)
         """
         # Set explicit monospace font on the widget (matching CommandFormatter)
-        font = QFont("Consolas", 10)
+        font = QFont(AppFonts.CONSOLE_FAMILY, AppFonts.FONT_SIZE_LARGE)
         font.setStyleHint(QFont.StyleHint.Monospace)
         text_edit.setFont(font)
         
@@ -102,7 +103,7 @@ class OutputLogFormatter:
             header: The header text
         """
         # Set explicit monospace font on the widget (matching CommandFormatter)
-        font = QFont("Consolas", 10)
+        font = QFont(AppFonts.CONSOLE_FAMILY, AppFonts.FONT_SIZE_LARGE)
         font.setStyleHint(QFont.StyleHint.Monospace)
         text_edit.setFont(font)
         
@@ -117,7 +118,7 @@ class OutputLogFormatter:
         
         # Add separator line using dashed line (matching CommandFormatter)
         separator = "-" * 60
-        separator_format = self._get_format(self.colors['debug'])
+        separator_format = self._get_format(AppColors.CMD_MUTED)
         cursor.insertText(separator + "\n", separator_format)
         
         # Add header text
@@ -137,7 +138,7 @@ class OutputLogFormatter:
             value: The value text
         """
         # Set explicit monospace font on the widget (matching CommandFormatter)
-        font = QFont("Consolas", 10)
+        font = QFont(AppFonts.CONSOLE_FAMILY, AppFonts.FONT_SIZE_LARGE)
         font.setStyleHint(QFont.StyleHint.Monospace)
         text_edit.setFont(font)
         

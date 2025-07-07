@@ -575,3 +575,79 @@ class AppIcons:
         </g>
     </svg>
     """
+    
+    # Additional icons for terminal enhancements
+    PLUS = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Plus symbol -->
+        <g filter="url(#win10-shadow)">
+            <rect x="22" y="12" width="4" height="24" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="12" y="22" width="24" height="4" fill="{_COLORS['PRIMARY_BLUE']}"/>
+        </g>
+    </svg>
+    """
+    
+    MINUS = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Minus symbol -->
+        <g filter="url(#win10-shadow)">
+            <rect x="12" y="22" width="24" height="4" fill="{_COLORS['PRIMARY_BLUE']}"/>
+        </g>
+    </svg>
+    """
+    
+    PAUSE = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Pause button -->
+        <g filter="url(#win10-shadow)">
+            <circle cx="24" cy="24" r="18" fill="{_COLORS['WARNING_ORANGE']}"/>
+            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        </g>
+        <!-- Pause bars -->
+        <rect x="18" y="16" width="4" height="16" fill="{_COLORS['WHITE']}"/>
+        <rect x="26" y="16" width="4" height="16" fill="{_COLORS['WHITE']}"/>
+    </svg>
+    """
+    
+    CHEVRON_DOWN = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Chevron down -->
+        <g filter="url(#win10-shadow)">
+            <path d="M16,18 L24,26 L32,18" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+    </svg>
+    """
+    
+    WRAP_TEXT = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <defs>
+            {_WIN10_SHADOW}
+        </defs>
+        <!-- Word wrap lines -->
+        <g filter="url(#win10-shadow)">
+            <rect x="8" y="12" width="32" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="8" y="18" width="32" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="8" y="24" width="24" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="8" y="30" width="20" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="8" y="36" width="28" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <!-- Wrap indicator -->
+            <path d="M32,24 L32,30 L28,26" fill="none" stroke="{_COLORS['SUCCESS_GREEN']}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+    </svg>
+    """
+    
+    # Font sizing icon aliases
+    FONT_INCREASE = PLUS
+    FONT_DECREASE = MINUS

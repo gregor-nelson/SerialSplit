@@ -20,71 +20,41 @@ from .icons.icons import AppIcons
 
 @dataclass
 class AppColors:
-    """Exact Windows 10 system color palette from registry and theme specifications"""
+    """Exact Windows 10 system color palette from registry and theme specifications
     
-    # === PRIMARY WINDOWS 10 SYSTEM COLORS - DARK MODE ===
-    # Background colors (Dark mode equivalents)
-    # Light mode: "#f0f0f0" → Dark mode: "#2d2d2d"
+    NOTE: Some color variables contain identical values and could be consolidated in future updates.
+    """
+    
     BACKGROUND_LIGHT = "#2d2d2d"        # ButtonFace - Dark gray (45, 45, 45)
-    # Light mode: "#ffffff" → Dark mode: "#1e1e1e"
     BACKGROUND_WHITE = "#1e1e1e"        # Window - Dark background (30, 30, 30)
-    # Light mode: "#f0f0f0" → Dark mode: "#2d2d2d"
     BACKGROUND_DISABLED = "#2d2d2d"     # Disabled keeps same background in dark mode
-    # Light mode: "#f0f0f0" → Dark mode: "#2d2d2d"
     BACKGROUND_MENU = "#2d2d2d"         # Menu - Dark menu background (45, 45, 45)
-    # Light mode: "#ffffe1" → Dark mode: "#404040"
     BACKGROUND_TOOLTIP = "#404040"      # InfoWindow - Dark tooltip background (64, 64, 64)
     
-    # Border colors (Dark mode equivalents)
-    # Light mode: "#adadad" → Dark mode: "#555555"
     BORDER_DEFAULT = "#555555"          # Default border - dark gray (85, 85, 85)
-    # Light mode: "#0078d7" → Dark mode: "#4cc2ff" (brighter for dark bg)
     BORDER_FOCUS = "#4cc2ff"            # Windows 10 accent blue - brighter (76, 194, 255)
-    # Light mode: "#005a9e" → Dark mode: "#0088ff"
     BORDER_PRESSED = "#0088ff"          # Brighter blue for pressed state (0, 136, 255)
-    # Light mode: "#d1d1d1" → Dark mode: "#404040"
     BORDER_DISABLED = "#404040"         # Darker gray for disabled (64, 64, 64)
-    # Light mode: "#e5e5e5" → Dark mode: "#404040"
     BORDER_LIGHT = "#404040"            # ButtonLight - Dark border (64, 64, 64)
-    # Light mode: "#b4b4b4" → Dark mode: "#666666"
     BORDER_ACTIVE = "#666666"           # ActiveBorder - Active window border (102, 102, 102)
     
-    # Button colors (Dark mode button system)
-    # Light mode: "#fdfdfd" → Dark mode: "#404040"
     BUTTON_DEFAULT = "#404040"          # Dark Win10 button color (64, 64, 64)
-    # Light mode: "#e5e5e5" → Dark mode: "#4a4a4a"
     BUTTON_HOVER = "#4a4a4a"            # Dark gray hover (74, 74, 74)
-    # Light mode: "#cccccc" → Dark mode: "#353535"
     BUTTON_PRESSED = "#353535"          # Dark gray pressed (53, 53, 53)
     
-    # Text colors (Dark mode text system)
-    # Light mode: "#000000" → Dark mode: "#ffffff"
     TEXT_DEFAULT = "#ffffff"            # WindowText/ButtonText - White text (255, 255, 255)
-    # Light mode: "#a0a0a0" → Dark mode: "#808080" (darker for dark bg)
     TEXT_DISABLED = "#808080"           # GrayText - Dark mode disabled text (128, 128, 128)
-    # Light mode: "#ffffff" → Dark mode: "#000000" (inverted)
     TEXT_WHITE = "#000000"              # HilightText - Black text for light backgrounds
-    # Light mode: "#000000" → Dark mode: "#ffffff"
     TEXT_MENU = "#ffffff"               # MenuText - White menu text (255, 255, 255)
-    # Light mode: "#000000" → Dark mode: "#ffffff"
     TEXT_TOOLTIP = "#ffffff"            # InfoText - White tooltip text (255, 255, 255)
     
-    # Icon colors (Dark mode system)
-    # Light mode: "#000000" → Dark mode: "#ffffff"
     ICON_DEFAULT = "#ffffff"            # Default icon color - white
-    # Light mode: "#a0a0a0" → Dark mode: "#808080"
     ICON_DISABLED = "#808080"           # Matches disabled text
     
-    # Selection colors (Dark mode selection system)
-    # Light mode: "#0078d7" → Dark mode: "#1e90ff" (brighter)
     SELECTION_BG = "#1e90ff"            # Active selection uses brighter accent (30, 144, 255)
-    # Light mode: "#ffffff" → Dark mode: "#ffffff" (keep white)
     SELECTION_TEXT = "#ffffff"          # HilightText - Selection text (255, 255, 255)
-    # Light mode: "#91c9f7" → Dark mode: "#4a4a4a"
     SELECTION_MENU = "#4a4a4a"          # Menu selection - dark gray (74, 74, 74)
     
-    # Windows 10 Accent Colors (Dark mode adjusted)
-    # Light mode: "#0078d7" → Dark mode: "#1e90ff" (brighter for dark bg)
     ACCENT_BLUE = "#1e90ff"             # Default Windows 10 accent - brighter (30, 144, 255)
     ACCENT_GREEN = "#66bb6a"            # Bright green for dark mode (102, 187, 106)
     ACCENT_ORANGE = "#d83b01"           # Orange accent - keep same (216, 59, 1)
@@ -93,10 +63,8 @@ class AppColors:
     ACCENT_MAGENTA = "#b4009e"          # Magenta accent - keep same (180, 0, 158)
     ACCENT_YELLOW = "#ffb900"           # Yellow accent - keep same (255, 185, 0)
     ACCENT_TEAL = "#008272"             # Teal accent - keep same (0, 130, 114)
-    # Light mode: "#0078d7" → Dark mode: "#1e90ff"
     PRIMARY_BLUE = "#1e90ff"
     
-    # Port Type Colors (Dark mode appropriate)
     PORT_TYPE_PHYSICAL_BG = "#1a3b5c"      # Dark blue background for physical ports
     PORT_TYPE_PHYSICAL_TEXT = "#4cc2ff"    # Light blue text for physical ports
     PORT_TYPE_VIRTUAL_BG = "#1a3b1a"       # Dark green background for virtual ports
@@ -106,22 +74,12 @@ class AppColors:
     PORT_TYPE_OTHER_BG = "#3b2a1a"         # Dark orange background for other ports
     PORT_TYPE_OTHER_TEXT = "#ffaa4c"       # Light orange text for other ports
     
-    # Scrollbar colors (Dark mode)
-    # Light mode: "#f0f0f0" → Dark mode: "#2d2d2d"
     SCROLLBAR_BACKGROUND = "#2d2d2d"    # Scrollbar track background - dark (45, 45, 45)
-    # Light mode: "#cdcdcd" → Dark mode: "#555555"
     SCROLLBAR_THUMB = "#555555"         # Scrollbar thumb color - dark gray (85, 85, 85)
-    # Light mode: "#a8a8a8" → Dark mode: "#666666"
     SCROLLBAR_THUMB_HOVER = "#666666"   # Scrollbar thumb hover - lighter gray (102, 102, 102)
-    # Light mode: "#787878" → Dark mode: "#777777"
     SCROLLBAR_THUMB_PRESSED = "#777777" # Scrollbar thumb pressed - lighter gray (119, 119, 119)
     
-    # Hot tracking (hover) color (Dark mode)
-    # Light mode: "#0066cc" → Dark mode: "#1a8cff" (brighter)
     HOT_TRACKING = "#1a8cff"            # HotTrackingColor - Hot tracking brighter (26, 140, 255)
-    
-    # === SEMANTIC COLORS (Windows 10 Style) ===
-    # Success colors - using system accent
     SUCCESS_PRIMARY = "#107c10"         # Windows 10 green
     SUCCESS_BACKGROUND = "#f0f0f0"      # Keep neutral background
     SUCCESS_BORDER = "#107c10"          # Match primary
@@ -141,78 +99,49 @@ class AppColors:
     INFO_BACKGROUND = "#f0f0f0"         # Keep neutral background
     INFO_BORDER = "#0078d7"             # Match primary
     
-    # === SPECIAL APPLICATION COLORS ===
-    # Port pair highlighting (keeping your existing functionality)
     PAIR_HIGHLIGHT = "#f0f8ff"          # Light blue for pairs with features
     PAIR_INFO = "#fffff8"               # Cream for info items
     
     # === CONTROL PANEL COLORS - DARK MODE ===
-    # Light mode: "#f8f8f8" → Dark mode: "#2a2a2a"
     CONTROL_PANEL_BACKGROUND = "#2a2a2a"     # Control panel background - dark (42, 42, 42)
-    # Light mode: "#d0d0d0" → Dark mode: "#555555"
     CONTROL_PANEL_BORDER = "#555555"         # Control panel border - dark gray (85, 85, 85)
-    # Light mode: "#333333" → Dark mode: "#ffffff"
     CONTROL_PANEL_TEXT = "#ffffff"           # Control panel text - white (255, 255, 255)
-    # Light mode: "#d0d0d0" → Dark mode: "#555555"
     CONTROL_PANEL_SEPARATOR = "#555555"      # Control panel separator - dark gray (85, 85, 85)
-    # Light mode: "#666666" → Dark mode: "#cccccc"
     CONTROL_PANEL_STATUS_TEXT = "#cccccc"    # Status text in control panels - light gray (204, 204, 204)
     
     # === BUTTON COLORS (Extended) - DARK MODE ===
     BUTTON_TRANSPARENT = "transparent"       # Transparent background
-    # Light mode: "#e5f3ff" → Dark mode: "#1a3d5c"
     BUTTON_BLUE_LIGHT = "#1a3d5c"           # Dark blue button background (26, 61, 92)
-    # Light mode: "#cce4f7" → Dark mode: "#2a4d6b"
     BUTTON_BLUE_BORDER = "#2a4d6b"          # Dark blue button border (42, 77, 107)
-    # Light mode: "#d0e7ff" → Dark mode: "#224466"
     BUTTON_BLUE_HOVER = "#224466"           # Dark blue button hover (34, 68, 102)
-    # Light mode: "#bde0ff" → Dark mode: "#1a5577"
     BUTTON_BLUE_PRESSED = "#1a5577"         # Dark blue button pressed (26, 85, 119)
-    # Light mode: "#9ac9e3" → Dark mode: "#3366aa"
     BUTTON_BLUE_BORDER_HOVER = "#3366aa"    # Dark blue button border hover (51, 102, 170)
-    # Light mode: "#7bb8dd" → Dark mode: "#4477bb"
     BUTTON_BLUE_BORDER_PRESSED = "#4477bb"  # Dark blue button border pressed (68, 119, 187)
-    # Light mode: "#0078d4" → Dark mode: "#1e90ff"
     BUTTON_ACCENT_TEXT = "#1e90ff"          # Accent text on buttons - brighter blue (30, 144, 255)
     
-    # === COMMAND FORMATTER COLORS - DARK MODE ===
-    # Professional bright color scheme for command preview on dark backgrounds
-    # Light mode: "#2c2c2c" → Dark mode: "#e0e0e0"
     CMD_DEFAULT = "#e0e0e0"               # Light gray for regular text (224, 224, 224)
-    # Light mode: "#0066cc" → Dark mode: "#4dc3ff"
     CMD_COMMAND = "#4dc3ff"               # Bright blue for commands (77, 195, 255)
-    # Light mode: "#2c5530" → Dark mode: "#66bb6a"
     CMD_PORT = "#66bb6a"                 # Bright green for ports (102, 187, 106)
-    # Light mode: "#5a5a5a" → Dark mode: "#cccccc"
     CMD_PARAMETER = "#cccccc"            # Light gray for parameters (204, 204, 204)
-    # Light mode: "#2c2c2c" → Dark mode: "#e0e0e0"
     CMD_VALUE = "#e0e0e0"                # Same as default
-    # Light mode: "#2a7f3e" → Dark mode: "#66bb6a"
     CMD_ENABLED = "#66bb6a"              # Bright green for enabled (102, 187, 106)
-    # Light mode: "#994444" → Dark mode: "#ff6b6b"
     CMD_DISABLED = "#ff6b6b"             # Bright red for disabled (255, 107, 107)
-    # Light mode: "#7a7a7a" → Dark mode: "#999999"
     CMD_MUTED = "#999999"                # Medium gray for separators (153, 153, 153)
-    # Light mode: "#1a1a1a" → Dark mode: "#ffffff"
     CMD_HIGHLIGHT = "#ffffff"            # White for emphasis (255, 255, 255)
-    # Light mode: "#5a5a5a" → Dark mode: "#cccccc"
     CMD_DIAGRAM = "#cccccc"              # Light gray for ASCII diagrams (204, 204, 204)
     
-    # === CHECKBOX SVG COLORS - DARK MODE ===
-    # Light mode: "#999999" → Dark mode: "#666666"
     CHECKBOX_BORDER_COLOR = "#666666"        # Checkbox border - dark gray (102, 102, 102)
-    # Light mode: "#0078D4" → Dark mode: "#1e90ff"
     CHECKBOX_CHECK_BACKGROUND = "#1e90ff"    # Checkbox checked background - brighter blue (30, 144, 255)
-    # Light mode: "#ffffff" → Dark mode: "#ffffff" (keep white)
     CHECKBOX_CHECK_COLOR = "#ffffff"         # Checkbox checkmark color - white (255, 255, 255)
     
-    # Progressive colors for advanced theming (Dark mode)
-    # Light mode: "#fafafa" → Dark mode: "#1a1a1a"
     GRAY_50 = "#1a1a1a"                 # Darkest gray (26, 26, 26)
-    # Light mode: "#f5f5f5" → Dark mode: "#2a2a2a"
     GRAY_100 = "#2a2a2a"                # Very dark gray (42, 42, 42)
-    # Light mode: "#eeeeee" → Dark mode: "#3a3a3a"
     GRAY_200 = "#3a3a3a"                # Dark gray (58, 58, 58)
+    
+    TEXT_PRIMARY = TEXT_DEFAULT          # Consolidated white text (#ffffff)
+    ACCENT_PRIMARY = ACCENT_BLUE         # Consolidated blue accent (#1e90ff)
+    BACKGROUND_SECONDARY = BACKGROUND_LIGHT  # Consolidated dark gray background (#2d2d2d)
+    BORDER_SECONDARY = BORDER_LIGHT      # Consolidated light border (#404040)
 
 
 @dataclass
@@ -227,17 +156,14 @@ class AppFonts:
     SMALL_SIZE = "8pt"
     CAPTION_SIZE = "12pt"     # Windows 10 caption font size (corrected)
     
-    # Additional font specifications
     BOLD_WEIGHT = "600"       # Semibold, not bold
     NORMAL_WEIGHT = "400"     # Regular
     ITALIC_STYLE = "italic"
     
-    # Font size constants
     FONT_SIZE_SMALL = 8           # Small font size (from gui.py)
     FONT_SIZE_MEDIUM = 9          # Medium font size
     FONT_SIZE_LARGE = 10          # Large font size (from launch_dialog.py)
     
-    # Console font family
     CONSOLE_FAMILY = "Consolas, 'Courier New', monospace"  # Console font family
 
 
@@ -245,34 +171,26 @@ class AppFonts:
 class AppDimensions:
     """Exact Windows 10 system dimensions based on Microsoft specifications"""
     
-    # === BUTTON DIMENSIONS (Based on Windows UX Guidelines) ===
-    # Standard button: 75x23 pixels (exact)
     BUTTON_WIDTH_STANDARD = 75          # Standard button width
     BUTTON_HEIGHT_STANDARD = 23         # Standard button height
     BUTTON_HEIGHT_SMALL = 21            # Small button height
     BUTTON_HEIGHT_MEDIUM = 23           # Medium button height (standard)
     BUTTON_HEIGHT_LARGE = 31            # Large button height (corrected)
     
-    # === CHECKBOX DIMENSIONS (Windows 10 specifications) ===
-    # Windows 10 checkbox: 13x13 pixels for the box itself
     CHECKBOX_SIZE_STANDARD = 13         # Actual checkbox box size
     CHECKBOX_TOTAL_SIZE = 17            # Total clickable area
     CHECKBOX_BORDER_WIDTH = 1           # Checkbox border width
     
-    # === COMBOBOX DIMENSIONS ===
     COMBOBOX_HEIGHT = 23                # Standard combobox height
     COMBOBOX_ARROW_WIDTH = 17           # Width of dropdown arrow area (corrected)
     COMBOBOX_ARROW_SIZE = 2             # Actual arrow glyph size (corrected)
     COMBOBOX_MIN_WIDTH = 120            # Minimum combobox width
     
-    # === ICON DIMENSIONS ===
-    # Based on Windows 10 icon sizes (16x16, 20x20, 24x24, 32x32)
     ICON_SIZE_SMALL = 16
     ICON_SIZE_MEDIUM = 20
     ICON_SIZE_LARGE = 24
     ICON_SIZE_XLARGE = 32
     
-    # === SPACING (Based on 4px grid system) ===
     SPACING_TINY = 2
     SPACING_SMALL = 4
     SPACING_MEDIUM = 6
@@ -280,13 +198,11 @@ class AppDimensions:
     SPACING_XLARGE = 12
     SPACING_XXLARGE = 16
     
-    # === MARGINS (Windows 10 dialog standards) ===
     MARGIN_DIALOG = (11, 11, 11, 11)   # Standard dialog margins
     MARGIN_CONTROL = (7, 7, 7, 7)      # Control spacing margins
     MARGIN_SMALL = (4, 4, 4, 4)        # Small margins
     MARGIN_NONE = (0, 0, 0, 0)         # No margins
     
-    # === PADDING VALUES ===
     PADDING_TINY = "1px"
     PADDING_SMALL = "2px"                      # Corrected to 2px
     PADDING_MEDIUM = "4px"                     # Corrected to 4px
