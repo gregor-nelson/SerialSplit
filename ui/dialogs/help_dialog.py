@@ -14,7 +14,8 @@ from enum import Enum
 import os
 from typing import Dict, List, Optional, Tuple
 from ui.theme.theme import (AppDimensions, ThemeManager,AppFonts, 
-                           AppColors, HTMLTheme, AppStyles)
+                           AppColors, HTMLTheme, AppStyles, IconManager)
+from ui.theme.icons.icons import AppIcons
 
 class HelpTopic(Enum):
     """Enumeration of all available help topics"""
@@ -320,7 +321,7 @@ class HelpContentRegistry:
             """Enhanced quick start content"""
             return f"""
         {HTMLTheme.get_styles()}
-        <h2>Quick Start Guide</h2>
+        <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Quick Start Guide</h1>
 
         <div class="info-box">
         <h3>Welcome to Serial Port Splitter!</h3>
@@ -369,7 +370,7 @@ class HelpContentRegistry:
         """First time setup content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>First Time Setup</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">First Time Setup</h1>
 
     <div class="info-box">
     <h3>Initial Configuration</h3>
@@ -423,7 +424,7 @@ class HelpContentRegistry:
         """Port pairs management content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>Managing Virtual Port Pairs</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Managing Virtual Port Pairs</h1>
 
     <h3>Understanding Port Pairs</h3>
     <p>Virtual port pairs are two COM ports connected by a virtual null-modem cable. Data written to one port instantly appears on the other.</p>
@@ -472,7 +473,7 @@ class HelpContentRegistry:
         """Routing modes detailed content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>Understanding Routing Modes</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Understanding Routing Modes</h1>
 
     <h3>Available Routing Modes</h3>
 
@@ -528,7 +529,7 @@ class HelpContentRegistry:
         """Flow control detailed content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>Flow Control Settings</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Flow Control Settings</h1>
 
     <h3>What is Flow Control?</h3>
     <p>Flow control prevents data loss by coordinating when devices can send data. It functions like traffic lights for serial communication.</p>
@@ -572,7 +573,7 @@ class HelpContentRegistry:
         """Baud rate configuration content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>Baud Rate Configuration</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Baud Rate Configuration</h1>
 
     <h3>Understanding Baud Rates</h3>
     <p>Baud rate is the speed of serial communication, measured in bits per second (bps).</p>
@@ -631,7 +632,7 @@ class HelpContentRegistry:
         """Advanced settings content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>Advanced Settings</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Advanced Settings</h1>
 
     <div class="warning-box">
     <h3>Expert Users Only</h3>
@@ -685,7 +686,7 @@ class HelpContentRegistry:
         """Command line usage content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>Command Line Usage</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Command Line Usage</h1>
 
     <h3>Running from Command Line</h3>
     <p>The Serial Port Splitter can be controlled via command line for automation.</p>
@@ -737,7 +738,7 @@ class HelpContentRegistry:
         """Common issues and solutions content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>Common Issues & Solutions</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Common Issues & Solutions</h1>
 
     <h3>"Access Denied" Error</h3>
     <div class="info-box">
@@ -801,7 +802,7 @@ class HelpContentRegistry:
         """Error messages guide content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>Error Messages Guide</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Error Messages Guide</h1>
 
     <h3>Understanding Error Messages</h3>
     <p>This guide explains common error messages and their solutions.</p>
@@ -869,7 +870,7 @@ class HelpContentRegistry:
         """Get COM0COM settings help content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>COM0COM Virtual Serial Port Settings Guide</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">COM0COM Virtual Serial Port Settings Guide</h1>
     <h3>Overview</h3>
     <p>The COM0COM driver facilitates the creation of virtual serial port pairs. These pairs are interconnected by a virtual null-modem cable, meaning any data written to one port in a pair is instantaneously received by the other. This guide details the configuration settings available for these port pairs.</p>
 
@@ -939,7 +940,7 @@ class HelpContentRegistry:
         """Get HUB4COM route options help content"""
         return f"""
     {HTMLTheme.get_styles()}
-    <h2>HUB4COM Route Mode Guide</h2>
+    <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">HUB4COM Route Mode Guide</h1>
 
     <h3>Basic Modes:</h3>
 
@@ -1009,7 +1010,7 @@ class HelpContentRegistry:
         """Get port types and identification help content"""
         return f"""
 {HTMLTheme.get_styles()}
-<h2>Port Types & Identification Guide</h2>
+<h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Port Types & Identification Guide</h1>
 
 <h3>Port Type Indicators</h3>
 
@@ -1051,7 +1052,7 @@ class HelpContentRegistry:
         """Get system configuration guide content"""
         return f"""
 {HTMLTheme.get_styles()}
-<h2>System Configuration Guide</h2>
+<h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">System Configuration Guide</h1>
 
 <h3>Data Flow Architecture</h3>
 <p>The Serial Port Splitter uses a hub-and-spoke model:</p>
@@ -1101,7 +1102,7 @@ class HelpContentRegistry:
         """Get quick tips and troubleshooting content"""
         return f"""
 {HTMLTheme.get_styles()}
-<h2>Quick Tips & Troubleshooting</h2>
+<h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Quick Tips & Troubleshooting</h1>
 
 <h3>Quick Start</h3>
 <ol>
@@ -1159,7 +1160,7 @@ class HelpContentRegistry:
         """Get About section content with professional software information"""
         return f"""
 {HTMLTheme.get_styles()}
-<div style="text-align: center; margin-bottom: 20px;">
+<div style="margin-bottom: 20px;">
     <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Serial Port Splitter</h1>
     <p style="color: {AppColors.TEXT_DEFAULT}; font-size: 11pt; margin: 0;">Professional Serial Port Management Solution</p>
     <p style="color: {AppColors.TEXT_DISABLED}; font-size: 10pt; margin: 5px 0 0 0;">Version 1.0</p>
@@ -1232,9 +1233,9 @@ class HelpContentRegistry:
         </div>
         <div style="text-align: right;">
             <p style="margin: 3px 0 0 0; font-size: 9pt;">
-                <span style="color: {AppColors.ACCENT_BLUE}; font-size: 14px; margin-right: 4px;">🐙</span>
+                <img src="{IconManager.svg_to_base64_data_uri(AppIcons.GITHUB, 16)}" style="display: inline-block; width: 16px; height: 16px; margin-right: 4px; vertical-align: text-bottom;" alt="GitHub" />
                 <a href="https://github.com/gregor-nelson" style="color: {AppColors.ACCENT_BLUE}; text-decoration: none; font-weight: 500;">
-                    GitHub=
+                    GitHub
                 </a>
             </p>
         </div>
@@ -1540,7 +1541,8 @@ class UnifiedHelpDialog(QDialog):
         self.content_display.setMinimumHeight(480)
         self.content_display.setStyleSheet(self.content_display.styleSheet() + AppStyles.scrollbar())
         
-        # Enable links and connect to handler
+        # Disable automatic link navigation and connect to custom handler
+        self.content_display.setOpenExternalLinks(False)
         self.content_display.anchorClicked.connect(self.handle_link_clicked)
         
         # Related topics section

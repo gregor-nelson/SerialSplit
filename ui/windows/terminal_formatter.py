@@ -84,33 +84,46 @@ class TerminalStreamFormatter:
         cursor.movePosition(QTextCursor.MoveOperation.End)
         text_edit.setTextCursor(cursor)
         
-        # Add newline if needed
-        if text_edit.toPlainText() and not text_edit.toPlainText().endswith('\n'):
-            cursor.insertText('\n')
+        # Split data into lines to handle proper line formatting
+        lines = data.split('\n')
         
-        # Add timestamp if requested
-        if show_timestamp:
-            timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]  # Include milliseconds
-            timestamp_format = self._get_format(self.colors['timestamp'])
-            cursor.insertText(f"[{timestamp}] ", timestamp_format)
-        
-        # Add data type prefix for non-incoming data
-        if data_type != "incoming":
-            prefix_color = self.colors.get(data_type, self.colors['default'])
-            prefix_format = self._get_format(prefix_color, bold=True)
+        for i, line in enumerate(lines):
+            # Skip empty lines at the end (from trailing newlines)
+            if i == len(lines) - 1 and not line:
+                continue
             
-            prefix_map = {
-                'outgoing': 'TX',
-                'status': 'STATUS',
-                'error': 'ERROR'
-            }
-            prefix = prefix_map.get(data_type, data_type.upper())
-            cursor.insertText(f"[{prefix}] ", prefix_format)
-        
-        # Format the data content
-        data_color = self.colors.get(data_type, self.colors['default'])
-        data_format = self._get_format(data_color)
-        cursor.insertText(data, data_format)
+            # Add newline if needed (except for first line if text already exists)
+            if (text_edit.toPlainText() and not text_edit.toPlainText().endswith('\n') and
+                (i > 0 or text_edit.toPlainText())):
+                cursor.insertText('\n')
+            
+            # Add timestamp if requested (only for lines with content)
+            if show_timestamp and line.strip():
+                timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]  # Include milliseconds
+                timestamp_format = self._get_format(self.colors['timestamp'])
+                cursor.insertText(f"[{timestamp}] ", timestamp_format)
+            
+            # Add data type prefix for non-incoming data (only for lines with content)
+            if data_type != "incoming" and line.strip():
+                prefix_color = self.colors.get(data_type, self.colors['default'])
+                prefix_format = self._get_format(prefix_color, bold=True)
+                
+                prefix_map = {
+                    'outgoing': 'TX',
+                    'status': 'STATUS',
+                    'error': 'ERROR'
+                }
+                prefix = prefix_map.get(data_type, data_type.upper())
+                cursor.insertText(f"[{prefix}] ", prefix_format)
+            
+            # Format the line content
+            data_color = self.colors.get(data_type, self.colors['default'])
+            data_format = self._get_format(data_color)
+            cursor.insertText(line, data_format)
+            
+            # Add newline after each line except the last one
+            if i < len(lines) - 1:
+                cursor.insertText('\n')
         
         # Auto-scroll to bottom
         text_edit.ensureCursorVisible()

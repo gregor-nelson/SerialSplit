@@ -1217,6 +1217,28 @@ class IconManager:
         painter.end()
         
         return pixmap
+    
+    @staticmethod
+    def svg_to_base64_data_uri(svg_template: str, size: int = 16) -> str:
+        """Convert SVG to base64 data URI for HTML embedding"""
+        import base64
+        from PyQt6.QtCore import QByteArray, QBuffer, QIODevice
+        
+        # Create pixmap from SVG
+        pixmap = IconManager._svg_to_pixmap(svg_template, size)
+        
+        # Convert pixmap to PNG bytes using Qt classes
+        byte_array = QByteArray()
+        buffer = QBuffer(byte_array)
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        pixmap.save(buffer, "PNG")
+        buffer.close()
+        
+        # Encode to base64
+        base64_data = base64.b64encode(byte_array.data()).decode('utf-8')
+        
+        # Return data URI
+        return f"data:image/png;base64,{base64_data}"
 
 
 class ThemeManager:

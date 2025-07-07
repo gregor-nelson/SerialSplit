@@ -30,7 +30,7 @@ class TerminalStreamWidget(QWidget):
         self.current_port: Optional[SerialPortInfo] = None
         self.port_monitor: Optional[SerialPortMonitor] = None
         self.formatter = TerminalStreamFormatter()
-        self.data_buffer = []  # Buffer for incoming data
+        self.data_buffer = ""  # Buffer for incoming data (string instead of list)
         self.buffer_timer = QTimer()
         self.buffer_timer.setSingleShot(True)
         self.buffer_timer.timeout.connect(self._flush_buffer)
@@ -349,17 +349,24 @@ class TerminalStreamWidget(QWidget):
             self.formatter.append_separator(self.terminal_display, "TERMINAL CLEARED")
     
     def _handle_incoming_data(self, data: bytes):
-        """Handle incoming serial data"""
+        """Handle incoming serial data with proper CRLF handling and line buffering"""
         try:
             # Convert bytes to string, handling common encodings
             text_data = data.decode('utf-8', errors='replace')
             
-            # Add to buffer for batched processing
-            self.data_buffer.append(text_data)
+            # Normalize line endings - convert CRLF to LF for consistent display
+            # This handles Windows-style CRLF (\r\n) and converts to Unix-style LF (\n)
+            text_data = text_data.replace('\r\n', '\n').replace('\r', '\n')
             
-            # Start/restart buffer timer for smooth display
-            if not self.buffer_timer.isActive():
-                self.buffer_timer.start(50)  # 50ms delay for batching
+            # Add to buffer
+            self.data_buffer += text_data
+            
+            # Process complete lines immediately
+            self._process_complete_lines()
+            
+            # Start/restart buffer timer as fallback for incomplete lines
+            if self.data_buffer and not self.buffer_timer.isActive():
+                self.buffer_timer.start(1000)  # 1 second timeout for incomplete lines
                 
         except Exception as e:
             # Handle decoding errors
