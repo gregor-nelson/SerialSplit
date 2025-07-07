@@ -7,6 +7,7 @@ applying consistent styling and color-coding for serial port communication.
 Follows the same professional styling as CommandFormatter and OutputLogFormatter.
 """
 
+import time
 from PyQt6.QtGui import QTextCharFormat, QColor, QFont, QTextCursor
 from PyQt6.QtWidgets import QTextEdit
 from datetime import datetime
@@ -34,62 +35,71 @@ class TerminalStreamFormatter:
             'default': AppColors.CMD_DEFAULT,        # Default text color
         }
         
-        # NMEA message color mapping - bright colors optimized for dark backgrounds
-        # Using high-contrast hex colors that are clearly visible on dark terminals
+        # Windows 10 Dark Mode NMEA Message Colors - Muted Terminal Palette with Subtle Variations
+        # Optimized for reduced eye strain and professional appearance in streaming data
         self.nmea_colors = {
-            # Navigation/Position messages - Bright Cyan Blue
-            'GGA': '#00D7FF',     # Global Positioning System Fix Data - Bright cyan
-            'GLL': '#00D7FF',     # Geographic Position - Bright cyan
-            'RMC': '#00D7FF',     # Recommended Minimum Navigation Information - Bright cyan
-            'ZDA': '#00D7FF',     # Date & Time - Bright cyan
+            # Navigation/Position messages - Muted Blue Family (subtle variations)
+            'GGA': '#8bb5d9',     # Global Positioning System Fix Data - Base soft blue
+            'GLL': '#7ba8cc',     # Geographic Position - Slightly darker blue
+            'RMC': '#9bc2e6',     # Recommended Minimum Navigation Information - Slightly lighter blue
+            'ZDA': '#85b0d6',     # Date & Time - Slightly grayer blue
             
-            # Depth/Sonar messages - Bright Teal
-            'DBS': '#00FFAA',     # Depth Below Surface - Bright teal/aqua
-            'DBT': '#00FFAA',     # Depth Below Transducer - Bright teal/aqua
-            'DPT': '#00FFAA',     # Depth - Bright teal/aqua
-            'SONDEP': '#00FFAA',  # Sonar Depth - Bright teal/aqua
+            # Depth/Sonar messages - Muted Green Family (subtle variations)
+            'DBS': '#90c695',     # Depth Below Surface - Base soft green
+            'DBT': '#84b989',     # Depth Below Transducer - Slightly darker green
+            'DPT': '#9cd3a1',     # Depth - Slightly lighter green
+            'DEP': '#8ac093',     # Depth (alternate format) - Slightly grayer green
+            'SONDEP': '#96cc99',  # Sonar Depth - Slightly more saturated green
             
-            # Heading/Attitude messages - Bright Purple/Magenta
-            'HDT': '#FF88FF',     # Heading True - Bright magenta
-            'HPR': '#FF88FF',     # Heading, Pitch, Roll - Bright magenta
-            'PASHR': '#FF88FF',   # Proprietary Attitude Sensor - Bright magenta
-            'THS': '#FF88FF',     # True Heading and Status - Bright magenta
+            # Heading/Attitude messages - Muted Purple Family (subtle variations)
+            'HDT': '#b4a7d6',     # Heading True - Base soft purple
+            'HPR': '#a89ac9',     # Heading, Pitch, Roll - Slightly darker purple
+            'PASHR': '#c0b4e3',   # Proprietary Attitude Sensor - Slightly lighter purple
+            'THS': '#b1a3d3',     # True Heading and Status - Slightly grayer purple
+            'HEV': '#aea0d0',     # Heave - Slightly more muted purple
             
-            # Velocity/Motion messages - Bright Green
-            'VBW': '#00FF88',     # Dual Ground/Water Speed - Bright green
-            'VDR': '#00FF88',     # Set and Drift - Bright green
-            'VHW': '#00FF88',     # Water Speed and Heading - Bright green
-            'VTG': '#00FF88',     # Track Made Good and Ground Speed - Bright green
+            # Velocity/Motion messages - Muted Teal Family (subtle variations)
+            'VBW': '#7fb8c4',     # Dual Ground/Water Speed - Base soft teal
+            'VDR': '#73abb7',     # Set and Drift - Slightly darker teal
+            'VHW': '#8bc5d1',     # Water Speed and Heading - Slightly lighter teal
+            'VTG': '#79b5c1',     # Track Made Good and Ground Speed - Slightly grayer teal
             
-            # Weather/Environmental messages - Bright Orange
-            'WIMDA': '#FFAA00',   # Meteorological Composite - Bright orange
-            'WIMWD': '#FFAA00',   # Wind Direction and Speed - Bright orange
-            'WIMWV': '#FFAA00',   # Wind Speed and Angle - Bright orange
+            # Weather/Environmental messages - Muted Orange Family (subtle variations)
+            'WIMDA': '#d4a574',   # Meteorological Composite - Base soft orange
+            'WIMWD': '#c89866',   # Wind Direction and Speed - Slightly darker orange
+            'WIMWV': '#e0b282',   # Wind Speed and Angle - Slightly lighter orange
+            'MDA': '#d1a271',     # Meteorological Composite (short form) - Slightly grayer orange
+            'MWD': '#cb9b69',     # Wind Direction and Speed (short form) - Slightly more muted orange
+            'MWV': '#ddaf7f',     # Wind Speed and Angle (short form) - Slightly warmer orange
             
-            # Satellite/GPS messages - Bright Yellow
-            'GSA': '#FFFF00',     # GNSS DOP and Active Satellites - Bright yellow
-            'GST': '#FFFF00',     # GNSS Pseudorange Error Statistics - Bright yellow
-            'GSV': '#FFFF00',     # GNSS Satellites in View - Bright yellow
-            'GRS': '#FFFF00',     # GNSS Range Residuals - Bright yellow
+            # Satellite/GPS messages - Muted Yellow Family (subtle variations)
+            'GSA': '#d4c875',     # GNSS DOP and Active Satellites - Base soft yellow
+            'GST': '#c8bb69',     # GNSS Pseudorange Error Statistics - Slightly darker yellow
+            'GSV': '#e0d581',     # GNSS Satellites in View - Slightly lighter yellow
+            'GRS': '#d1c572',     # GNSS Range Residuals - Slightly grayer yellow
             
-            # Proprietary messages - Bright Violet
-            'PSAT': '#AA88FF',    # Proprietary Satellite - Bright violet
-            'PSONNAV': '#AA88FF', # Proprietary Navigation - Bright violet
-            'PSXN': '#AA88FF',    # Proprietary System - Bright violet
-            'PTNL': '#AA88FF',    # Proprietary Trimble - Bright violet
-            'PDWA': '#AA88FF',    # Proprietary Dynamic Wayfinding - Bright violet
+            # Proprietary messages - Muted Pink/Rose Family (subtle variations)
+            'PSAT': '#c99bb3',    # Proprietary Satellite - Base soft rose
+            'PSONNAV': '#bd8fa7', # Proprietary Navigation - Slightly darker rose
+            'PSXN': '#d5a7bf',    # Proprietary System - Slightly lighter rose
+            'PTNL': '#c698b0',    # Proprietary Trimble - Slightly grayer rose
+            'PDWA': '#c295ad',    # Proprietary Dynamic Wayfinding - Slightly more muted rose
             
-            # AIS messages - Bright Red
-            'AIVDM': '#FF4444',   # AIS VDM message - Bright red
+            # AIS messages - Muted Red Family
+            'AIVDM': '#cc8888',   # AIS VDM message - Soft red
             
-            # Other/miscellaneous messages - Light Gray
-            'DRU': '#CCCCCC',     # Dual Rudder - Light gray
-            'HEV': '#CCCCCC',     # Heave - Light gray
-            'ROV': '#CCCCCC',     # Remotely Operated Vehicle - Light gray
+            # Other/miscellaneous messages - Neutral Gray Family (subtle variations)
+            'DRU': '#a0a0a0',     # Dual Rudder - Light gray
+            'ROV': '#959595',     # Remotely Operated Vehicle - Slightly darker gray
+            'NMEA_UNKNOWN': '#888888',  # Unknown NMEA message - Medium gray
         }
         
-        # Create format cache for performance
+        # Create format cache for performance with size limit
         self._format_cache = {}
+        self._max_cache_size = 100
+        
+        # Initialize robust parsing state
+        self._init_robust_parsing_state()
         
     def _get_format(self, color: str, bold: bool = False) -> QTextCharFormat:
         """
@@ -105,6 +115,10 @@ class TerminalStreamFormatter:
         cache_key = f"{color}_{bold}"
         
         if cache_key not in self._format_cache:
+            # Clear cache if it gets too large
+            if len(self._format_cache) >= self._max_cache_size:
+                self._format_cache.clear()
+            
             fmt = QTextCharFormat()
             fmt.setForeground(QColor(color))
             # Use the same font family as CommandFormatter for consistency
@@ -115,6 +129,345 @@ class TerminalStreamFormatter:
             
         return self._format_cache[cache_key]
     
+    def _init_robust_parsing_state(self):
+        """Initialize robust parsing state management."""
+        self.line_buffer = ""
+        self.consecutive_failures = 0
+        self.last_successful_parse = time.time()
+        self.total_messages_processed = 0
+        self.successful_nmea_detections = 0
+        self.parser_state = "normal"  # normal, degraded, recovery
+        self.last_known_good_message_type = None
+        
+        # Comprehensive fallback patterns with dynamic talker ID support
+        self.fallback_patterns = [
+            # Standard GPS/GNSS messages (any talker ID)
+            (r'\$[A-Z]{2}GGA', 'GGA'),  # Global Positioning System Fix Data
+            (r'\$[A-Z]{2}RMC', 'RMC'),  # Recommended Minimum Navigation Information
+            (r'\$[A-Z]{2}GLL', 'GLL'),  # Geographic Position - Latitude/Longitude
+            (r'\$[A-Z]{2}GSA', 'GSA'),  # GNSS DOP and Active Satellites
+            (r'\$[A-Z]{2}GSV', 'GSV'),  # GNSS Satellites in View
+            (r'\$[A-Z]{2}VTG', 'VTG'),  # Track Made Good and Ground Speed
+            (r'\$[A-Z]{2}ZDA', 'ZDA'),  # UTC Time and Date
+            (r'\$[A-Z]{2}GST', 'GST'),  # GNSS Pseudorange Error Statistics
+            (r'\$[A-Z]{2}GRS', 'GRS'),  # GNSS Range Residuals
+            
+            # Depth/Sonar messages (any talker ID)
+            (r'\$[A-Z]{2}DBS', 'DBS'),  # Depth Below Surface
+            (r'\$[A-Z]{2}DBT', 'DBT'),  # Depth Below Transducer
+            (r'\$[A-Z]{2}DPT', 'DPT'),  # Depth of Water
+            (r'\$[A-Z]{2}DEP', 'DEP'),  # Depth (alternate format)
+            
+            # Heading/Attitude messages (any talker ID)
+            (r'\$[A-Z]{2}HDT', 'HDT'),  # Heading True
+            (r'\$[A-Z]{2}THS', 'THS'),  # True Heading and Status
+            (r'\$[A-Z]{2}HPR', 'HPR'),  # Heading, Pitch, Roll
+            (r'\$[A-Z]{2}HEV', 'HEV'),  # Heave
+            
+            # Velocity/Motion messages (any talker ID)
+            (r'\$[A-Z]{2}VBW', 'VBW'),  # Dual Ground/Water Speed
+            (r'\$[A-Z]{2}VDR', 'VDR'),  # Set and Drift
+            (r'\$[A-Z]{2}VHW', 'VHW'),  # Water Speed and Heading
+            
+            # Weather/Environmental messages (any talker ID - both forms)
+            (r'\$[A-Z]{2}MWV', 'MWV'),  # Wind Speed and Angle
+            (r'\$[A-Z]{2}MWD', 'MWD'),  # Wind Direction and Speed
+            (r'\$[A-Z]{2}MDA', 'MDA'),  # Meteorological Composite
+            (r'\$..MWV', 'WIMWV'),      # Legacy mapping
+            (r'\$..MWD', 'WIMWD'),      # Legacy mapping
+            (r'\$..MDA', 'WIMDA'),      # Legacy mapping
+            
+            # Other messages (any talker ID)
+            (r'\$[A-Z]{2}DRU', 'DRU'),  # Dual Rudder
+            (r'\$[A-Z]{2}ROV', 'ROV'),  # Remotely Operated Vehicle
+            
+            # Proprietary messages
+            (r'\$PASHR', 'PASHR'),      # Proprietary Attitude and Heading Reference
+            (r'\$PSAT,HPR', 'PSAT'),    # Proprietary Satellite - Attitude Data
+            (r'\$PSONNAV', 'PSONNAV'),  # Proprietary Navigation
+            (r'\$PSXN', 'PSXN'),        # Proprietary Extended Navigation
+            (r'\$PTNL,AVR', 'PTNL'),    # Proprietary Trimble - Attitude and Velocity
+            (r'\$PDWA', 'PDWA'),        # Proprietary Dynamic Water Analysis
+            
+            # AIS messages
+            (r'\!AIVDM', 'AIVDM'),      # AIS VHF Data-Link Message
+        ]
+        
+        # Known NMEA talker IDs for validation
+        self.known_talkers = {
+            'GP': 'Global Positioning System',
+            'GN': 'Global Navigation Satellite System',
+            'GL': 'GLONASS',
+            'GA': 'Galileo',
+            'BD': 'BeiDou',
+            'GB': 'BeiDou',
+            'GQ': 'QZSS',
+            'II': 'Integrated Instrumentation',
+            'IN': 'Integrated Navigation',
+            'LC': 'Loran-C',
+            'EC': 'Electronic Chart Display',
+            'CD': 'Digital Selective Calling',
+            'HC': 'Heading/Compass',
+            'HE': 'Gyro North Seeking',
+            'RA': 'Radar',
+            'SD': 'Sounder/Depth',
+            'TI': 'Turn Indicator',
+            'VD': 'Velocity Sensor',
+            'VW': 'Mechanical Speed Log',
+            'WI': 'Weather Instruments',
+            'YX': 'Transducer',
+            'ZA': 'Atomic Clock',
+            'ZV': 'Radio beacon'
+        }
+        
+        # Compile regex patterns for performance with error handling
+        self.compiled_patterns = []
+        for pattern, msg_type in self.fallback_patterns:
+            try:
+                self.compiled_patterns.append((re.compile(pattern), msg_type))
+            except re.error:
+                # Skip invalid patterns silently to maintain stability
+                continue
+    
+    def _is_valid_nmea_structure(self, line: str) -> bool:
+        """Validate basic NMEA message structure."""
+        if not line or len(line) < 7:  # Minimum viable NMEA length
+            return False
+        
+        line = line.strip()
+        
+        # Check NMEA sentence structure
+        if line.startswith('$') and '*' in line:
+            parts = line.split('*')
+            if len(parts) == 2:
+                sentence_part = parts[0]
+                checksum_part = parts[1]
+                
+                # Validate checksum format (2 hex characters)
+                if len(checksum_part) >= 2 and all(c in '0123456789ABCDEFabcdef' for c in checksum_part[:2]):
+                    # Validate sentence has at least talker ID and message type
+                    if len(sentence_part) >= 6 and sentence_part[1:].replace(',', '').replace('.', '').replace('-', '').isalnum():
+                        return True
+        
+        # Check AIS message structure
+        if line.startswith('!') and '*' in line:
+            parts = line.split('*')
+            if len(parts) == 2 and len(parts[1]) >= 2:
+                return True
+        
+        return False
+    
+    def _calculate_checksum(self, sentence: str) -> str:
+        """Calculate NMEA checksum for validation."""
+        checksum = 0
+        for char in sentence:
+            checksum ^= ord(char)
+        return f"{checksum:02X}"
+    
+    def _validate_nmea_checksum(self, line: str) -> bool:
+        """Validate NMEA checksum if present."""
+        if '*' not in line:
+            return False
+        
+        try:
+            sentence_part, checksum_part = line.split('*', 1)
+            if len(checksum_part) < 2:
+                return False
+            
+            # Remove leading $ or !
+            if sentence_part.startswith(('$', '!')):
+                sentence_part = sentence_part[1:]
+            
+            expected_checksum = self._calculate_checksum(sentence_part)
+            actual_checksum = checksum_part[:2].upper()
+            
+            return expected_checksum == actual_checksum
+        except Exception:
+            return False
+    
+    def _preprocess_data_line(self, raw_line: str) -> str:
+        """Safely preprocess a data line for parsing."""
+        if not raw_line:
+            return ""
+        
+        # Remove common line endings and extra whitespace
+        line = raw_line.strip('\r\n\t ')
+        
+        # Remove non-printable characters except for standard NMEA chars
+        line = ''.join(c for c in line if c.isprintable() or c in '\r\n')
+        
+        # Remove checksum portion for field parsing (keep for validation)
+        if '*' in line:
+            line_for_parsing = line.split('*')[0]
+        else:
+            line_for_parsing = line
+        
+        return line_for_parsing.strip()
+    
+    def _detect_nmea_with_fallback(self, line: str) -> str:
+        """Detect NMEA message type using primary method with fallback."""
+        # Try primary detection first
+        msg_type = self._detect_nmea_message_type(line)
+        if msg_type and msg_type in self.nmea_colors:
+            return msg_type
+        
+        # Try fallback regex patterns with error handling
+        for pattern, fallback_type in self.compiled_patterns:
+            try:
+                if pattern.search(line):
+                    if fallback_type in self.nmea_colors:
+                        return fallback_type
+            except (re.error, TypeError):
+                # Skip problematic patterns to maintain stability
+                continue
+        
+        # If it looks like NMEA but we can't classify it, return generic type
+        if self._is_valid_nmea_structure(line):
+            return 'NMEA_UNKNOWN'
+        
+        return None
+    
+    def _update_parser_statistics(self, success: bool, msg_type: str = None):
+        """Update parser statistics and state."""
+        self.total_messages_processed += 1
+        
+        if success:
+            self.successful_nmea_detections += 1
+            self.consecutive_failures = 0
+            self.last_successful_parse = time.time()
+            if msg_type:
+                self.last_known_good_message_type = msg_type
+        else:
+            self.consecutive_failures += 1
+        
+        # Update parser state based on success rate
+        if self.consecutive_failures > 10:
+            self.parser_state = "degraded"
+        elif self.consecutive_failures > 20:
+            self.parser_state = "recovery"
+        else:
+            self.parser_state = "normal"
+    
+    def _should_reset_parser_state(self) -> bool:
+        """Determine if parser state should be reset."""
+        # Reset if too many consecutive failures
+        if self.consecutive_failures > 30:
+            return True
+        
+        # Reset if no successful parse in too long
+        if time.time() - self.last_successful_parse > 300:  # 5 minutes
+            return True
+        
+        return False
+    
+    def _reset_parser_state(self):
+        """Reset parser state to recover from errors."""
+        self.line_buffer = ""
+        self.consecutive_failures = 0
+        self.parser_state = "normal"
+        self.last_successful_parse = time.time()
+    
+    def _process_complete_line(self, line: str) -> tuple:
+        """Process a complete line and return (message_type, processed_line)."""
+        if not line:
+            return None, line
+        
+        # Preprocess the line
+        processed_line = self._preprocess_data_line(line)
+        if not processed_line:
+            return None, line
+        
+        # Validate NMEA structure if it looks like NMEA
+        if processed_line.startswith(('$', '!')):
+            if not self._is_valid_nmea_structure(line):
+                self._update_parser_statistics(False)
+                return None, line
+            
+            # Validate checksum if in strict mode
+            if self.parser_state == "normal":
+                if not self._validate_nmea_checksum(line):
+                    self._update_parser_statistics(False)
+                    return None, line
+        
+        # Detect message type with fallback
+        msg_type = self._detect_nmea_with_fallback(processed_line)
+        
+        if msg_type:
+            self._update_parser_statistics(True, msg_type)
+            return msg_type, line
+        else:
+            self._update_parser_statistics(False)
+            return None, line
+    
+    def process_serial_data(self, raw_data: str) -> list:
+        """Process raw serial data and return list of (message_type, line) tuples."""
+        if not raw_data:
+            return []
+        
+        # Basic input size validation
+        if len(raw_data) > 50000:  # Limit single data chunk size
+            raw_data = raw_data[:50000]
+        
+        # Reset parser state if necessary
+        if self._should_reset_parser_state():
+            self._reset_parser_state()
+        
+        # Add to line buffer with size limit
+        self.line_buffer += raw_data
+        
+        # Prevent buffer from growing too large
+        if len(self.line_buffer) > 10000:
+            # Keep only the last 5000 characters
+            self.line_buffer = self.line_buffer[-5000:]
+        
+        # Split into lines
+        lines = self.line_buffer.split('\n')
+        
+        # Keep the last incomplete line in buffer
+        self.line_buffer = lines[-1]
+        
+        # Process complete lines
+        processed_lines = []
+        for line in lines[:-1]:
+            msg_type, processed_line = self._process_complete_line(line)
+            processed_lines.append((msg_type, processed_line))
+        
+        return processed_lines
+    
+    def append_serial_data(self, text_edit: QTextEdit, raw_data: str, data_type: str = "incoming", 
+                          show_timestamp: bool = True):
+        """Process and append serial data using robust parsing."""
+        if not raw_data:
+            return
+        
+        # Process the raw data through robust parsing
+        processed_lines = self.process_serial_data(raw_data)
+        
+        # Append each processed line
+        for msg_type, line in processed_lines:
+            if msg_type:
+                # Use detected NMEA type for coloring
+                self.append_data(text_edit, line, data_type, show_timestamp)
+            else:
+                # Fall back to default coloring
+                self.append_data(text_edit, line, data_type, show_timestamp)
+    
+    def get_parser_statistics(self) -> dict:
+        """Get current parser statistics for debugging."""
+        success_rate = 0
+        if self.total_messages_processed > 0:
+            success_rate = (self.successful_nmea_detections / self.total_messages_processed) * 100
+        
+        return {
+            'total_processed': self.total_messages_processed,
+            'successful_detections': self.successful_nmea_detections,
+            'consecutive_failures': self.consecutive_failures,
+            'success_rate': success_rate,
+            'parser_state': self.parser_state,
+            'last_known_good_type': self.last_known_good_message_type,
+            'buffer_size': len(self.line_buffer)
+        }
+    
     def _ensure_monospace_font(self, text_edit: QTextEdit):
         """Ensure the text edit uses consistent monospace font."""
         font = QFont(AppFonts.CONSOLE.family(), AppFonts.FONT_SIZE_LARGE)
@@ -123,7 +476,7 @@ class TerminalStreamFormatter:
     
     def _detect_nmea_message_type(self, data: str) -> str:
         """
-        Detect and classify NMEA message type from data string.
+        Enhanced NMEA message type detection with dynamic talker ID support.
         
         Args:
             data: The incoming data string to analyze
@@ -140,10 +493,6 @@ class TerminalStreamFormatter:
         
         # Check for standard NMEA messages (starts with $)
         if data.startswith('$'):
-            # Extract message type from standard NMEA format
-            # Format: $AABBB,... where AA is talker ID and BBB is message type
-            # Also handle proprietary formats like $PSAT,HPR or $PSONNAV
-            
             # Remove leading $
             nmea_data = data[1:]
             
@@ -165,24 +514,47 @@ class TerminalStreamFormatter:
                 return 'PTNL'
             elif header.startswith('PDWA'):
                 return 'PDWA'
+            elif header.startswith('PASHR'):
+                return 'PASHR'
             
-            # Handle standard NMEA messages
-            if len(header) >= 5:
-                # Standard format: AABBB (AA=talker, BBB=message type)
-                message_type = header[2:5]  # Extract BBB part
+            # Handle standard NMEA messages with dynamic talker ID detection
+            if len(header) >= 3:
+                # Extract potential talker ID and message type
+                if len(header) >= 5:
+                    # Standard format: AABBB (AA=talker, BBB=message type)
+                    potential_talker = header[:2]
+                    message_type = header[2:]
+                    
+                    # Validate talker ID (known talkers or alphabetic)
+                    if potential_talker in self.known_talkers or potential_talker.isalpha():
+                        # Check if message type is in our color mapping
+                        if message_type in self.nmea_colors:
+                            return message_type
+                        
+                        # Handle weather messages (check for MWV, MWD, MDA)
+                        if message_type in ['MWV', 'MWD', 'MDA']:
+                            return message_type
+                        
+                        # Handle depth messages (DEP)
+                        if message_type == 'DEP':
+                            return 'DEP'
+                        
+                        # Handle longer message types (like WIMWV, WIMWD, WIMDA)
+                        if len(message_type) > 3:
+                            short_type = message_type[-3:]  # Get last 3 characters
+                            if short_type in self.nmea_colors:
+                                return short_type
                 
-                # Check if it's in our color mapping
-                if message_type in self.nmea_colors:
-                    return message_type
-                
-                # Handle full header matches (for proprietary messages)
+                # Handle cases where the entire header might be the message type
                 if header in self.nmea_colors:
                     return header
-            
-            # Handle special cases where message type is longer or different
-            for nmea_type in self.nmea_colors:
-                if header.startswith(nmea_type) or header.endswith(nmea_type):
-                    return nmea_type
+                
+                # Handle partial matches for complex proprietary messages
+                for nmea_type in self.nmea_colors:
+                    if len(nmea_type) > 3 and header.endswith(nmea_type):
+                        return nmea_type
+                    elif header.startswith(nmea_type):
+                        return nmea_type
         
         return None
     
@@ -197,6 +569,9 @@ class TerminalStreamFormatter:
             data_type: The data type (incoming, outgoing, status, error)
             show_timestamp: Whether to show timestamp prefix
         """
+        # Basic null check
+        if not text_edit or not data:
+            return
         # Set explicit monospace font on the widget (matching CommandFormatter)
         self._ensure_monospace_font(text_edit)
         
@@ -230,7 +605,7 @@ class TerminalStreamFormatter:
         # Detect NMEA message type and use appropriate color
         nmea_type = None
         if data_type == "incoming":  # Only colorize incoming data
-            nmea_type = self._detect_nmea_message_type(data)
+            nmea_type = self._detect_nmea_with_fallback(data)
         
         # Choose color based on NMEA type or default data type
         if nmea_type and nmea_type in self.nmea_colors:
@@ -256,6 +631,9 @@ class TerminalStreamFormatter:
             text_edit: The QTextEdit widget to insert into
             label: Optional label for the separator
         """
+        # Basic null check
+        if not text_edit:
+            return
         # Set explicit monospace font on the widget (matching CommandFormatter)
         self._ensure_monospace_font(text_edit)
         
@@ -293,11 +671,15 @@ class TerminalStreamFormatter:
             message: The status message
             status_type: The status type (status, error)
         """
+        # Basic null check
+        if not text_edit or not message:
+            return
         self.append_data(text_edit, message, status_type, show_timestamp=True)
     
     def clear(self, text_edit: QTextEdit):
         """Clear all content from the text edit."""
-        text_edit.clear()
+        if text_edit:
+            text_edit.clear()
     
     def format_connection_start(self, text_edit: QTextEdit, port_name: str, baud_rate: int):
         """
