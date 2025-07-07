@@ -1579,6 +1579,14 @@ class ThemeManager:
                 if isinstance(name, QUrl) and name.scheme() in ('http', 'https'):
                     return None
                 return super().loadResource(type, name)
+            
+            def setSource(self, url):
+                # Override setSource to prevent navigation to external URLs
+                if isinstance(url, QUrl) and url.scheme() in ('http', 'https'):
+                    # Don't navigate - this prevents the "No document" error
+                    return
+                # Allow normal internal navigation
+                super().setSource(url)
         
         widget = NonNavigatingTextBrowser()
         widget.setReadOnly(True)

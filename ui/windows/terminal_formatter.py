@@ -10,6 +10,7 @@ Follows the same professional styling as CommandFormatter and OutputLogFormatter
 from PyQt6.QtGui import QTextCharFormat, QColor, QFont, QTextCursor
 from PyQt6.QtWidgets import QTextEdit
 from datetime import datetime
+import re
 from ui.theme.theme import AppColors, AppFonts
 
 
@@ -31,6 +32,60 @@ class TerminalStreamFormatter:
             'error': AppColors.ERROR_PRIMARY,        # Red for connection errors
             'status': AppColors.CMD_HIGHLIGHT,       # Blue for status messages
             'default': AppColors.CMD_DEFAULT,        # Default text color
+        }
+        
+        # NMEA message color mapping - bright colors optimized for dark backgrounds
+        # Using high-contrast hex colors that are clearly visible on dark terminals
+        self.nmea_colors = {
+            # Navigation/Position messages - Bright Cyan Blue
+            'GGA': '#00D7FF',     # Global Positioning System Fix Data - Bright cyan
+            'GLL': '#00D7FF',     # Geographic Position - Bright cyan
+            'RMC': '#00D7FF',     # Recommended Minimum Navigation Information - Bright cyan
+            'ZDA': '#00D7FF',     # Date & Time - Bright cyan
+            
+            # Depth/Sonar messages - Bright Teal
+            'DBS': '#00FFAA',     # Depth Below Surface - Bright teal/aqua
+            'DBT': '#00FFAA',     # Depth Below Transducer - Bright teal/aqua
+            'DPT': '#00FFAA',     # Depth - Bright teal/aqua
+            'SONDEP': '#00FFAA',  # Sonar Depth - Bright teal/aqua
+            
+            # Heading/Attitude messages - Bright Purple/Magenta
+            'HDT': '#FF88FF',     # Heading True - Bright magenta
+            'HPR': '#FF88FF',     # Heading, Pitch, Roll - Bright magenta
+            'PASHR': '#FF88FF',   # Proprietary Attitude Sensor - Bright magenta
+            'THS': '#FF88FF',     # True Heading and Status - Bright magenta
+            
+            # Velocity/Motion messages - Bright Green
+            'VBW': '#00FF88',     # Dual Ground/Water Speed - Bright green
+            'VDR': '#00FF88',     # Set and Drift - Bright green
+            'VHW': '#00FF88',     # Water Speed and Heading - Bright green
+            'VTG': '#00FF88',     # Track Made Good and Ground Speed - Bright green
+            
+            # Weather/Environmental messages - Bright Orange
+            'WIMDA': '#FFAA00',   # Meteorological Composite - Bright orange
+            'WIMWD': '#FFAA00',   # Wind Direction and Speed - Bright orange
+            'WIMWV': '#FFAA00',   # Wind Speed and Angle - Bright orange
+            
+            # Satellite/GPS messages - Bright Yellow
+            'GSA': '#FFFF00',     # GNSS DOP and Active Satellites - Bright yellow
+            'GST': '#FFFF00',     # GNSS Pseudorange Error Statistics - Bright yellow
+            'GSV': '#FFFF00',     # GNSS Satellites in View - Bright yellow
+            'GRS': '#FFFF00',     # GNSS Range Residuals - Bright yellow
+            
+            # Proprietary messages - Bright Violet
+            'PSAT': '#AA88FF',    # Proprietary Satellite - Bright violet
+            'PSONNAV': '#AA88FF', # Proprietary Navigation - Bright violet
+            'PSXN': '#AA88FF',    # Proprietary System - Bright violet
+            'PTNL': '#AA88FF',    # Proprietary Trimble - Bright violet
+            'PDWA': '#AA88FF',    # Proprietary Dynamic Wayfinding - Bright violet
+            
+            # AIS messages - Bright Red
+            'AIVDM': '#FF4444',   # AIS VDM message - Bright red
+            
+            # Other/miscellaneous messages - Light Gray
+            'DRU': '#CCCCCC',     # Dual Rudder - Light gray
+            'HEV': '#CCCCCC',     # Heave - Light gray
+            'ROV': '#CCCCCC',     # Remotely Operated Vehicle - Light gray
         }
         
         # Create format cache for performance
@@ -66,6 +121,71 @@ class TerminalStreamFormatter:
         font.setStyleHint(QFont.StyleHint.Monospace)
         text_edit.setFont(font)
     
+    def _detect_nmea_message_type(self, data: str) -> str:
+        """
+        Detect and classify NMEA message type from data string.
+        
+        Args:
+            data: The incoming data string to analyze
+            
+        Returns:
+            The NMEA message type or None if not detected
+        """
+        # Strip whitespace and check for NMEA patterns
+        data = data.strip()
+        
+        # Check for AIS messages (starts with !)
+        if data.startswith('!AIVDM'):
+            return 'AIVDM'
+        
+        # Check for standard NMEA messages (starts with $)
+        if data.startswith('$'):
+            # Extract message type from standard NMEA format
+            # Format: $AABBB,... where AA is talker ID and BBB is message type
+            # Also handle proprietary formats like $PSAT,HPR or $PSONNAV
+            
+            # Remove leading $
+            nmea_data = data[1:]
+            
+            # Split by comma to get the first field
+            fields = nmea_data.split(',')
+            if not fields:
+                return None
+            
+            header = fields[0]
+            
+            # Handle proprietary messages with specific patterns
+            if header.startswith('PSAT') and len(fields) > 1 and fields[1] == 'HPR':
+                return 'PSAT'
+            elif header.startswith('PSONNAV'):
+                return 'PSONNAV'
+            elif header.startswith('PSXN'):
+                return 'PSXN'
+            elif header.startswith('PTNL') and len(fields) > 1 and fields[1] == 'AVR':
+                return 'PTNL'
+            elif header.startswith('PDWA'):
+                return 'PDWA'
+            
+            # Handle standard NMEA messages
+            if len(header) >= 5:
+                # Standard format: AABBB (AA=talker, BBB=message type)
+                message_type = header[2:5]  # Extract BBB part
+                
+                # Check if it's in our color mapping
+                if message_type in self.nmea_colors:
+                    return message_type
+                
+                # Handle full header matches (for proprietary messages)
+                if header in self.nmea_colors:
+                    return header
+            
+            # Handle special cases where message type is longer or different
+            for nmea_type in self.nmea_colors:
+                if header.startswith(nmea_type) or header.endswith(nmea_type):
+                    return nmea_type
+        
+        return None
+    
     def append_data(self, text_edit: QTextEdit, data: str, data_type: str = "incoming", 
                    show_timestamp: bool = True):
         """
@@ -73,7 +193,7 @@ class TerminalStreamFormatter:
         
         Args:
             text_edit: The QTextEdit widget to append to
-            data: The data to format and display
+            data: The data to format and display (should be a single line)
             data_type: The data type (incoming, outgoing, status, error)
             show_timestamp: Whether to show timestamp prefix
         """
@@ -84,46 +204,46 @@ class TerminalStreamFormatter:
         cursor.movePosition(QTextCursor.MoveOperation.End)
         text_edit.setTextCursor(cursor)
         
-        # Split data into lines to handle proper line formatting
-        lines = data.split('\n')
+        # Add newline if needed (unless this is the first line)
+        if text_edit.toPlainText() and not text_edit.toPlainText().endswith('\n'):
+            cursor.insertText('\n')
         
-        for i, line in enumerate(lines):
-            # Skip empty lines at the end (from trailing newlines)
-            if i == len(lines) - 1 and not line:
-                continue
+        # Add timestamp if requested
+        if show_timestamp:
+            timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]  # Include milliseconds
+            timestamp_format = self._get_format(self.colors['timestamp'])
+            cursor.insertText(f"[{timestamp}] ", timestamp_format)
+        
+        # Add data type prefix for non-incoming data
+        if data_type != "incoming":
+            prefix_color = self.colors.get(data_type, self.colors['default'])
+            prefix_format = self._get_format(prefix_color, bold=True)
             
-            # Add newline if needed (except for first line if text already exists)
-            if (text_edit.toPlainText() and not text_edit.toPlainText().endswith('\n') and
-                (i > 0 or text_edit.toPlainText())):
-                cursor.insertText('\n')
-            
-            # Add timestamp if requested (only for lines with content)
-            if show_timestamp and line.strip():
-                timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]  # Include milliseconds
-                timestamp_format = self._get_format(self.colors['timestamp'])
-                cursor.insertText(f"[{timestamp}] ", timestamp_format)
-            
-            # Add data type prefix for non-incoming data (only for lines with content)
-            if data_type != "incoming" and line.strip():
-                prefix_color = self.colors.get(data_type, self.colors['default'])
-                prefix_format = self._get_format(prefix_color, bold=True)
-                
-                prefix_map = {
-                    'outgoing': 'TX',
-                    'status': 'STATUS',
-                    'error': 'ERROR'
-                }
-                prefix = prefix_map.get(data_type, data_type.upper())
-                cursor.insertText(f"[{prefix}] ", prefix_format)
-            
-            # Format the line content
+            prefix_map = {
+                'outgoing': 'TX',
+                'status': 'STATUS',
+                'error': 'ERROR'
+            }
+            prefix = prefix_map.get(data_type, data_type.upper())
+            cursor.insertText(f"[{prefix}] ", prefix_format)
+        
+        # Detect NMEA message type and use appropriate color
+        nmea_type = None
+        if data_type == "incoming":  # Only colorize incoming data
+            nmea_type = self._detect_nmea_message_type(data)
+        
+        # Choose color based on NMEA type or default data type
+        if nmea_type and nmea_type in self.nmea_colors:
+            data_color = self.nmea_colors[nmea_type]
+        else:
             data_color = self.colors.get(data_type, self.colors['default'])
-            data_format = self._get_format(data_color)
-            cursor.insertText(line, data_format)
-            
-            # Add newline after each line except the last one
-            if i < len(lines) - 1:
-                cursor.insertText('\n')
+        
+        # Format the data content
+        data_format = self._get_format(data_color)
+        cursor.insertText(data, data_format)
+        
+        # Add newline at the end
+        cursor.insertText('\n')
         
         # Auto-scroll to bottom
         text_edit.ensureCursorVisible()

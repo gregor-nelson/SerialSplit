@@ -1717,12 +1717,13 @@ class UnifiedHelpDialog(QDialog):
         if url_string.startswith(('http://', 'https://')):
             try:
                 webbrowser.open(url_string)
-                # Prevent QTextBrowser from navigating away from current content
-                return True
+                # Link opened successfully in external browser
+                # QTextBrowser content remains unchanged
             except Exception as e:
                 print(f"Failed to open URL {url_string}: {e}")
         
-        return False
+        # Always prevent QTextBrowser from navigating internally
+        # by not calling the default link handler
             
     def go_back(self):
         """Navigate back (placeholder for history)"""
