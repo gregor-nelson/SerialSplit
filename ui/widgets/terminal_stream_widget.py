@@ -259,7 +259,7 @@ class TerminalStreamWidget(QWidget):
         # Try SETTINGS, GEAR, or COG icon constants, whichever is available
         # If none are available, this will need to be adjusted based on your icon constants
         icon = IconManager.create_svg_icon(
-            AppIcons.SETTINGS,  # Update this to match your available icon constant
+            AppIcons.TERMINAL_SETTINGS,  # Update this to match your available icon constant
             AppColors.TEXT_DEFAULT,
             IconManager.get_scaled_size(14)
         )

@@ -1,283 +1,239 @@
 #!/usr/bin/env python3
 """
 Windows 10 Professional System Icons for Hub4com GUI
-
-This collection follows authentic Windows 10 design principles:
-- Flat design with subtle depth
-- Professional color palette
-- Clean geometric shapes
-- Enterprise-appropriate aesthetic
-- Consistent with Windows system applications
+---
+Revision 2: Enhanced for a deep, rich, and eye-catching appearance
+using subtle gradients and lighting effects, aligned with modern Fluent Design principles.
 """
 
 class AppIcons:
     """
-    Windows 10 Professional system icon definitions.
-    Designed for professional applications with enterprise-grade appearance.
+    A collection of SVG icons designed with an enhanced Windows aesthetic.
+    The icons use gradients and shadows to create depth, making them suitable
+    for modern applications requiring a polished, enterprise-grade look.
     """
 
-    # Windows 10 standard shadow - subtle and professional
-    _WIN10_SHADOW = """
-        <filter id="win10-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
-            <feOffset dx="0" dy="1" result="offsetblur"/>
-            <feFlood flood-color="#000000" flood-opacity="0.12"/>
-            <feComposite in2="offsetblur" operator="in"/>
-            <feMerge>
-                <feMergeNode/>
-                <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-        </filter>
-    """
-
-    # Windows 10 Professional Color Palette
+    # Enhanced color palette with brighter tones for gradients
     _COLORS = {
         'PRIMARY_BLUE': '#0078D4',
-        'LIGHT_BLUE': '#40E0FF', 
+        'PRIMARY_BLUE_LIGHT': '#00A0FF',
         'DARK_BLUE': '#005A9E',
         'SUCCESS_GREEN': '#107C10',
+        'SUCCESS_GREEN_LIGHT': '#1ED760',
         'WARNING_ORANGE': '#FF8C00',
-        'ERROR_RED': '#E81123',
+        'WARNING_ORANGE_LIGHT': '#FFA500',
+        'ERROR_RED': '#D83B01',
+        'ERROR_RED_LIGHT': '#F06B38',
         'GRAY_DARK': '#323130',
         'GRAY_MEDIUM': '#8A8886',
-        'GRAY_LIGHT': '#C8C6C4',
+        'GRAY_LIGHT': '#E1DFDD',
         'BACKGROUND': '#F3F2F1',
         'WHITE': '#FFFFFF'
     }
 
+    # Consistent stroke width for all icons
+    _STROKE_WIDTH = "2.5"
+
+    # Reusable SVG definitions for gradients and shadows
+    _DEFS = f"""
+        <defs>
+            <filter id="win10-shadow" x="-25%" y="-25%" width="150%" height="150%">
+                <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.15"/>
+            </filter>
+            <filter id="win10-shadow-small" x="-25%" y="-25%" width="150%" height="150%">
+                <feDropShadow dx="0" dy="0.5" stdDeviation="0.5" flood-color="#000000" flood-opacity="0.2"/>
+            </filter>
+            <linearGradient id="primary-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="{_COLORS['PRIMARY_BLUE_LIGHT']}" />
+                <stop offset="100%" stop-color="{_COLORS['PRIMARY_BLUE']}" />
+            </linearGradient>
+            <linearGradient id="success-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="{_COLORS['SUCCESS_GREEN_LIGHT']}" />
+                <stop offset="100%" stop-color="{_COLORS['SUCCESS_GREEN']}" />
+            </linearGradient>
+            <linearGradient id="error-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="{_COLORS['ERROR_RED_LIGHT']}" />
+                <stop offset="100%" stop-color="{_COLORS['ERROR_RED']}" />
+            </linearGradient>
+            <linearGradient id="warning-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="{_COLORS['WARNING_ORANGE_LIGHT']}" />
+                <stop offset="100%" stop-color="{_COLORS['WARNING_ORANGE']}" />
+            </linearGradient>
+            <linearGradient id="gray-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="{_COLORS['GRAY_LIGHT']}" />
+                <stop offset="100%" stop-color="{_COLORS['GRAY_MEDIUM']}" />
+            </linearGradient>
+        </defs>
+    """
+
+    TERMINAL_SETTINGS = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+        {_DEFS}
+        <g filter="url(#win10-shadow)">
+            <rect x="8" y="12" width="48" height="40" rx="2" fill="{_COLORS['GRAY_DARK']}"/>
+            <rect x="8" y="12" width="48" height="7" rx="1" ry="1" fill="#4B4B4B"/>
+            <text x="14" y="29" font-family="Consolas, 'Courier New', monospace" font-size="5" fill="#00E070">C:\&gt;_</text>
+        </g>
+        <g transform="translate(40 36) scale(1.2)" filter="url(#win10-shadow)">
+            <circle cx="8" cy="8" r="8" fill="url(#primary-gradient)"/>
+            <path d="M8 3.5v2M8 10.5v2M12.5 8h-2M5.5 8h-2M10.9 5.1l-1.4 1.4M6.5 9.5l-1.4 1.4M10.9 10.9l-1.4-1.4M6.5 6.5l-1.4-1.4" 
+                  stroke="{_COLORS['WHITE']}" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+            <circle cx="8" cy="8" r="2.5" fill="{_COLORS['WHITE']}" opacity="0.9"/>
+        </g>
+    </svg>
+    """
+
     LIST = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Document background -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <rect x="8" y="6" width="26" height="34" rx="2" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_LIGHT']}" stroke-width="1"/>
-            <!-- Folded corner -->
-            <path d="M30,6 L34,10 L34,40 L30,40 Z" fill="{_COLORS['GRAY_LIGHT']}"/>
-            <path d="M30,6 L34,10 L30,10 Z" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <rect x="10" y="6" width="28" height="36" rx="2" fill="{_COLORS['BACKGROUND']}"/>
+            <rect x="10" y="6" width="28" height="36" rx="2" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_LIGHT']}" stroke-width="0.5"/>
         </g>
-        <!-- List items -->
-        <rect x="12" y="14" width="2" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-        <rect x="16" y="14" width="14" height="2" fill="{_COLORS['GRAY_MEDIUM']}"/>
-        <rect x="12" y="19" width="2" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-        <rect x="16" y="19" width="18" height="2" fill="{_COLORS['GRAY_MEDIUM']}"/>
-        <rect x="12" y="24" width="2" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-        <rect x="16" y="24" width="16" height="2" fill="{_COLORS['GRAY_MEDIUM']}"/>
-        <rect x="12" y="29" width="2" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-        <rect x="16" y="29" width="12" height="2" fill="{_COLORS['GRAY_MEDIUM']}"/>
+        <g>
+            <rect x="18" y="13" width="16" height="2.5" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <rect x="18" y="21" width="16" height="2.5" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <rect x="18" y="29" width="16" height="2.5" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <rect x="18" y="37" width="10" height="2.5" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
+        </g>
     </svg>
     """
 
     CREATE = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Background circle -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <circle cx="24" cy="24" r="18" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <rect x="21" y="10" width="6" height="28" rx="2" fill="url(#primary-gradient)"/>
+            <rect x="10" y="21" width="28" height="6" rx="2" fill="url(#primary-gradient)"/>
         </g>
-        <!-- Plus symbol -->
-        <rect x="22" y="14" width="4" height="20" fill="{_COLORS['WHITE']}"/>
-        <rect x="14" y="22" width="20" height="4" fill="{_COLORS['WHITE']}"/>
     </svg>
     """
 
     HELP = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Background circle -->
-        <g filter="url(#win10-shadow)">
-            <circle cx="24" cy="24" r="18" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        </g>
-        <!-- Question mark -->
-        <path d="M24,32a2,2,0,1,1-2-2A2,2,0,0,1,24,32Z" fill="{_COLORS['WHITE']}"/>
-        <path d="M18,18c0-3.3,2.7-6,6-6s6,2.7,6,6c0,2-1,3-2,4l-1,1v3h-6v-4l2-2c1-1,1-1,1-2a2,2,0,0,0-4,0H18z" fill="{_COLORS['WHITE']}"/>
+        {_DEFS}
+        <circle cx="24" cy="24" r="18" fill="url(#primary-gradient)" filter="url(#win10-shadow)"/>
+        <path d="M19 18a5 5 0 0 1 5-5c2.76 0 5 2.24 5 5 0 2.76-2.24 5-5 5v1" 
+              stroke="{_COLORS['WHITE']}" stroke-width="{_STROKE_WIDTH}" fill="none" stroke-linecap="round" opacity="0.9"/>
+        <circle cx="24" cy="31" r="2.5" fill="{_COLORS['WHITE']}" opacity="0.9"/>
     </svg>
     """
 
     REFRESH = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Refresh arrow -->
-        <g filter="url(#win10-shadow)">
-            <path d="M24,8A16,16,0,1,0,35.2,19.6" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round"/>
-            <!-- Arrow head -->
-            <path d="M32,12 L38,18 L32,24" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        {_DEFS}
+        <g filter="url(#win10-shadow)" transform="rotate(15, 24, 24)">
+            <path d="M35 28A11 11 0 1 1 31.6 14.5M35 15V21H29" 
+                  stroke="url(#primary-gradient)" stroke-width="{_STROKE_WIDTH}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </g>
     </svg>
     """
 
     EXPORT = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Document -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <rect x="10" y="8" width="20" height="28" rx="2" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_LIGHT']}" stroke-width="1"/>
-            <path d="M26,8 L30,12 L30,36 L26,36 Z" fill="{_COLORS['GRAY_LIGHT']}"/>
-            <path d="M26,8 L30,12 L26,12 Z" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <path d="M16 22l8-8 8 8M24 14v16" 
+                  stroke="url(#primary-gradient)" stroke-width="{_STROKE_WIDTH}" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <rect x="12" y="34" width="24" height="4" rx="1.5" fill="url(#gray-gradient)"/>
         </g>
-        <!-- Export arrow -->
-        <path d="M32,20 L38,20 M35,17 L38,20 L35,23" stroke="{_COLORS['SUCCESS_GREEN']}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </svg>
     """
 
     FOLDER = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Folder structure -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <!-- Back part -->
-            <path d="M6,14V36h32V18H20l-3-4H6z" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <!-- Front part -->
-            <path d="M6,18V38h32V18H6z" fill="{_COLORS['LIGHT_BLUE']}"/>
-            <!-- Subtle highlight -->
-            <path d="M6,18h32v2H6z" fill="rgba(255,255,255,0.2)"/>
+            <path d="M8 12h13l4 4h15v20H8z" fill="url(#primary-gradient)"/>
+            <path d="M40,17 L40,36 H8 V15 H22 l3-3 H8 a1,1 0,0,0 -1,1 V36 a1,1 0,0,0 1,1 H40 a1,1 0,0,0 1-1 V17 a1,1 0,0,0 -1,-1 z" fill="{_COLORS['DARK_BLUE']}" opacity="0.4"/>
         </g>
     </svg>
     """
 
     SETTINGS = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Settings gear - simplified Windows 10 style -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <path d="M24,6c-1.1,0-2,0.9-2,2v2.1c-1.3,0.2-2.5,0.6-3.6,1.2l-1.5-1.5c-0.8-0.8-2-0.8-2.8,0l-2.8,2.8c-0.8,0.8-0.8,2,0,2.8l1.5,1.5c-0.6,1.1-1,2.3-1.2,3.6H10c-1.1,0-2,0.9-2,2v4c0,1.1,0.9,2,2,2h2.1c0.2,1.3,0.6,2.5,1.2,3.6l-1.5,1.5c-0.8,0.8-0.8,2,0,2.8l2.8,2.8c0.8,0.8,2,0.8,2.8,0l1.5-1.5c1.1,0.6,2.3,1,3.6,1.2V38c0,1.1,0.9,2,2,2h4c1.1,0,2-0.9,2-2v-2.1c1.3-0.2,2.5-0.6,3.6-1.2l1.5,1.5c0.8,0.8,2,0.8,2.8,0l2.8-2.8c0.8-0.8,0.8-2,0-2.8l-1.5-1.5c0.6-1.1,1-2.3,1.2-3.6H38c1.1,0,2-0.9,2-2v-4c0-1.1-0.9-2-2-2h-2.1c-0.2-1.3-0.6-2.5-1.2-3.6l1.5-1.5c0.8-0.8,0.8-2,0-2.8l-2.8-2.8c-0.8-0.8-2-0.8-2.8,0l-1.5,1.5c-1.1-0.6-2.3-1-3.6-1.2V8c0-1.1-0.9-2-2-2H24z" fill="{_COLORS['GRAY_MEDIUM']}"/>
-            <!-- Center circle -->
-            <circle cx="24" cy="24" r="6" fill="{_COLORS['BACKGROUND']}" stroke="{_COLORS['GRAY_DARK']}" stroke-width="1.5"/>
+            <circle cx="24" cy="24" r="10" fill="url(#gray-gradient)"/>
+            <path d="M24 10v4M24 34v4M14 14l3 3M31 31l-3-3M10 24h4M34 24h4M14 34l3-3M31 17l-3 3" 
+                  stroke="{_COLORS['GRAY_DARK']}" stroke-width="{_STROKE_WIDTH}" stroke-linecap="round"/>
+            <circle cx="24" cy="24" r="5" fill="url(#primary-gradient)"/>
+            <circle cx="24" cy="24" r="2" fill="{_COLORS['WHITE']}"/>
         </g>
     </svg>
     """
 
     DELETE = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Trash can - Windows 10 style -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <!-- Handle -->
-            <rect x="20" y="8" width="8" height="4" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
-            <!-- Lid -->
-            <rect x="14" y="12" width="20" height="3" rx="1.5" fill="{_COLORS['GRAY_MEDIUM']}"/>
-            <!-- Body -->
-            <path d="M16,15 L32,15 L31,36 L17,36 Z" fill="{_COLORS['ERROR_RED']}"/>
-            <!-- Delete lines -->
-            <rect x="20" y="19" width="1.5" height="12" fill="{_COLORS['WHITE']}"/>
-            <rect x="23.25" y="19" width="1.5" height="12" fill="{_COLORS['WHITE']}"/>
-            <rect x="26.5" y="19" width="1.5" height="12" fill="{_COLORS['WHITE']}"/>
+            <path d="M15 12h18v4H15z" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <path d="M17 16h14v22a2 2 0 0 1-2 2H19a2 2 0 0 1-2-2V16z" fill="url(#error-gradient)"/>
+            <path d="M21 19v15M27 19v15" stroke="{_COLORS['WHITE']}" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
         </g>
     </svg>
     """
 
     REMOVE = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Remove X in circle -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <circle cx="24" cy="24" r="18" fill="{_COLORS['ERROR_RED']}"/>
-            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <path d="M14 14l20 20M34 14L14 34" stroke="url(#error-gradient)" stroke-width="4" stroke-linecap="round"/>
         </g>
-        <!-- X mark -->
-        <path d="M17,17 L31,31 M17,31 L31,17" stroke="{_COLORS['WHITE']}" stroke-width="3" stroke-linecap="round"/>
     </svg>
     """
 
     PLAY = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Play button -->
-        <g filter="url(#win10-shadow)">
-            <circle cx="24" cy="24" r="18" fill="{_COLORS['SUCCESS_GREEN']}"/>
-            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        </g>
-        <!-- Play triangle -->
-        <path d="M19,16 L33,24 L19,32 Z" fill="{_COLORS['WHITE']}"/>
+        {_DEFS}
+        <path d="M16 12l20 12-20 12V12z" fill="url(#success-gradient)" filter="url(#win10-shadow)"/>
     </svg>
     """
 
     STOP = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Stop button -->
-        <g filter="url(#win10-shadow)">
-            <circle cx="24" cy="24" r="18" fill="{_COLORS['ERROR_RED']}"/>
-            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        </g>
-        <!-- Stop square -->
-        <rect x="16" y="16" width="16" height="16" rx="2" fill="{_COLORS['WHITE']}"/>
+        {_DEFS}
+        <rect x="14" y="14" width="20" height="20" rx="2" fill="url(#error-gradient)" filter="url(#win10-shadow)"/>
     </svg>
     """
 
     DROPDOWN_ARROW = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <path d="M16,20 L24,28 L32,20" fill="none" stroke="{_COLORS['GRAY_DARK']}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M14 20l10 10 10-10" fill="none" stroke="{_COLORS['GRAY_DARK']}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     """
 
     CHECKBOX_CHECK = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Checkbox -->
-        <g filter="url(#win10-shadow)">
-            <rect x="10" y="10" width="28" height="28" rx="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="10" y="10" width="28" height="28" rx="2" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        </g>
-        <!-- Checkmark -->
-        <path d="M16,24 L22,30 L34,18" stroke="{_COLORS['WHITE']}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        {_DEFS}
+        <rect x="12" y="12" width="24" height="24" rx="3" fill="url(#primary-gradient)" filter="url(#win10-shadow)"/>
+        <path d="M18 24l6 6 10-10" stroke="{_COLORS['WHITE']}" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     """
 
-    ERROR_CROSS = REMOVE  # Reuse for consistency
-
     MONITOR = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Monitor -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <!-- Stand -->
-            <rect x="20" y="38" width="8" height="4" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
-            <rect x="18" y="35" width="12" height="3" rx="1" fill="{_COLORS['GRAY_MEDIUM']}"/>
-            <!-- Screen bezel -->
-            <rect x="6" y="8" width="36" height="27" rx="2" fill="{_COLORS['GRAY_DARK']}"/>
-            <!-- Screen -->
-            <rect x="9" y="11" width="30" height="21" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <!-- Screen content -->
-            <rect x="12" y="14" width="24" height="2" fill="{_COLORS['WHITE']}" opacity="0.7"/>
-            <rect x="12" y="18" width="18" height="2" fill="{_COLORS['WHITE']}" opacity="0.5"/>
-            <rect x="12" y="22" width="20" height="2" fill="{_COLORS['WHITE']}" opacity="0.6"/>
+            <rect x="6" y="10" width="36" height="24" rx="2" fill="{_COLORS['GRAY_DARK']}"/>
+            <rect x="8" y="12" width="32" height="20" fill="{_COLORS['DARK_BLUE']}"/>
+            <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="{_COLORS['PRIMARY_BLUE_LIGHT']}" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="{_COLORS['DARK_BLUE']}" stop-opacity="0"/>
+            </radialGradient>
+            <rect x="8" y="12" width="32" height="20" fill="url(#glow)"/>
+            <path d="M20 34h8v4h-8z" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <path d="M16 38h16v2H16z" fill="{_COLORS['GRAY_MEDIUM']}" rx="1"/>
         </g>
     </svg>
     """
 
     SPINNER = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <!-- Loading spinner -->
-        <circle cx="24" cy="24" r="16" fill="none" stroke="{_COLORS['GRAY_LIGHT']}" stroke-width="3"/>
-        <circle cx="24" cy="24" r="16" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round" stroke-dasharray="25 75">
+        {_DEFS}
+        <circle cx="24" cy="24" r="16" fill="none" stroke="url(#gray-gradient)" stroke-width="3" opacity="0.3"/>
+        <circle cx="24" cy="24" r="16" fill="none" stroke="url(#primary-gradient)" stroke-width="3.5" 
+                stroke-dasharray="30 70" stroke-linecap="round">
             <animateTransform attributeName="transform" type="rotate" from="0 24 24" to="360 24 24" dur="1s" repeatCount="indefinite"/>
         </circle>
     </svg>
@@ -285,164 +241,123 @@ class AppIcons:
 
     INFO = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Info circle -->
-        <g filter="url(#win10-shadow)">
-            <circle cx="24" cy="24" r="18" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        {_DEFS}
+        <circle cx="24" cy="24" r="18" fill="url(#primary-gradient)" filter="url(#win10-shadow)"/>
+        <g fill="{_COLORS['WHITE']}" opacity="0.9">
+            <circle cx="24" cy="17" r="2.5"/>
+            <rect x="21.5" y="23" width="5" height="12" rx="2.5"/>
         </g>
-        <!-- Info symbol -->
-        <rect x="22" y="20" width="4" height="14" fill="{_COLORS['WHITE']}"/>
-        <circle cx="24" cy="15" r="2.5" fill="{_COLORS['WHITE']}"/>
     </svg>
     """
 
     ARROW_DOWN = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Down arrow -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <path d="M24,8 L24,34 M16,26 L24,34 L32,26" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M24 12v20m-8-8l8 8 8-8" stroke="url(#primary-gradient)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </g>
     </svg>
     """
 
     ARROW_UP = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Up arrow -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <path d="M24,40 L24,14 M16,22 L24,14 L32,22" stroke="{_COLORS['SUCCESS_GREEN']}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M24 36V16m-8 8l8-8 8 8" stroke="url(#success-gradient)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </g>
     </svg>
     """
 
     SEARCH = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Search icon -->
-        <g filter="url(#win10-shadow)">
-            <circle cx="20" cy="20" r="10" fill="none" stroke="{_COLORS['GRAY_DARK']}" stroke-width="3"/>
-            <path d="M28,28 L38,38" stroke="{_COLORS['GRAY_DARK']}" stroke-width="3" stroke-linecap="round"/>
+        {_DEFS}
+        <g filter="url(#win10-shadow)" transform="translate(4, 4)">
+            <circle cx="17" cy="17" r="10" stroke="url(#gray-gradient)" stroke-width="{_STROKE_WIDTH}" fill="none"/>
+            <path d="M25 25l8 8" stroke="url(#gray-gradient)" stroke-width="3.5" stroke-linecap="round"/>
         </g>
     </svg>
     """
 
     CHART_BAR = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Bar chart -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <rect x="8" y="24" width="6" height="16" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="18" y="16" width="6" height="24" fill="{_COLORS['SUCCESS_GREEN']}"/>
-            <rect x="28" y="20" width="6" height="20" fill="{_COLORS['WARNING_ORANGE']}"/>
-            <rect x="38" y="12" width="6" height="28" fill="{_COLORS['ERROR_RED']}"/>
+            <rect x="8" y="28" width="7" height="10" rx="1.5" fill="url(#primary-gradient)"/>
+            <rect x="18" y="22" width="7" height="16" rx="1.5" fill="url(#success-gradient)"/>
+            <rect x="28" y="16" width="7" height="22" rx="1.5" fill="url(#warning-gradient)"/>
+            <rect x="38" y="10" width="7" height="28" rx="1.5" fill="url(#error-gradient)"/>
         </g>
     </svg>
     """
 
     FLOW_CONTROL = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Flow arrows -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <path d="M8,16 L34,16 M28,10 L34,16 L28,22" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <path d="M40,32 L14,32 M20,26 L14,32 L20,38" stroke="{_COLORS['SUCCESS_GREEN']}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M12 18h20m-6-6l6 6-6 6" stroke="url(#primary-gradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M36 30H16m6 6l-6-6 6-6" stroke="url(#success-gradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </g>
     </svg>
     """
 
     SIGNAL = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <!-- Signal strength -->
-        <rect x="8" y="32" width="4" height="8" fill="{_COLORS['SUCCESS_GREEN']}"/>
-        <rect x="16" y="24" width="4" height="16" fill="{_COLORS['SUCCESS_GREEN']}"/>
-        <rect x="24" y="16" width="4" height="24" fill="{_COLORS['SUCCESS_GREEN']}"/>
-        <rect x="32" y="8" width="4" height="32" fill="{_COLORS['GRAY_LIGHT']}"/>
+        {_DEFS}
+        <g filter="url(#win10-shadow)" transform="translate(0, 4)">
+            <rect x="10" y="26" width="6" height="6" rx="2" fill="url(#success-gradient)"/>
+            <rect x="18" y="20" width="6" height="12" rx="2" fill="url(#success-gradient)"/>
+            <rect x="26" y="14" width="6" height="18" rx="2" fill="url(#success-gradient)"/>
+            <rect x="34" y="8" width="6" height="24" rx="2" fill="url(#gray-gradient)" opacity="0.5"/>
+        </g>
     </svg>
     """
 
     BUFFER = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Buffer blocks -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <rect x="8" y="16" width="8" height="16" rx="1" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="20" y="16" width="8" height="16" rx="1" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="32" y="16" width="8" height="16" rx="1" fill="{_COLORS['GRAY_LIGHT']}"/>
+            <rect x="8" y="18" width="10" height="12" rx="2" fill="url(#primary-gradient)"/>
+            <rect x="19" y="18" width="10" height="12" rx="2" fill="url(#primary-gradient)"/>
+            <rect x="30" y="18" width="10" height="12" rx="2" fill="url(#gray-gradient)" opacity="0.6"/>
         </g>
     </svg>
     """
 
     CLOCK = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Clock -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <circle cx="24" cy="24" r="18" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_MEDIUM']}" stroke-width="2"/>
-            <!-- Clock hands -->
-            <circle cx="24" cy="24" r="1.5" fill="{_COLORS['GRAY_DARK']}"/>
-            <path d="M24,24 L24,12" stroke="{_COLORS['GRAY_DARK']}" stroke-width="2" stroke-linecap="round"/>
-            <path d="M24,24 L32,24" stroke="{_COLORS['GRAY_DARK']}" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="24" cy="24" r="18" fill="{_COLORS['BACKGROUND']}" stroke="{_COLORS['GRAY_MEDIUM']}" stroke-width="1"/>
+            <circle cx="24" cy="24" r="17" fill="{_COLORS['WHITE']}"/>
+            <circle cx="24" cy="24" r="2" fill="{_COLORS['GRAY_DARK']}"/>
+            <rect x="23" y="12" width="2" height="12" rx="1" fill="{_COLORS['GRAY_DARK']}" transform="rotate(15, 24, 24)"/>
+            <rect x="23" y="18" width="2" height="8" rx="1" fill="{_COLORS['GRAY_DARK']}" transform="rotate(90, 24, 24)"/>
         </g>
     </svg>
     """
 
     PORT = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Serial port connector -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <!-- Connector body -->
-            <rect x="12" y="16" width="24" height="16" rx="2" fill="{_COLORS['GRAY_MEDIUM']}" stroke="{_COLORS['GRAY_DARK']}" stroke-width="1"/>
-            <!-- Connector pins -->
-            <rect x="16" y="20" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="22" y="20" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="28" y="20" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="16" y="26" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="22" y="26" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="28" y="26" width="3" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <!-- Cable -->
-            <rect x="8" y="22" width="4" height="4" rx="2" fill="{_COLORS['GRAY_DARK']}"/>
-            <rect x="36" y="22" width="4" height="4" rx="2" fill="{_COLORS['GRAY_DARK']}"/>
+            <rect x="12" y="18" width="24" height="12" rx="2" fill="url(#gray-gradient)"/>
+            <g fill="{_COLORS['GRAY_DARK']}">
+                <circle cx="17" cy="24" r="1.5"/><circle cx="21" cy="24" r="1.5"/><circle cx="25" cy="24" r="1.5"/><circle cx="29" cy="24" r="1.5"/>
+            </g>
         </g>
     </svg>
     """
 
     CONFIGURE = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Configuration panel -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <!-- Panel background -->
-            <rect x="8" y="12" width="32" height="24" rx="2" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_MEDIUM']}" stroke-width="1"/>
-            <!-- Sliders -->
-            <rect x="12" y="18" width="24" height="2" fill="{_COLORS['GRAY_LIGHT']}"/>
-            <rect x="24" y="16" width="4" height="6" rx="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="12" y="24" width="24" height="2" fill="{_COLORS['GRAY_LIGHT']}"/>
-            <rect x="18" y="22" width="4" height="6" rx="2" fill="{_COLORS['SUCCESS_GREEN']}"/>
-            <rect x="12" y="30" width="24" height="2" fill="{_COLORS['GRAY_LIGHT']}"/>
-            <rect x="30" y="28" width="4" height="6" rx="2" fill="{_COLORS['WARNING_ORANGE']}"/>
+            <rect x="12" y="16" width="24" height="4" rx="2" fill="{_COLORS['GRAY_LIGHT']}"/>
+            <rect x="12" y="24" width="24" height="4" rx="2" fill="{_COLORS['GRAY_LIGHT']}"/>
+            <rect x="12" y="32" width="24" height="4" rx="2" fill="{_COLORS['GRAY_LIGHT']}"/>
+            <circle cx="28" cy="18" r="5" fill="url(#primary-gradient)"/>
+            <circle cx="20" cy="26" r="5" fill="url(#success-gradient)"/>
+            <circle cx="32" cy="34" r="5" fill="url(#warning-gradient)"/>
         </g>
     </svg>
     """
@@ -450,260 +365,88 @@ class AppIcons:
     # Com0com Settings Icons - Small 16x16 icons for inline display
     TIMING_CLOCK = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-        <defs>
-            <filter id="timing-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
-                <feOffset dx="0" dy="1" result="offsetblur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.12"/>
-                <feComposite in2="offsetblur" operator="in"/>
-                <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-            </filter>
-            <linearGradient id="clockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:{_COLORS['WHITE']};stop-opacity:1" />
-                <stop offset="100%" style="stop-color:{_COLORS['BACKGROUND']};stop-opacity:1" />
-            </linearGradient>
-            <linearGradient id="dialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:{_COLORS['PRIMARY_BLUE']};stop-opacity:1" />
-                <stop offset="100%" style="stop-color:{_COLORS['DARK_BLUE']};stop-opacity:1" />
-            </linearGradient>
-        </defs>
-        <!-- Clock face -->
-        <g filter="url(#timing-shadow)">
-            <!-- Outer rim -->
-            <circle cx="8" cy="8" r="6.5" fill="url(#dialGradient)" opacity="0.8"/>
-            <circle cx="8" cy="8" r="6" fill="url(#clockGradient)" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1.5"/>
-            
-            <!-- Hour markers with colors -->
-            <rect x="7.5" y="2.5" width="1" height="2" fill="{_COLORS['SUCCESS_GREEN']}" rx="0.2"/>
-            <rect x="12.5" y="7.5" width="2" height="1" fill="{_COLORS['WARNING_ORANGE']}" rx="0.2"/>
-            <rect x="7.5" y="12.5" width="1" height="2" fill="{_COLORS['ERROR_RED']}" rx="0.2"/>
-            <rect x="1.5" y="7.5" width="2" height="1" fill="{_COLORS['LIGHT_BLUE']}" rx="0.2"/>
-            
-            <!-- Quarter markers -->
-            <circle cx="8" cy="3" r="0.5" fill="{_COLORS['SUCCESS_GREEN']}" opacity="0.7"/>
-            <circle cx="13" cy="8" r="0.5" fill="{_COLORS['WARNING_ORANGE']}" opacity="0.7"/>
-            <circle cx="8" cy="13" r="0.5" fill="{_COLORS['ERROR_RED']}" opacity="0.7"/>
-            <circle cx="3" cy="8" r="0.5" fill="{_COLORS['LIGHT_BLUE']}" opacity="0.7"/>
-            
-            <!-- Center hub with metallic effect -->
-            <circle cx="8" cy="8" r="1.2" fill="{_COLORS['GRAY_MEDIUM']}" opacity="0.9"/>
-            <circle cx="8" cy="8" r="0.8" fill="{_COLORS['GRAY_DARK']}"/>
-            
-            <!-- Clock hands with enhanced colors -->
-            <rect x="7.5" y="4" width="1" height="4" fill="{_COLORS['PRIMARY_BLUE']}" rx="0.2"/>
-            <rect x="8" y="7.5" width="3" height="1" fill="{_COLORS['SUCCESS_GREEN']}" rx="0.2"/>
-            
-            <!-- Timing indicator arc - enhanced -->
-            <path d="M 8 2 A 6 6 0 0 1 11.5 4.5" fill="none" stroke="{_COLORS['WARNING_ORANGE']}" stroke-width="1.5" stroke-dasharray="0.8,0.4" opacity="0.9"/>
-            
-            <!-- Frequency indicator -->
-            <rect x="12" y="3" width="1.5" height="1.5" rx="0.3" fill="{_COLORS['SUCCESS_GREEN']}" opacity="0.8"/>
-            <rect x="12.2" y="3.2" width="1.1" height="1.1" rx="0.2" fill="{_COLORS['WHITE']}" opacity="0.3"/>
-            
-            <!-- Digital timing marks -->
-            <rect x="4" y="4" width="0.5" height="0.5" fill="{_COLORS['LIGHT_BLUE']}" rx="0.1" opacity="0.6"/>
-            <rect x="11.5" y="4" width="0.5" height="0.5" fill="{_COLORS['LIGHT_BLUE']}" rx="0.1" opacity="0.6"/>
-            <rect x="4" y="11.5" width="0.5" height="0.5" fill="{_COLORS['LIGHT_BLUE']}" rx="0.1" opacity="0.6"/>
-            <rect x="11.5" y="11.5" width="0.5" height="0.5" fill="{_COLORS['LIGHT_BLUE']}" rx="0.1" opacity="0.6"/>
+        {_DEFS}
+        <g filter="url(#win10-shadow-small)">
+            <circle cx="8" cy="8" r="7" fill="{_COLORS['WHITE']}" stroke="{_COLORS['GRAY_MEDIUM']}" stroke-width="0.5"/>
+            <rect x="7.5" y="4" width="1" height="4" rx="0.5" fill="{_COLORS['GRAY_DARK']}"/>
+            <rect x="8" y="7.5" width="3" height="1" rx="0.5" fill="{_COLORS['GRAY_DARK']}"/>
+            <circle cx="8" cy="8" r="1" fill="{_COLORS['GRAY_DARK']}"/>
         </g>
     </svg>
     """
 
     BUFFER_STACK = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-        <defs>
-            <filter id="buffer-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
-                <feOffset dx="0" dy="1" result="offsetblur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.12"/>
-                <feComposite in2="offsetblur" operator="in"/>
-                <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-            </filter>
-        </defs>
-        <!-- Buffer blocks with Windows 10 styling -->
-        <g filter="url(#buffer-shadow)">
-            <rect x="2" y="10" width="4" height="4" rx="1" fill="{_COLORS['SUCCESS_GREEN']}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-            <rect x="6" y="8" width="4" height="6" rx="1" fill="{_COLORS['SUCCESS_GREEN']}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-            <rect x="10" y="6" width="4" height="8" rx="1" fill="{_COLORS['WARNING_ORANGE']}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-            <!-- Data flow indicators (Windows 10 style) -->
-            <path d="M4.5,11.5 L5.5,10.5" stroke="{_COLORS['WHITE']}" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
-            <path d="M8.5,10.5 L9.5,9.5" stroke="{_COLORS['WHITE']}" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
-            <!-- Buffer level indicators -->
-            <rect x="2.5" y="11" width="3" height="0.5" fill="{_COLORS['WHITE']}" opacity="0.7"/>
-            <rect x="6.5" y="9" width="3" height="0.5" fill="{_COLORS['WHITE']}" opacity="0.7"/>
-            <rect x="10.5" y="7" width="3" height="0.5" fill="{_COLORS['WHITE']}" opacity="0.5"/>
+        {_DEFS}
+        <g filter="url(#win10-shadow-small)">
+            <rect x="2" y="10" width="12" height="4" rx="1" fill="url(#warning-gradient)"/>
+            <rect x="2" y="6" width="12" height="4" rx="1" fill="url(#success-gradient)"/>
+            <rect x="2" y="2" width="12" height="4" rx="1" fill="url(#success-gradient)"/>
         </g>
     </svg>
     """
 
     EXCLUSIVE_LOCK = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-        <defs>
-            <filter id="lock-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
-                <feOffset dx="0" dy="1" result="offsetblur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.12"/>
-                <feComposite in2="offsetblur" operator="in"/>
-                <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-            </filter>
-        </defs>
-        <!-- Lock with Windows 10 styling -->
-        <g filter="url(#lock-shadow)">
-            <!-- Lock shackle -->
-            <path d="M5,6 L5,4 A3,3 0 0,1 11,4 L11,6" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1.5" stroke-linecap="round"/>
-            <!-- Lock body -->
-            <rect x="4" y="6" width="8" height="7" rx="1" fill="{_COLORS['PRIMARY_BLUE']}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-            <!-- Lock highlight (Windows 10 style) -->
-            <rect x="4" y="6" width="8" height="2" rx="1" fill="rgba(255,255,255,0.2)"/>
-            <!-- Keyhole -->
-            <circle cx="8" cy="9" r="1" fill="{_COLORS['WHITE']}"/>
-            <rect x="7.5" y="9" width="1" height="2" fill="{_COLORS['WHITE']}"/>
-            <!-- Exclusive indicator -->
-            <rect x="11.5" y="3.5" width="3" height="3" rx="0.5" fill="{_COLORS['ERROR_RED']}" opacity="0.9"/>
-            <rect x="12.5" y="4.5" width="1" height="1" fill="{_COLORS['WHITE']}"/>
+        {_DEFS}
+        <g filter="url(#win10-shadow-small)">
+            <path d="M4 7V5.5A4 4 0 0 1 8 1.5a4 4 0 0 1 4 4V7" 
+                  stroke="url(#gray-gradient)" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <rect x="3" y="7" width="10" height="7" rx="1.5" fill="url(#primary-gradient)"/>
+            <circle cx="8" cy="10.5" r="1" fill="{_COLORS['WHITE']}"/>
         </g>
     </svg>
     """
 
     PLUGIN_CONNECTOR = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-        <defs>
-            <filter id="plugin-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
-                <feOffset dx="0" dy="1" result="offsetblur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.12"/>
-                <feComposite in2="offsetblur" operator="in"/>
-                <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-            </filter>
-        </defs>
-        <!-- Connector with Windows 10 styling -->
-        <g filter="url(#plugin-shadow)">
-            <!-- Connector body -->
-            <rect x="3" y="6" width="10" height="4" rx="1" fill="{_COLORS['GRAY_MEDIUM']}" stroke="{_COLORS['GRAY_DARK']}" stroke-width="1"/>
-            <!-- Connector highlight -->
-            <rect x="3" y="6" width="10" height="1.5" rx="1" fill="rgba(255,255,255,0.2)"/>
-            <!-- Connector pins (Windows 10 style) -->
-            <rect x="5" y="7" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="7" y="7" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="9" y="7" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="5" y="8.2" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="7" y="8.2" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="9" y="8.2" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <!-- Cable connections -->
-            <rect x="1" y="7" width="2" height="2" rx="1" fill="{_COLORS['GRAY_DARK']}"/>
-            <rect x="13" y="7" width="2" height="2" rx="1" fill="{_COLORS['GRAY_DARK']}"/>
-            <!-- Connection status indicator -->
-            <circle cx="12" cy="4" r="1.5" fill="{_COLORS['SUCCESS_GREEN']}" opacity="0.8"/>
-            <rect x="11.5" y="3.5" width="1" height="1" fill="{_COLORS['WHITE']}"/>
+        {_DEFS}
+        <g filter="url(#win10-shadow-small)">
+            <rect x="2" y="6" width="12" height="4" rx="1" fill="url(#gray-gradient)"/>
+            <g fill="{_COLORS['GRAY_DARK']}">
+                <rect x="4" y="7" width="1.5" height="2"/><rect x="7.25" y="7" width="1.5" height="2"/><rect x="10.5" y="7" width="1.5" height="2"/>
+            </g>
         </g>
     </svg>
     """
 
     GITHUB = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-        <defs>
-            <filter id="github-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
-                <feOffset dx="0" dy="0.5" result="offsetblur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.1"/>
-                <feComposite in2="offsetblur" operator="in"/>
-                <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-            </filter>
-        </defs>
-        <!-- GitHub logo -->
-        <g filter="url(#github-shadow)">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" fill="{_COLORS['PRIMARY_BLUE']}"/>
-        </g>
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" 
+              fill="{_COLORS['GRAY_DARK']}"/>
     </svg>
     """
-    
-    # Additional icons for terminal enhancements
-    PLUS = f"""
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Plus symbol -->
-        <g filter="url(#win10-shadow)">
-            <rect x="22" y="12" width="4" height="24" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="12" y="22" width="24" height="4" fill="{_COLORS['PRIMARY_BLUE']}"/>
-        </g>
-    </svg>
-    """
-    
+
+    PLUS = CREATE 
+
     MINUS = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Minus symbol -->
-        <g filter="url(#win10-shadow)">
-            <rect x="12" y="22" width="24" height="4" fill="{_COLORS['PRIMARY_BLUE']}"/>
-        </g>
+        {_DEFS}
+        <rect x="10" y="21" width="28" height="6" rx="2" fill="url(#primary-gradient)" filter="url(#win10-shadow)"/>
     </svg>
     """
-    
+
     PAUSE = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Pause button -->
-        <g filter="url(#win10-shadow)">
-            <circle cx="24" cy="24" r="18" fill="{_COLORS['WARNING_ORANGE']}"/>
-            <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        </g>
-        <!-- Pause bars -->
-        <rect x="18" y="16" width="4" height="16" fill="{_COLORS['WHITE']}"/>
-        <rect x="26" y="16" width="4" height="16" fill="{_COLORS['WHITE']}"/>
-    </svg>
-    """
-    
-    CHEVRON_DOWN = f"""
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Chevron down -->
-        <g filter="url(#win10-shadow)">
-            <path d="M16,18 L24,26 L32,18" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        {_DEFS}
+        <g filter="url(#win10-shadow)" fill="url(#warning-gradient)">
+            <rect x="16" y="14" width="6" height="20" rx="2"/>
+            <rect x="26" y="14" width="6" height="20" rx="2"/>
         </g>
     </svg>
     """
-    
+
+    CHEVRON_DOWN = DROPDOWN_ARROW # Alias for DROPDOWN_ARROW
+
     WRAP_TEXT = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        <defs>
-            {_WIN10_SHADOW}
-        </defs>
-        <!-- Word wrap lines -->
+        {_DEFS}
         <g filter="url(#win10-shadow)">
-            <rect x="8" y="12" width="32" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="8" y="18" width="32" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="8" y="24" width="24" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="8" y="30" width="20" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="8" y="36" width="28" height="2" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <!-- Wrap indicator -->
-            <path d="M32,24 L32,30 L28,26" fill="none" stroke="{_COLORS['SUCCESS_GREEN']}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="8" y="12" width="32" height="3" rx="1.5" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <rect x="8" y="19" width="32" height="3" rx="1.5" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <rect x="8" y="26" width="20" height="3" rx="1.5" fill="{_COLORS['GRAY_MEDIUM']}"/>
+            <path d="M36 27.5l-6 6v-4h-20" fill="none" stroke="url(#primary-gradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="8" y="33" width="28" height="3" rx="1.5" fill="{_COLORS['GRAY_MEDIUM']}"/>
         </g>
     </svg>
     """
-    
-    # Font sizing icon aliases
-    FONT_INCREASE = PLUS
-    FONT_DECREASE = MINUS
