@@ -407,7 +407,7 @@ class HelpContentRegistry:
         <li>The new ports should appear in the port lists</li>
     </ol>
 
-    <div class="warning-box">
+    <div class="warning-box" >
     <h3>⚠️ Enterprise Security Considerations</h3>
     <p><b>Corporate/Offshore Networks:</b> Group Policy or security software may prevent COM0COM installation:</p>
     <ul>
@@ -1211,7 +1211,7 @@ class HelpContentRegistry:
     <li><b>Integration:</b> Bridge applications that need shared serial access</li>
 </ul>
 
-<div class="warning-box">
+<div class="warning-box" style="background-color: {AppColors.BACKGROUND_WHITE};" >
     <h3>System Requirements</h3>
     <ul>
         <li>Windows 10 or later (for full functionality)</li>
@@ -1221,7 +1221,7 @@ class HelpContentRegistry:
     </ul>
 </div>
 
-<div class="footer-box" style="margin-top: 30px; background-color: {AppColors.BACKGROUND_LIGHT}; border-top: 2px solid {AppColors.BORDER_LIGHT}; padding: 15px;">
+<div class="footer-box" style="margin-top: 30px; background-color: {AppColors.BACKGROUND_WHITE}; border-top: 2px solid {AppColors.BORDER_LIGHT}; padding: 15px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
         <div style="text-align: left;">
             <p style="margin: 0; font-size: 10pt; color: {AppColors.TEXT_DEFAULT};">

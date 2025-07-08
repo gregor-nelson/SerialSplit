@@ -1781,7 +1781,7 @@ class HTMLTheme:
             
             /* Windows 10 Card Components */
             .info-box {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
+                background-color: {AppColors.BACKGROUND_WHITE};
                 border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
                 border-left: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.INFO_PRIMARY};
                 padding: {AppDimensions.PADDING_BUTTON_LARGE};
@@ -1804,7 +1804,7 @@ class HTMLTheme:
             }}
             
             .warning-box {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
+                background-color: {AppColors.BACKGROUND_WHITE};
                 border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
                 border-left: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.WARNING_PRIMARY};
                 padding: {AppDimensions.PADDING_BUTTON_LARGE};
@@ -1833,7 +1833,7 @@ class HTMLTheme:
                 text-align: center;
                 margin-top: {AppDimensions.SPACING_XXLARGE}px;
                 padding: {AppDimensions.PADDING_BUTTON_LARGE};
-                background-color: {AppColors.BACKGROUND_LIGHT};
+                background-color: {AppColors.BACKGROUND_WHITE};
                 border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
                 border-radius: {AppDimensions.BORDER_RADIUS_MODERN}px;
                 position: relative;
@@ -1859,7 +1859,7 @@ class HTMLTheme:
             }}
             /* Windows 10 Code & Inline Elements */
             code {{
-                background: {AppColors.GRAY_200};
+                background: {AppColors.BACKGROUND_WHITE};
                 padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
                 font-family: {AppFonts.CONSOLE_FAMILY};
                 font-size: {AppFonts.SMALL_SIZE};
@@ -1892,7 +1892,7 @@ class HTMLTheme:
             }}
             
             .code-inline {{
-                background: {AppColors.GRAY_200};
+                background: {AppColors.BACKGROUND_WHITE};
                 padding: {AppDimensions.PADDING_SMALL} {AppDimensions.PADDING_MEDIUM};
                 font-family: {AppFonts.CONSOLE_FAMILY};
                 font-size: {AppFonts.SMALL_SIZE};
@@ -1903,7 +1903,7 @@ class HTMLTheme:
             
             /* Windows 10 Status Components */
             .status-box {{
-                background-color: {AppColors.BACKGROUND_LIGHT};
+                background-color: {AppColors.BACKGROUND_WHITE};
                 border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
                 border-left: {AppDimensions.BORDER_WIDTH_THICK}px solid {AppColors.ACCENT_BLUE};
                 padding: {AppDimensions.PADDING_MEDIUM};
@@ -1915,7 +1915,7 @@ class HTMLTheme:
             }}
             
             .moxa-section {{
-                background-color: {AppColors.GRAY_100};
+                background-color: {AppColors.BACKGROUND_WHITE};
                 padding: {AppDimensions.PADDING_BUTTON_LARGE};
                 margin-top: {AppDimensions.SPACING_XLARGE}px;
                 border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_LIGHT};
@@ -1960,7 +1960,7 @@ class HTMLTheme:
             }}
             
             .port-details {{
-                background-color: {AppColors.GRAY_100};
+                background-color: {AppColors.BACKGROUND_WHITE};
                 padding: {AppDimensions.PADDING_MEDIUM};
                 margin: {AppDimensions.SPACING_SMALL}px 0;
                 border-left: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ACCENT_BLUE};
