@@ -104,10 +104,10 @@ class FeatureIconDelegate(QStyledItemDelegate):
     def _get_icon_for_feature(self, feature_name):
         """Get icon and color for feature name"""
         feature_map = {
-            "Baud Rate Timing": ("TIMING_CLOCK", AppColors.PRIMARY_BLUE),
-            "Buffer Overrun": ("BUFFER_STACK", AppColors.ACCENT_YELLOW),
-            "Exclusive Mode": ("EXCLUSIVE_LOCK", AppColors.ACCENT_RED),
-            "Plug-In Mode": ("PLUGIN_CONNECTOR", AppColors.ACCENT_GREEN)
+            "Baud Rate Timing": ("TIMING_CLOCK", AppColors.TEXT_PRIMARY),
+            "Buffer Overrun": ("BUFFER_STACK", AppColors.TEXT_PRIMARY),
+            "Exclusive Mode": ("EXCLUSIVE_LOCK", AppColors.TEXT_PRIMARY),
+            "Plug-In Mode": ("PLUGIN_CONNECTOR", AppColors.TEXT_PRIMARY)
         }
         return feature_map.get(feature_name, (None, AppColors.TEXT_DEFAULT))
 

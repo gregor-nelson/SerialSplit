@@ -452,23 +452,62 @@ class AppIcons:
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
         <defs>
             <filter id="timing-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
-                <feOffset dx="0" dy="0.5" result="offsetblur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.1"/>
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
+                <feOffset dx="0" dy="1" result="offsetblur"/>
+                <feFlood flood-color="#000000" flood-opacity="0.12"/>
                 <feComposite in2="offsetblur" operator="in"/>
                 <feMerge>
                     <feMergeNode/>
                     <feMergeNode in="SourceGraphic"/>
                 </feMerge>
             </filter>
+            <linearGradient id="clockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:{_COLORS['WHITE']};stop-opacity:1" />
+                <stop offset="100%" style="stop-color:{_COLORS['BACKGROUND']};stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="dialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:{_COLORS['PRIMARY_BLUE']};stop-opacity:1" />
+                <stop offset="100%" style="stop-color:{_COLORS['DARK_BLUE']};stop-opacity:1" />
+            </linearGradient>
         </defs>
         <!-- Clock face -->
         <g filter="url(#timing-shadow)">
-            <circle cx="8" cy="8" r="6" fill="{_COLORS['WHITE']}" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1.5"/>
-            <!-- Clock hands -->
-            <circle cx="8" cy="8" r="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <path d="M8,8 L8,4" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1.2" stroke-linecap="round"/>
-            <path d="M8,8 L11,8" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1" stroke-linecap="round"/>
+            <!-- Outer rim -->
+            <circle cx="8" cy="8" r="6.5" fill="url(#dialGradient)" opacity="0.8"/>
+            <circle cx="8" cy="8" r="6" fill="url(#clockGradient)" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1.5"/>
+            
+            <!-- Hour markers with colors -->
+            <rect x="7.5" y="2.5" width="1" height="2" fill="{_COLORS['SUCCESS_GREEN']}" rx="0.2"/>
+            <rect x="12.5" y="7.5" width="2" height="1" fill="{_COLORS['WARNING_ORANGE']}" rx="0.2"/>
+            <rect x="7.5" y="12.5" width="1" height="2" fill="{_COLORS['ERROR_RED']}" rx="0.2"/>
+            <rect x="1.5" y="7.5" width="2" height="1" fill="{_COLORS['LIGHT_BLUE']}" rx="0.2"/>
+            
+            <!-- Quarter markers -->
+            <circle cx="8" cy="3" r="0.5" fill="{_COLORS['SUCCESS_GREEN']}" opacity="0.7"/>
+            <circle cx="13" cy="8" r="0.5" fill="{_COLORS['WARNING_ORANGE']}" opacity="0.7"/>
+            <circle cx="8" cy="13" r="0.5" fill="{_COLORS['ERROR_RED']}" opacity="0.7"/>
+            <circle cx="3" cy="8" r="0.5" fill="{_COLORS['LIGHT_BLUE']}" opacity="0.7"/>
+            
+            <!-- Center hub with metallic effect -->
+            <circle cx="8" cy="8" r="1.2" fill="{_COLORS['GRAY_MEDIUM']}" opacity="0.9"/>
+            <circle cx="8" cy="8" r="0.8" fill="{_COLORS['GRAY_DARK']}"/>
+            
+            <!-- Clock hands with enhanced colors -->
+            <rect x="7.5" y="4" width="1" height="4" fill="{_COLORS['PRIMARY_BLUE']}" rx="0.2"/>
+            <rect x="8" y="7.5" width="3" height="1" fill="{_COLORS['SUCCESS_GREEN']}" rx="0.2"/>
+            
+            <!-- Timing indicator arc - enhanced -->
+            <path d="M 8 2 A 6 6 0 0 1 11.5 4.5" fill="none" stroke="{_COLORS['WARNING_ORANGE']}" stroke-width="1.5" stroke-dasharray="0.8,0.4" opacity="0.9"/>
+            
+            <!-- Frequency indicator -->
+            <rect x="12" y="3" width="1.5" height="1.5" rx="0.3" fill="{_COLORS['SUCCESS_GREEN']}" opacity="0.8"/>
+            <rect x="12.2" y="3.2" width="1.1" height="1.1" rx="0.2" fill="{_COLORS['WHITE']}" opacity="0.3"/>
+            
+            <!-- Digital timing marks -->
+            <rect x="4" y="4" width="0.5" height="0.5" fill="{_COLORS['LIGHT_BLUE']}" rx="0.1" opacity="0.6"/>
+            <rect x="11.5" y="4" width="0.5" height="0.5" fill="{_COLORS['LIGHT_BLUE']}" rx="0.1" opacity="0.6"/>
+            <rect x="4" y="11.5" width="0.5" height="0.5" fill="{_COLORS['LIGHT_BLUE']}" rx="0.1" opacity="0.6"/>
+            <rect x="11.5" y="11.5" width="0.5" height="0.5" fill="{_COLORS['LIGHT_BLUE']}" rx="0.1" opacity="0.6"/>
         </g>
     </svg>
     """
@@ -477,9 +516,9 @@ class AppIcons:
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
         <defs>
             <filter id="buffer-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
-                <feOffset dx="0" dy="0.5" result="offsetblur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.1"/>
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
+                <feOffset dx="0" dy="1" result="offsetblur"/>
+                <feFlood flood-color="#000000" flood-opacity="0.12"/>
                 <feComposite in2="offsetblur" operator="in"/>
                 <feMerge>
                     <feMergeNode/>
@@ -487,11 +526,18 @@ class AppIcons:
                 </feMerge>
             </filter>
         </defs>
-        <!-- Buffer blocks -->
+        <!-- Buffer blocks with Windows 10 styling -->
         <g filter="url(#buffer-shadow)">
-            <rect x="2" y="10" width="4" height="4" rx="0.5" fill="{_COLORS['SUCCESS_GREEN']}"/>
-            <rect x="6" y="8" width="4" height="6" rx="0.5" fill="{_COLORS['SUCCESS_GREEN']}"/>
-            <rect x="10" y="6" width="4" height="8" rx="0.5" fill="{_COLORS['WARNING_ORANGE']}"/>
+            <rect x="2" y="10" width="4" height="4" rx="1" fill="{_COLORS['SUCCESS_GREEN']}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <rect x="6" y="8" width="4" height="6" rx="1" fill="{_COLORS['SUCCESS_GREEN']}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <rect x="10" y="6" width="4" height="8" rx="1" fill="{_COLORS['WARNING_ORANGE']}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <!-- Data flow indicators (Windows 10 style) -->
+            <path d="M4.5,11.5 L5.5,10.5" stroke="{_COLORS['WHITE']}" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+            <path d="M8.5,10.5 L9.5,9.5" stroke="{_COLORS['WHITE']}" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+            <!-- Buffer level indicators -->
+            <rect x="2.5" y="11" width="3" height="0.5" fill="{_COLORS['WHITE']}" opacity="0.7"/>
+            <rect x="6.5" y="9" width="3" height="0.5" fill="{_COLORS['WHITE']}" opacity="0.7"/>
+            <rect x="10.5" y="7" width="3" height="0.5" fill="{_COLORS['WHITE']}" opacity="0.5"/>
         </g>
     </svg>
     """
@@ -500,9 +546,9 @@ class AppIcons:
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
         <defs>
             <filter id="lock-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
-                <feOffset dx="0" dy="0.5" result="offsetblur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.1"/>
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
+                <feOffset dx="0" dy="1" result="offsetblur"/>
+                <feFlood flood-color="#000000" flood-opacity="0.12"/>
                 <feComposite in2="offsetblur" operator="in"/>
                 <feMerge>
                     <feMergeNode/>
@@ -510,15 +556,20 @@ class AppIcons:
                 </feMerge>
             </filter>
         </defs>
-        <!-- Lock -->
+        <!-- Lock with Windows 10 styling -->
         <g filter="url(#lock-shadow)">
             <!-- Lock shackle -->
             <path d="M5,6 L5,4 A3,3 0 0,1 11,4 L11,6" fill="none" stroke="{_COLORS['PRIMARY_BLUE']}" stroke-width="1.5" stroke-linecap="round"/>
             <!-- Lock body -->
-            <rect x="4" y="6" width="8" height="7" rx="1" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="4" y="6" width="8" height="7" rx="1" fill="{_COLORS['PRIMARY_BLUE']}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <!-- Lock highlight (Windows 10 style) -->
+            <rect x="4" y="6" width="8" height="2" rx="1" fill="rgba(255,255,255,0.2)"/>
             <!-- Keyhole -->
             <circle cx="8" cy="9" r="1" fill="{_COLORS['WHITE']}"/>
             <rect x="7.5" y="9" width="1" height="2" fill="{_COLORS['WHITE']}"/>
+            <!-- Exclusive indicator -->
+            <rect x="11.5" y="3.5" width="3" height="3" rx="0.5" fill="{_COLORS['ERROR_RED']}" opacity="0.9"/>
+            <rect x="12.5" y="4.5" width="1" height="1" fill="{_COLORS['WHITE']}"/>
         </g>
     </svg>
     """
@@ -527,9 +578,9 @@ class AppIcons:
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
         <defs>
             <filter id="plugin-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
-                <feOffset dx="0" dy="0.5" result="offsetblur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.1"/>
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
+                <feOffset dx="0" dy="1" result="offsetblur"/>
+                <feFlood flood-color="#000000" flood-opacity="0.12"/>
                 <feComposite in2="offsetblur" operator="in"/>
                 <feMerge>
                     <feMergeNode/>
@@ -537,20 +588,25 @@ class AppIcons:
                 </feMerge>
             </filter>
         </defs>
-        <!-- Connector -->
+        <!-- Connector with Windows 10 styling -->
         <g filter="url(#plugin-shadow)">
             <!-- Connector body -->
-            <rect x="3" y="6" width="10" height="4" rx="1" fill="{_COLORS['GRAY_MEDIUM']}" stroke="{_COLORS['GRAY_DARK']}" stroke-width="0.5"/>
-            <!-- Connector pins -->
-            <rect x="5" y="7" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="7" y="7" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="9" y="7" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="5" y="8.2" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="7" y="8.2" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <rect x="9" y="8.2" width="1" height="0.8" fill="{_COLORS['PRIMARY_BLUE']}"/>
-            <!-- Cable -->
+            <rect x="3" y="6" width="10" height="4" rx="1" fill="{_COLORS['GRAY_MEDIUM']}" stroke="{_COLORS['GRAY_DARK']}" stroke-width="1"/>
+            <!-- Connector highlight -->
+            <rect x="3" y="6" width="10" height="1.5" rx="1" fill="rgba(255,255,255,0.2)"/>
+            <!-- Connector pins (Windows 10 style) -->
+            <rect x="5" y="7" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="7" y="7" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="9" y="7" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="5" y="8.2" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="7" y="8.2" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <rect x="9" y="8.2" width="1" height="0.8" rx="0.2" fill="{_COLORS['PRIMARY_BLUE']}"/>
+            <!-- Cable connections -->
             <rect x="1" y="7" width="2" height="2" rx="1" fill="{_COLORS['GRAY_DARK']}"/>
             <rect x="13" y="7" width="2" height="2" rx="1" fill="{_COLORS['GRAY_DARK']}"/>
+            <!-- Connection status indicator -->
+            <circle cx="12" cy="4" r="1.5" fill="{_COLORS['SUCCESS_GREEN']}" opacity="0.8"/>
+            <rect x="11.5" y="3.5" width="1" height="1" fill="{_COLORS['WHITE']}"/>
         </g>
     </svg>
     """

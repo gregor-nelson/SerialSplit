@@ -1435,18 +1435,17 @@ class Hub4comGUI(QMainWindow):
         indicators = []
         params = params_a + " " + params_b
         
-        # Custom SVG icon mapping with distinct colors
+        # Use existing theme constants for consistency
         indicators_map = {
-            "EmuBR=yes": ("Baud Rate Timing", "TIMING_CLOCK", AppColors.PRIMARY_BLUE),      # Blue
-            "EmuOverrun=yes": ("Buffer Overrun", "BUFFER_STACK", AppColors.ACCENT_YELLOW),   # Yellow/Orange  
-            "ExclusiveMode=yes": ("Exclusive Mode", "EXCLUSIVE_LOCK", AppColors.ACCENT_RED), # Red
-            "PlugInMode=yes": ("Plug-In Mode", "PLUGIN_CONNECTOR", AppColors.ACCENT_GREEN)  # Green
+            "EmuBR=yes": ("Baud Rate Timing", "TIMING_CLOCK", AppColors.ACCENT_BLUE),      # Theme blue
+            "EmuOverrun=yes": ("Buffer Overrun", "BUFFER_STACK", AppColors.ACCENT_TEAL),    # Theme teal  
+            "ExclusiveMode=yes": ("Exclusive Mode", "EXCLUSIVE_LOCK", AppColors.ACCENT_RED), # Theme red
+            "PlugInMode=yes": ("Plug-In Mode", "PLUGIN_CONNECTOR", AppColors.ACCENT_GREEN)   # Theme green
         }
         
         for param, (name, icon_key, color) in indicators_map.items():
             if param in params:
-                # Use simple icon prefix with colored text for now
-                # We'll create actual SVG icons in the list item itself
+                # Simple text - color will be handled by the delegate if needed
                 indicators.append(f'● {name}')
         
         return ', '.join(indicators)

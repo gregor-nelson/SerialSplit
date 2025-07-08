@@ -277,7 +277,7 @@ class AppDimensions:
     # === ADDITIONAL PADDING VALUES ===
     PADDING_TAB = "4px 12px"            # Tab padding (from tab_manager_widget.py)
     PADDING_COMPACT = "2px 0px"         # Compact padding (from gui.py)
-    PADDING_BUTTON_DETAILED = "4px 10px 4px 26px"  # Detailed button padding (from gui.py)
+    PADDING_BUTTON_DETAILED = "4px 18px 4px 18px"  # Detailed button padding (from gui.py)
     PADDING_LAYOUT_SMALL = "8px 4px"    # Small layout padding (from gui.py)
 
 class AppMessages:
@@ -344,7 +344,7 @@ class AppStyles:
             base_style += f"""
             QPushButton {{
                 background-color: {AppColors.ACCENT_BLUE};
-                color: {AppColors.TEXT_WHITE};
+                color: {AppColors.TEXT_DEFAULT};
                 border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ACCENT_BLUE};
             }}
             QPushButton:hover {{
