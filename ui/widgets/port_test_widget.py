@@ -283,7 +283,7 @@ class SerialPortTestWidget(QWidget):
         self.results_widget = QWidget()
         self.results_widget.setStyleSheet(f"""
             QWidget {{
-                background-color: {AppColors.BACKGROUND_WHITE};
+                background-color: {AppColors.BACKGROUND_LIGHT};
             }}
         """)
         

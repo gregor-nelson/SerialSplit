@@ -16,8 +16,6 @@ from dataclasses import dataclass
 from typing import Optional, Callable
 from .icons.icons import AppIcons
 
-
-
 @dataclass
 class AppColors:
     """Exact Windows 10 system color palette from registry and theme specifications
@@ -130,9 +128,9 @@ class AppColors:
     CMD_HIGHLIGHT = "#ffffff"            # White for emphasis (255, 255, 255)
     CMD_DIAGRAM = "#cccccc"              # Light gray for ASCII diagrams (204, 204, 204)
     
-    CHECKBOX_BORDER_COLOR = "#666666"        # Checkbox border - dark gray (102, 102, 102)
-    CHECKBOX_CHECK_BACKGROUND = "#1e90ff"    # Checkbox checked background - brighter blue (30, 144, 255)
-    CHECKBOX_CHECK_COLOR = "#ffffff"         # Checkbox checkmark color - white (255, 255, 255)
+    CHECKBOX_BORDER_COLOR = "#2d2d2d"        # Checkbox border - dark gray (102, 102, 102)
+    CHECKBOX_CHECK_BACKGROUND = "#2d2d2d"    # Checkbox checked background - brighter blue (30, 144, 255)
+    CHECKBOX_CHECK_COLOR = "#1e90ff"         # Checkbox checkmark color - white (255, 255, 255)
     
     GRAY_50 = "#1a1a1a"                 # Darkest gray (26, 26, 26)
     GRAY_100 = "#2a2a2a"                # Very dark gray (42, 42, 42)
@@ -142,7 +140,6 @@ class AppColors:
     ACCENT_PRIMARY = ACCENT_BLUE         # Consolidated blue accent (#1e90ff)
     BACKGROUND_SECONDARY = BACKGROUND_LIGHT  # Consolidated dark gray background (#2d2d2d)
     BORDER_SECONDARY = BORDER_LIGHT      # Consolidated light border (#404040)
-
 
 @dataclass
 class AppFonts:
@@ -165,7 +162,6 @@ class AppFonts:
     FONT_SIZE_LARGE = 10          # Large font size (from launch_dialog.py)
     
     CONSOLE_FAMILY = "Consolas, 'Courier New', monospace"  # Console font family
-
 
 @dataclass 
 class AppDimensions:
@@ -284,7 +280,6 @@ class AppDimensions:
     PADDING_BUTTON_DETAILED = "4px 10px 4px 26px"  # Detailed button padding (from gui.py)
     PADDING_LAYOUT_SMALL = "8px 4px"    # Small layout padding (from gui.py)
 
-
 class AppMessages:
     """Centralized messages for consistency"""
     READY = "Ready"
@@ -306,7 +301,6 @@ class AppMessages:
     BUTTON_ROUTE_MODE = "Route Mode: {mode} ▼"
     BUTTON_PORT_LABEL = "Port {number}:"
     BUTTON_SET_ALL = "Set All:"
-
 
 class AppStyles:
     """Exact Windows 10 system stylesheets matching native controls"""
@@ -1060,7 +1054,6 @@ class AppStyles:
         }}
         """
     
-    
 class IconManager:
     """Enhanced icon manager with Windows 10 system icon support"""
     
@@ -1155,7 +1148,6 @@ class IconManager:
         
         # Return data URI
         return f"data:image/png;base64,{base64_data}"
-
 
 class ThemeManager:
     """Enhanced theme manager with Windows 10 system accuracy"""

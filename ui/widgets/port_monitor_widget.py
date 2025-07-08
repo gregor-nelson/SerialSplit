@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QLabel, QPushButton,
 from PyQt6.QtCore import Qt, QTimer, QPointF, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor, QPen, QLinearGradient, QBrush, QPolygonF
 import time
+from datetime import datetime
 
 from core.core import SerialPortInfo, SerialPortMonitor
 from ui.theme.theme import ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts
@@ -16,7 +17,7 @@ from ui.theme.icons.icons import AppIcons
 
 
 class CombinedDataChart(QWidget):
-    """Combined RX/TX data chart with professional styling"""
+    """Combined RX/TX data chart with professional styling and overlay statistics"""
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -28,6 +29,11 @@ class CombinedDataChart(QWidget):
         self.timestamps = []
         self.max_points = 120  # Higher resolution for smoother curves and better granularity
         self.max_value = 1
+        
+        # Advanced statistics for overlay - always show with default values
+        from core.core import AdvancedStatistics
+        self.advanced_stats = AdvancedStatistics()
+        self.show_overlays = True  # Always show overlays
         
     def add_values(self, rx_value: float, tx_value: float):
         """Add new RX and TX values with timestamp"""
@@ -56,7 +62,27 @@ class CombinedDataChart(QWidget):
         self.tx_data.clear()
         self.timestamps.clear()
         self.max_value = 1
+        # Reset stats to default values but keep showing overlay
+        from core.core import AdvancedStatistics
+        self.advanced_stats = AdvancedStatistics()
         self.update()
+    
+    def set_advanced_stats(self, stats):
+        """Set advanced statistics for overlay display"""
+        if stats is not None:
+            self.advanced_stats = stats
+        # Always keep showing overlays
+        self.show_overlays = True
+        self.update()
+    
+    def _format_rate(self, rate):
+        """Format rate value for display"""
+        if rate < 1024:
+            return f"{rate:.0f} B/s"
+        elif rate < 1024 * 1024:
+            return f"{rate/1024:.1f} K/s"
+        else:
+            return f"{rate/(1024*1024):.1f} M/s"
     
     def paintEvent(self, event):
         """Paint the combined chart"""
@@ -100,6 +126,10 @@ class CombinedDataChart(QWidget):
         if len(self.rx_data) > 1 and self.max_value > 0:
             self._draw_data_line(painter, self.rx_data, QColor(AppColors.ACCENT_GREEN), margin_left, margin_top, chart_width, chart_height)  # Green for RX
             self._draw_data_line(painter, self.tx_data, QColor(AppColors.ACCENT_BLUE), margin_left, margin_top, chart_width, chart_height)  # Blue for TX
+        
+        # Always draw overlay statistics
+        if self.show_overlays:
+            self._draw_overlay_panels(painter)
     
     def _draw_data_line(self, painter, data, color, margin_left, margin_top, chart_width, chart_height):
         """Draw a data line with fill area within chart bounds"""
@@ -108,11 +138,14 @@ class CombinedDataChart(QWidget):
         
         x_step = chart_width / (len(data) - 1)
         
+        # Use only 75% of chart height for data scaling (top 25% reserved for overlay text)
+        data_height = chart_height * 0.75
+        
         # Create path for line within chart area
         points = []
         for i, value in enumerate(data):
             x = margin_left + i * x_step
-            y = margin_top + chart_height - (value / self.max_value * chart_height)
+            y = margin_top + chart_height - (value / self.max_value * data_height)
             points.append((x, y))
         
         # Draw fill area
@@ -138,6 +171,102 @@ class CombinedDataChart(QWidget):
             x1, y1 = points[i-1]
             x2, y2 = points[i]
             painter.drawLine(int(x1), int(y1), int(x2), int(y2))
+    
+    def _draw_overlay_panels(self, painter):
+        """Draw clean text-only overlay statistics on the chart"""
+        # Use default stats if none provided
+        if not self.advanced_stats:
+            from core.core import AdvancedStatistics
+            stats = AdvancedStatistics()
+        else:
+            stats = self.advanced_stats
+        
+        # Font setup for clean text overlays
+        font = painter.font()
+        font.setFamily(AppFonts.CONSOLE.family())
+        font.setPointSize(8)  # Smaller font for compact display
+        painter.setFont(font)
+        
+        # Text spacing
+        line_height = painter.fontMetrics().height()
+        text_spacing = 2  # Compact spacing between lines
+        
+        # Use chart margins for positioning
+        margin_left = AppDimensions.CHART_MARGIN_LEFT
+        margin_right = AppDimensions.CHART_MARGIN_RIGHT
+        margin_top = AppDimensions.CHART_MARGIN_TOP
+        
+        # Left panel: Peak/Average rates (top-left corner) - side by side layout
+        rx_peak_text = f"RX Pk: {self._format_rate(stats.rx_peak_rate)}"
+        rx_avg_text = f"RX Avg: {self._format_rate(stats.rx_average_rate)}"
+        tx_peak_text = f"TX Pk: {self._format_rate(stats.tx_peak_rate)}"
+        tx_avg_text = f"TX Avg: {self._format_rate(stats.tx_average_rate)}"
+        
+        # Calculate column widths for side-by-side layout
+        rx_peak_width = painter.fontMetrics().horizontalAdvance(rx_peak_text)
+        rx_avg_width = painter.fontMetrics().horizontalAdvance(rx_avg_text)
+        column_spacing = 20  # Space between RX and TX columns
+        
+        # Left panel positioning (top-left corner)
+        left_panel_x = margin_left
+        left_panel_y = margin_top
+        
+        # Draw left panel - Row 1: Peak rates (RX and TX side by side)
+        row1_y = left_panel_y + line_height
+        
+        # RX Peak (left column)
+        self._draw_outlined_text(painter, left_panel_x, row1_y, rx_peak_text, QColor(AppColors.TEXT_DEFAULT))
+        
+        # TX Peak (right column)
+        tx_peak_x = left_panel_x + max(rx_peak_width, rx_avg_width) + column_spacing
+        self._draw_outlined_text(painter, tx_peak_x, row1_y, tx_peak_text, QColor(AppColors.TEXT_DEFAULT))
+        
+        # Draw left panel - Row 2: Average rates (RX and TX side by side)
+        row2_y = row1_y + line_height + text_spacing
+        
+        # RX Average (left column)
+        self._draw_outlined_text(painter, left_panel_x, row2_y, rx_avg_text, QColor(AppColors.TEXT_DEFAULT))
+        
+        # TX Average (right column)
+        self._draw_outlined_text(painter, tx_peak_x, row2_y, tx_avg_text, QColor(AppColors.TEXT_DEFAULT))
+        
+        # Right panel: Packet and error statistics (top-right corner)
+        total_errors = (stats.rx_errors + stats.tx_errors + 
+                       stats.timeout_errors + stats.buffer_overruns +
+                       stats.framing_errors + stats.parity_errors)
+        
+        avg_gap_ms = stats.average_inter_frame_gap * 1000  # Convert to milliseconds
+        
+        right_panel_lines = [
+            f"Pkts: RX {stats.rx_packet_count}, TX {stats.tx_packet_count}",
+            f"Errors: {total_errors}",
+            f"Gap: {avg_gap_ms:.1f}ms"
+        ]
+        
+        # Calculate right panel positioning (top-right corner)
+        max_width = max(painter.fontMetrics().horizontalAdvance(line) for line in right_panel_lines)
+        right_panel_x = self.width() - max_width - margin_right
+        right_panel_y = margin_top
+        
+        # Draw right panel text with outline for better contrast
+        for i, line in enumerate(right_panel_lines):
+            y_pos = right_panel_y + i * (line_height + text_spacing) + line_height
+            
+            # Use white text for all elements
+            self._draw_outlined_text(painter, right_panel_x, y_pos, line, QColor(AppColors.TEXT_DEFAULT))
+    
+    def _draw_outlined_text(self, painter, x, y, text, color):
+        """Helper method to draw text with outline for better contrast"""
+        # Draw text outline for better readability
+        painter.setPen(QPen(QColor(AppColors.BACKGROUND_LIGHT), 2))
+        painter.drawText(x - 1, y - 1, text)
+        painter.drawText(x + 1, y - 1, text)
+        painter.drawText(x - 1, y + 1, text)
+        painter.drawText(x + 1, y + 1, text)
+        
+        # Draw colored text
+        painter.setPen(QPen(color))
+        painter.drawText(x, y, text)
 
 
 class EnhancedPortInfoWidget(QWidget):
@@ -317,16 +446,18 @@ class EnhancedPortInfoWidget(QWidget):
         control_section = QHBoxLayout()
         control_section.setSpacing(AppDimensions.SPACING_SMALL)
         
-        # Time indicator
+        # Time indicator with dual display
         self.time_label = QLabel("")
         self.time_label.setStyleSheet(f"""
             QLabel {{
-                color: {AppColors.TEXT_DISABLED};
+                color: {AppColors.TEXT_DEFAULT};
                 font-family: {AppFonts.CONSOLE.family()};
                 font-size: {AppFonts.SMALL_SIZE};
                 background: transparent;
+                padding: 2px 4px;
             }}
         """)
+        self.time_label.setToolTip("Elapsed time • Current time")
         self.time_label.setVisible(False)
         control_section.addWidget(self.time_label)
         
@@ -476,6 +607,11 @@ class EnhancedPortInfoWidget(QWidget):
             rx_rate = self.last_stats.get("rx_rate", 0)
             tx_rate = self.last_stats.get("tx_rate", 0)
             self.data_chart.add_values(rx_rate, tx_rate)
+            
+            # Update advanced statistics overlay
+            if hasattr(self.port_monitor, 'get_advanced_stats'):
+                advanced_stats = self.port_monitor.get_advanced_stats()
+                self.data_chart.set_advanced_stats(advanced_stats)
     
     def update_port_info(self, port_info: SerialPortInfo, enhanced_display: str):
         """Update port information display"""
@@ -557,6 +693,7 @@ class EnhancedPortInfoWidget(QWidget):
         self.rx_value.setText("0 B/s")
         self.tx_value.setText("0 B/s")
         self.data_chart.clear_data()
+        # Keep overlay visible with default values
     
     def update_monitoring_stats(self, stats):
         """Update monitoring statistics display"""
@@ -585,12 +722,23 @@ class EnhancedPortInfoWidget(QWidget):
         self.rx_value.setText(rx_text)
         self.tx_value.setText(tx_text)
         
-        # Update time
+        # Update time with dual display: elapsed time and current timestamp
         running_time = int(stats.get("running_time", 0))
+        current_time = datetime.now().strftime("%H:%M:%S")
+        
+        # Format elapsed time
         if running_time < 60:
-            time_str = f"{running_time}s"
+            elapsed_str = f"{running_time}s"
+        elif running_time < 3600:
+            elapsed_str = f"{running_time//60}:{running_time%60:02d}"
         else:
-            time_str = f"{running_time//60}:{running_time%60:02d}"
+            hours = running_time // 3600
+            minutes = (running_time % 3600) // 60
+            seconds = running_time % 60
+            elapsed_str = f"{hours}:{minutes:02d}:{seconds:02d}"
+        
+        # Combine elapsed time and current timestamp
+        time_str = f"{elapsed_str} • {current_time}"
         self.time_label.setText(time_str)
         
         # Dynamic text weight based on activity

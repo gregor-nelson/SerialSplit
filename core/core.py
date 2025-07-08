@@ -65,6 +65,51 @@ class Com0comPortPair:
     port_b_params: Dict[str, str]
 
 
+@dataclass
+class SerialPacketInfo:
+    """Information about a detected serial packet/frame"""
+    timestamp: float
+    size: int
+    direction: str  # 'RX' or 'TX'
+    data: bytes
+    inter_frame_gap: float = 0.0  # Time since last packet
+    has_errors: bool = False
+    error_type: str = ""
+
+
+@dataclass
+class AdvancedStatistics:
+    """Advanced statistics for serial port monitoring"""
+    # Peak/Average rates
+    rx_peak_rate: float = 0.0
+    tx_peak_rate: float = 0.0
+    rx_average_rate: float = 0.0
+    tx_average_rate: float = 0.0
+    
+    # Error tracking
+    rx_errors: int = 0
+    tx_errors: int = 0
+    timeout_errors: int = 0
+    buffer_overruns: int = 0
+    framing_errors: int = 0
+    parity_errors: int = 0
+    
+    # Packet statistics
+    rx_packet_count: int = 0
+    tx_packet_count: int = 0
+    rx_packet_sizes: List[int] = None
+    tx_packet_sizes: List[int] = None
+    average_inter_frame_gap: float = 0.0
+    min_inter_frame_gap: float = float('inf')
+    max_inter_frame_gap: float = 0.0
+    
+    def __post_init__(self):
+        if self.rx_packet_sizes is None:
+            self.rx_packet_sizes = []
+        if self.tx_packet_sizes is None:
+            self.tx_packet_sizes = []
+
+
 class SettingsManager:
     """Manages application settings using QSettings for cross-platform persistence"""
     
@@ -735,7 +780,7 @@ class SerialPortMonitor(QThread):
         self.port_name = port_name
         self.baudrate = baudrate
         
-        # Statistics
+        # Basic statistics
         self.stats = {
             "rx_bytes": 0,
             "tx_bytes": 0,
@@ -747,10 +792,22 @@ class SerialPortMonitor(QThread):
             "is_monitoring": False
         }
         
+        # Advanced statistics
+        self.advanced_stats = AdvancedStatistics()
+        
         # Rate calculation windows
         self.rx_window = []  # List of (timestamp, bytes) tuples
         self.tx_window = []  # List of (timestamp, bytes) tuples
         self.window_size = 2  # seconds for rate calculation
+        
+        # Packet detection
+        self.rx_packets = []  # List of SerialPacketInfo
+        self.tx_packets = []  # List of SerialPacketInfo
+        self.last_rx_timestamp = 0.0
+        self.last_tx_timestamp = 0.0
+        self.packet_gap_threshold = 0.01  # 10ms gap indicates new packet
+        self.current_rx_buffer = bytearray()
+        self.current_tx_buffer = bytearray()
         
         # Operation flags
         self.monitoring = False
@@ -863,6 +920,9 @@ class SerialPortMonitor(QThread):
                             now = time.time()
                             self.rx_window.append((now, len(data)))
                             
+                            # Process for advanced statistics
+                            self._process_rx_data(data, now)
+                            
                             # Emit the data
                             self.data_received.emit(data)
                 
@@ -873,6 +933,12 @@ class SerialPortMonitor(QThread):
                     if self.stats["start_time"]:
                         self.stats["running_time"] = (datetime.now() - self.stats["start_time"]).total_seconds()
                     
+                    # Finalize any pending packets based on timeout
+                    if self.current_rx_buffer and (now - self.last_rx_timestamp) > self.packet_gap_threshold:
+                        self._finalize_rx_packet(self.last_rx_timestamp, now - self.last_rx_timestamp)
+                    if self.current_tx_buffer and (now - self.last_tx_timestamp) > self.packet_gap_threshold:
+                        self._finalize_tx_packet(self.last_tx_timestamp, now - self.last_tx_timestamp)
+                    
                     # Emit updated stats
                     self.stats_updated.emit(self.stats.copy())
                     last_stats_update = now
@@ -882,6 +948,7 @@ class SerialPortMonitor(QThread):
                 
             except Exception as e:
                 self.stats["errors"] += 1
+                self._handle_serial_error(e)
                 self.error_occurred.emit(f"Monitor error: {str(e)}")
                 time.sleep(0.5)  # Wait before retrying
         
@@ -993,6 +1060,9 @@ class SerialPortMonitor(QThread):
                     self.stats["tx_bytes"] += bytes_written
                     now = time.time()
                     self.tx_window.append((now, bytes_written))
+                    
+                    # Process for advanced statistics
+                    self._process_tx_data(data, now)
                 
                 return True
                 
@@ -1003,6 +1073,135 @@ class SerialPortMonitor(QThread):
             self.stats["errors"] += 1
             self.error_occurred.emit(f"TX error: {str(e)}")
             return False
+    
+    def _process_rx_data(self, data, timestamp):
+        """Process received data for packet detection and statistics"""
+        self.current_rx_buffer.extend(data)
+        
+        # Check for packet boundary (gap-based detection)
+        if self.last_rx_timestamp > 0:
+            gap = timestamp - self.last_rx_timestamp
+            if gap > self.packet_gap_threshold and len(self.current_rx_buffer) > 0:
+                # Previous buffer was a complete packet
+                self._finalize_rx_packet(self.last_rx_timestamp, gap)
+        
+        self.last_rx_timestamp = timestamp
+        
+        # Update peak rates
+        if self.stats["rx_rate"] > self.advanced_stats.rx_peak_rate:
+            self.advanced_stats.rx_peak_rate = self.stats["rx_rate"]
+    
+    def _process_tx_data(self, data, timestamp):
+        """Process transmitted data for packet detection and statistics"""
+        self.current_tx_buffer.extend(data)
+        
+        # Check for packet boundary (gap-based detection)
+        if self.last_tx_timestamp > 0:
+            gap = timestamp - self.last_tx_timestamp
+            if gap > self.packet_gap_threshold and len(self.current_tx_buffer) > 0:
+                # Previous buffer was a complete packet
+                self._finalize_tx_packet(self.last_tx_timestamp, gap)
+        
+        self.last_tx_timestamp = timestamp
+        
+        # Update peak rates
+        if self.stats["tx_rate"] > self.advanced_stats.tx_peak_rate:
+            self.advanced_stats.tx_peak_rate = self.stats["tx_rate"]
+    
+    def _finalize_rx_packet(self, timestamp, inter_frame_gap):
+        """Finalize an RX packet and update statistics"""
+        if len(self.current_rx_buffer) == 0:
+            return
+        
+        packet = SerialPacketInfo(
+            timestamp=timestamp,
+            size=len(self.current_rx_buffer),
+            direction="RX",
+            data=bytes(self.current_rx_buffer),
+            inter_frame_gap=inter_frame_gap
+        )
+        
+        self.rx_packets.append(packet)
+        self.advanced_stats.rx_packet_count += 1
+        self.advanced_stats.rx_packet_sizes.append(packet.size)
+        
+        # Update inter-frame gap statistics
+        if inter_frame_gap < self.advanced_stats.min_inter_frame_gap:
+            self.advanced_stats.min_inter_frame_gap = inter_frame_gap
+        if inter_frame_gap > self.advanced_stats.max_inter_frame_gap:
+            self.advanced_stats.max_inter_frame_gap = inter_frame_gap
+        
+        # Update running average
+        total_gaps = sum(p.inter_frame_gap for p in self.rx_packets if p.inter_frame_gap > 0)
+        gap_count = len([p for p in self.rx_packets if p.inter_frame_gap > 0])
+        if gap_count > 0:
+            self.advanced_stats.average_inter_frame_gap = total_gaps / gap_count
+        
+        # Clear buffer for next packet
+        self.current_rx_buffer.clear()
+        
+        # Keep only recent packets (last 1000)
+        if len(self.rx_packets) > 1000:
+            self.rx_packets.pop(0)
+    
+    def _finalize_tx_packet(self, timestamp, inter_frame_gap):
+        """Finalize a TX packet and update statistics"""
+        if len(self.current_tx_buffer) == 0:
+            return
+        
+        packet = SerialPacketInfo(
+            timestamp=timestamp,
+            size=len(self.current_tx_buffer),
+            direction="TX",
+            data=bytes(self.current_tx_buffer),
+            inter_frame_gap=inter_frame_gap
+        )
+        
+        self.tx_packets.append(packet)
+        self.advanced_stats.tx_packet_count += 1
+        self.advanced_stats.tx_packet_sizes.append(packet.size)
+        
+        # Clear buffer for next packet
+        self.current_tx_buffer.clear()
+        
+        # Keep only recent packets (last 1000)
+        if len(self.tx_packets) > 1000:
+            self.tx_packets.pop(0)
+    
+    def _update_advanced_stats(self):
+        """Update advanced statistics calculations"""
+        # Calculate average rates
+        if self.rx_window:
+            total_rx = sum(size for _, size in self.rx_window)
+            time_span = self.rx_window[-1][0] - self.rx_window[0][0] if len(self.rx_window) > 1 else 1
+            self.advanced_stats.rx_average_rate = total_rx / time_span if time_span > 0 else 0
+        
+        if self.tx_window:
+            total_tx = sum(size for _, size in self.tx_window)
+            time_span = self.tx_window[-1][0] - self.tx_window[0][0] if len(self.tx_window) > 1 else 1
+            self.advanced_stats.tx_average_rate = total_tx / time_span if time_span > 0 else 0
+    
+    def get_advanced_stats(self):
+        """Get current advanced statistics"""
+        self._update_advanced_stats()
+        return self.advanced_stats
+    
+    def _handle_serial_error(self, error):
+        """Handle and classify serial errors"""
+        error_str = str(error).lower()
+        
+        if "timeout" in error_str:
+            self.advanced_stats.timeout_errors += 1
+        elif "overrun" in error_str or "buffer" in error_str:
+            self.advanced_stats.buffer_overruns += 1
+        elif "framing" in error_str:
+            self.advanced_stats.framing_errors += 1
+        elif "parity" in error_str:
+            self.advanced_stats.parity_errors += 1
+        else:
+            # Generic error
+            self.advanced_stats.rx_errors += 1 if "rx" in error_str or "read" in error_str else 0
+            self.advanced_stats.tx_errors += 1 if "tx" in error_str or "write" in error_str else 0
 
 
 class SerialPortTester:

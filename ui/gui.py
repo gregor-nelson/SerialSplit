@@ -322,13 +322,13 @@ class Hub4comGUI(QMainWindow):
         """Generate Windows 10 style checkbox icon"""
         if checked:
             svg = f'''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.CHECKBOX_CHECK_COLOR}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
+                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.CHECKBOX_BORDER_COLOR}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
                 <rect x="2" y="2" width="12" height="12" fill="{AppColors.CHECKBOX_CHECK_BACKGROUND}"/>
-                <path d="M4 8l2 2 6-6" stroke="{AppColors.CHECKBOX_CHECK_COLOR}" stroke-width="1" fill="none" stroke-linecap="round"/>
+                <path d="M4 8l2 2 6-6" stroke="{AppColors.CHECKBOX_CHECK_COLOR}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
             </svg>'''
         else:
             svg = f'''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.CHECKBOX_CHECK_COLOR}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
+                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.CHECKBOX_BORDER_COLOR}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
             </svg>'''
         
         renderer = QSvgRenderer(QByteArray(svg.encode()))

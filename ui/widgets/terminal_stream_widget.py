@@ -5,11 +5,13 @@ Provides a simple terminal window for logging incoming serial data
 """
 
 from typing import Optional
+import threading
 
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QPushButton, QTextEdit, QFrame, QSizePolicy)
-from PyQt6.QtCore import Qt, QTimer, pyqtSlot, pyqtSignal
-from PyQt6.QtGui import QTextCursor
+                             QPushButton, QTextEdit, QFrame, QSizePolicy, QMenu, QApplication)
+from PyQt6.QtCore import Qt, QTimer, pyqtSlot, pyqtSignal, QByteArray
+from PyQt6.QtGui import QTextCursor, QAction, QFont, QIcon, QPixmap, QPainter
+from PyQt6.QtSvg import QSvgRenderer
 
 from core.core import SerialPortInfo, SerialPortMonitor
 from ui.theme.theme import (
@@ -30,18 +32,40 @@ class TerminalStreamWidget(QWidget):
         self.current_port: Optional[SerialPortInfo] = None
         self.port_monitor: Optional[SerialPortMonitor] = None
         self.formatter = TerminalStreamFormatter()
-        self.data_buffer = ""  # Buffer for incoming data (string instead of list)
+        self.line_buffer = ""  # Buffer for incomplete lines
         self.buffer_timer = QTimer()
         self.buffer_timer.setSingleShot(True)
         self.buffer_timer.timeout.connect(self._flush_buffer)
-        self.encoding_fallbacks = ['utf-8', 'ascii', 'latin-1']  # Encoding fallback chain
-        self.max_buffer_size = 64 * 1024  # 64KB buffer limit
-        self.max_display_lines = 1000  # Limit terminal display lines
+        self.encoding = 'utf-8'  # Default encoding
         self.hex_display_mode = False  # Toggle for hex display mode
-        self.error_count = 0  # Track consecutive errors
-        self.max_consecutive_errors = 5  # Stop after too many errors
+        
+        # User preference settings
+        self.auto_scroll_enabled = True
+        self.current_font_size = AppFonts.FONT_SIZE_LARGE
+        self.word_wrap_enabled = False
         
         self.init_ui()
+    
+    def checkbox_icon(self, checked: bool) -> QIcon:
+        """Generate Windows 10 style checkbox icon"""
+        if checked:
+            svg = f'''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.CHECKBOX_BORDER_COLOR}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
+                <rect x="2" y="2" width="12" height="12" fill="{AppColors.CHECKBOX_CHECK_BACKGROUND}"/>
+                <path d="M4 8l2 2 6-6" stroke="{AppColors.CHECKBOX_CHECK_COLOR}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            </svg>'''
+        else:
+            svg = f'''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.CHECKBOX_BORDER_COLOR}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
+            </svg>'''
+        
+        renderer = QSvgRenderer(QByteArray(svg.encode()))
+        pixmap = QPixmap(16, 16)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        renderer.render(painter)
+        painter.end()
+        return QIcon(pixmap)
         
     def init_ui(self):
         """Initialize the user interface with theme integration"""
@@ -109,6 +133,27 @@ class TerminalStreamWidget(QWidget):
         control_section = QHBoxLayout()
         control_section.setSpacing(AppDimensions.SPACING_SMALL)
         
+        # Settings button
+        self.settings_btn = QPushButton()
+        self.settings_btn.setFixedSize(24, 24)
+        self.settings_btn.setToolTip("Terminal settings")
+        self.settings_btn.clicked.connect(self.show_settings_menu)
+        self.settings_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent;
+                padding: 0px;
+            }}
+            QPushButton:hover {{
+                background-color: {AppColors.BUTTON_HOVER};
+                border: 1px solid {AppColors.BORDER_DEFAULT};
+            }}
+            QPushButton:pressed {{
+                background-color: {AppColors.BUTTON_PRESSED};
+            }}
+        """)
+        self._update_settings_button_icon()
+        control_section.addWidget(self.settings_btn)
+        
         # Clear button
         self.clear_btn = QPushButton()
         self.clear_btn.setFixedSize(24, 24)
@@ -172,19 +217,13 @@ class TerminalStreamWidget(QWidget):
         # Terminal display area
         self.terminal_display = QTextEdit()
         self.terminal_display.setReadOnly(True)
-        self.terminal_display.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {AppColors.BACKGROUND_WHITE};
-                color: {AppColors.TEXT_DEFAULT};
-                border: none;
-                font-family: {AppFonts.CONSOLE_FAMILY};
-                font-size: {AppFonts.FONT_SIZE_LARGE};
-                selection-background-color: {AppColors.SELECTION_BG};
-                selection-color: {AppColors.SELECTION_TEXT};
-            }}
-        """)
+        self._update_terminal_display_style()
         self.terminal_display.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.terminal_display.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        # Set up custom context menu
+        self.terminal_display.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.terminal_display.customContextMenuRequested.connect(self.show_context_menu)
         
         main_layout.addWidget(self.terminal_display)
         
@@ -212,6 +251,20 @@ class TerminalStreamWidget(QWidget):
         
         self.monitor_btn.setIcon(icon)
         self.monitor_btn.setIconSize(IconManager.get_scaled_size(14))
+    
+    def _update_settings_button_icon(self):
+        """Update settings button icon"""
+        from ui.theme.theme import IconManager
+        
+        # Try SETTINGS, GEAR, or COG icon constants, whichever is available
+        # If none are available, this will need to be adjusted based on your icon constants
+        icon = IconManager.create_svg_icon(
+            AppIcons.SETTINGS,  # Update this to match your available icon constant
+            AppColors.TEXT_DEFAULT,
+            IconManager.get_scaled_size(14)
+        )
+        self.settings_btn.setIcon(icon)
+        self.settings_btn.setIconSize(IconManager.get_scaled_size(14))
     
     def _update_clear_button_icon(self):
         """Update clear button icon"""
@@ -280,6 +333,7 @@ class TerminalStreamWidget(QWidget):
                           port_info.port_type.startswith("Virtual")))
             
             self.monitor_btn.setVisible(can_monitor)
+            self.settings_btn.setVisible(True)  # Always show settings when port is selected
             
             if not can_monitor:
                 self.stop_monitoring()
@@ -303,9 +357,6 @@ class TerminalStreamWidget(QWidget):
             
         # Stop existing monitor
         self.stop_monitoring()
-        
-        # Reset error tracking
-        self.error_count = 0
         
         # Create new monitor
         self.port_monitor = SerialPortMonitor(self.current_port.port_name, 9600)
@@ -338,7 +389,7 @@ class TerminalStreamWidget(QWidget):
             self.port_monitor = None
             
         # Clear buffer and stop timer
-        self.data_buffer = ""
+        self.line_buffer = ""
         self.buffer_timer.stop()
         self._update_monitor_button_icon(False)
         
@@ -356,18 +407,18 @@ class TerminalStreamWidget(QWidget):
         self.formatter.clear(self.terminal_display)
         
         # Clear the data buffer as well
-        self.data_buffer = ""
+        self.line_buffer = ""
         self.buffer_timer.stop()
         
         # If monitoring, add a clear separator
         if self.port_monitor and self.port_monitor.monitoring:
-            self.formatter.append_separator(self.terminal_display, "TERMINAL CLEARED")
+            self.formatter.append_separator(self.terminal_display, "Terminal cleared")
     
     def _handle_incoming_data(self, data: bytes):
-        """Handle incoming serial data with proper CRLF handling and line buffering"""
+        """Handle incoming serial data with proper line buffering"""
         try:
             if self.hex_display_mode:
-                # Display raw hex data with ASCII representation
+                # Display raw hex data
                 hex_data = ' '.join(f'{b:02X}' for b in data)
                 ascii_data = ''.join(chr(b) if 32 <= b < 127 else '.' for b in data)
                 formatted_data = f"HEX: {hex_data} | ASCII: {ascii_data}"
@@ -380,99 +431,24 @@ class TerminalStreamWidget(QWidget):
                 )
                 return
             
-            # Decode bytes with fallback encodings for robustness
-            text_data = self._decode_with_fallback(data)
+            # Decode bytes
+            try:
+                text_data = data.decode(self.encoding)
+            except UnicodeDecodeError:
+                # Try with replacement characters
+                text_data = data.decode(self.encoding, errors='replace')
             
-            # Check if data contains mostly non-printable characters
-            if self._is_likely_binary(data):
-                # Switch to hex mode automatically for binary data
-                self.formatter.append_status(
-                    self.terminal_display,
-                    "Binary data detected - showing hex representation",
-                    "status"
-                )
-                self.hex_display_mode = True
-                self._handle_incoming_data(data)  # Re-process in hex mode
-                return
-            
-            # Normalize line endings - convert CRLF to LF for consistent display
-            # This handles Windows-style CRLF (\r\n) and converts to Unix-style LF (\n)
+            # Normalize line endings
             text_data = text_data.replace('\r\n', '\n').replace('\r', '\n')
             
-            # Add to buffer with size checking
-            self.data_buffer += text_data
+            # Add to line buffer
+            self.line_buffer += text_data
             
-            # Check buffer size and truncate if needed
-            if len(self.data_buffer) > self.max_buffer_size:
-                self.data_buffer = self.data_buffer[-self.max_buffer_size//2:]  # Keep last half
-                self.formatter.append_status(
-                    self.terminal_display,
-                    "Buffer overflow - truncated old data",
-                    "status"
-                )
+            # Process complete lines
+            lines = self.line_buffer.split('\n')
             
-            # Process complete lines immediately
-            self._process_complete_lines()
-            
-            # Start/restart buffer timer as fallback for incomplete lines
-            if self.data_buffer and not self.buffer_timer.isActive():
-                self.buffer_timer.start(1000)  # 1 second timeout for incomplete lines
-                
-        except Exception as e:
-            # Handle errors with recovery mechanism
-            self.error_count += 1
-            error_msg = f"Data processing error #{self.error_count}: {str(e)}"
-            
-            self.formatter.append_status(
-                self.terminal_display,
-                error_msg,
-                "error"
-            )
-            
-            # Stop monitoring if too many consecutive errors
-            if self.error_count >= self.max_consecutive_errors:
-                self.formatter.append_status(
-                    self.terminal_display,
-                    f"Too many consecutive errors ({self.error_count}). Stopping monitoring.",
-                    "error"
-                )
-                self.stop_monitoring()
-        else:
-            # Reset error count on successful processing
-            self.error_count = 0
-    
-    def _decode_with_fallback(self, data: bytes) -> str:
-        """Try multiple encodings to decode data robustly"""
-        for encoding in self.encoding_fallbacks:
-            try:
-                return data.decode(encoding)
-            except UnicodeDecodeError:
-                continue
-        
-        # If all encodings fail, use UTF-8 with replacement characters
-        return data.decode('utf-8', errors='replace')
-    
-    def _is_likely_binary(self, data: bytes) -> bool:
-        """Check if data is likely binary (contains many non-printable characters)"""
-        if len(data) == 0:
-            return False
-        
-        # Count printable characters (ASCII 32-126, plus common control chars)
-        printable_chars = sum(1 for b in data if 32 <= b <= 126 or b in [9, 10, 13])  # Tab, LF, CR
-        binary_threshold = 0.8  # 80% printable characters required for text
-        
-        return (printable_chars / len(data)) < binary_threshold
-    
-    def _process_complete_lines(self):
-        """Process complete lines from the buffer"""
-        if '\n' in self.data_buffer:
-            # Split into lines, keeping the last potentially incomplete line
-            lines = self.data_buffer.split('\n')
-            complete_lines = lines[:-1]  # All but the last line
-            remaining_data = lines[-1]   # The last line (might be incomplete)
-            
-            # Display complete lines
-            for line in complete_lines:
+            # Display all complete lines
+            for line in lines[:-1]:
                 if line:  # Only display non-empty lines
                     self.formatter.append_data(
                         self.terminal_display,
@@ -481,39 +457,42 @@ class TerminalStreamWidget(QWidget):
                         show_timestamp=True
                     )
             
-            # Limit display lines to prevent memory issues
-            self._limit_display_lines()
+            # Keep the last (potentially incomplete) line
+            self.line_buffer = lines[-1]
             
-            # Keep remaining incomplete data in buffer
-            self.data_buffer = remaining_data
-            
-            # Stop timer if buffer is now empty
-            if not self.data_buffer:
+            # Start timer for incomplete lines
+            if self.line_buffer:
                 self.buffer_timer.stop()
+                self.buffer_timer.start(1000)  # 1 second timeout
+                
+        except Exception as e:
+            self.formatter.append_status(
+                self.terminal_display,
+                f"Data processing error: {str(e)}",
+                "error"
+            )
     
     def _flush_buffer(self):
-        """Flush remaining data in buffer (for incomplete lines that timeout)"""
-        if self.data_buffer:
-            # Display any remaining data
+        """Flush remaining data in buffer"""
+        if self.line_buffer:
             self.formatter.append_data(
                 self.terminal_display,
-                self.data_buffer,
+                self.line_buffer,
                 "incoming",
                 show_timestamp=True
             )
-            self.data_buffer = ""
+            self.line_buffer = ""
     
     def _handle_stats_update(self, stats):
-        """Handle monitoring statistics update (optional for terminal)"""
-        # Terminal widget doesn't need to display stats,
-        # but we keep this for compatibility with SerialPortMonitor
+        """Handle monitoring statistics update"""
+        # Terminal widget doesn't display stats
         pass
     
     def _handle_monitoring_error(self, error_msg):
         """Handle monitoring errors"""
         self.formatter.append_status(
             self.terminal_display,
-            f"Monitoring error: {error_msg}",
+            f"Port monitoring failed: {error_msg}",
             "error"
         )
         self.stop_monitoring()
@@ -524,21 +503,166 @@ class TerminalStreamWidget(QWidget):
         self.separator.setVisible(False)
         self.stop_monitoring()
     
-    def _limit_display_lines(self):
-        """Limit terminal display to prevent memory issues"""
-        plain_text = self.terminal_display.toPlainText()
-        lines = plain_text.split('\n')
-        
-        if len(lines) > self.max_display_lines:
-            # Keep last max_display_lines lines
-            truncated_lines = lines[-self.max_display_lines:]
-            self.terminal_display.setPlainText('\n'.join(truncated_lines))
-            
-            # Move cursor to end
-            cursor = self.terminal_display.textCursor()
-            cursor.movePosition(cursor.MoveOperation.End)
-            self.terminal_display.setTextCursor(cursor)
-    
     def get_current_port(self) -> Optional[str]:
         """Get the currently set port name"""
         return self.current_port.port_name if self.current_port else None
+    
+    def show_settings_menu(self):
+        """Show settings menu when gear button is clicked"""
+        # Get the button's global position for menu placement
+        button_pos = self.settings_btn.mapToGlobal(self.settings_btn.rect().bottomLeft())
+        self._show_terminal_menu(button_pos)
+    
+    def show_context_menu(self, position):
+        """Show custom context menu on right-click"""
+        global_pos = self.terminal_display.mapToGlobal(position)
+        self._show_terminal_menu(global_pos)
+    
+
+    def _show_terminal_menu(self, global_position):
+        """Show terminal settings menu at specified position"""
+        context_menu = QMenu(self)
+        
+        # Standard text operations
+        select_all_action = QAction("Select All", self)
+        select_all_action.setShortcut("Ctrl+A")
+        select_all_action.triggered.connect(self.terminal_display.selectAll)
+        context_menu.addAction(select_all_action)
+        
+        copy_action = QAction("Copy", self)
+        copy_action.setShortcut("Ctrl+C")
+        copy_action.setEnabled(self.terminal_display.textCursor().hasSelection())
+        copy_action.triggered.connect(self.terminal_display.copy)
+        context_menu.addAction(copy_action)
+        
+        context_menu.addSeparator()
+        
+        # Font size controls
+        font_menu = context_menu.addMenu("Font Size")
+        
+        increase_font_action = QAction("Increase Font Size", self)
+        increase_font_action.setShortcut("Ctrl++")
+        increase_font_action.triggered.connect(self.increase_font_size)
+        font_menu.addAction(increase_font_action)
+        
+        decrease_font_action = QAction("Decrease Font Size", self)
+        decrease_font_action.setShortcut("Ctrl+-")
+        decrease_font_action.triggered.connect(self.decrease_font_size)
+        font_menu.addAction(decrease_font_action)
+        
+        font_menu.addSeparator()
+        
+        reset_font_action = QAction("Reset Font Size", self)
+        reset_font_action.triggered.connect(self.reset_font_size)
+        font_menu.addAction(reset_font_action)
+        
+        context_menu.addSeparator()
+        
+        # Terminal-specific options
+        auto_scroll_action = QAction("Auto-scroll", self)
+        auto_scroll_action.setIcon(self.checkbox_icon(self.formatter.is_auto_scroll_enabled()))
+        auto_scroll_action.triggered.connect(self.toggle_auto_scroll)
+        context_menu.addAction(auto_scroll_action)
+        
+        word_wrap_action = QAction("Word Wrap", self)
+        word_wrap_action.setIcon(self.checkbox_icon(self.word_wrap_enabled))
+        word_wrap_action.triggered.connect(self.toggle_word_wrap)
+        context_menu.addAction(word_wrap_action)
+        
+        context_menu.addSeparator()
+        
+        # Display mode toggle
+        hex_mode_action = QAction("Hex Display Mode", self)
+        hex_mode_action.setIcon(self.checkbox_icon(self.hex_display_mode))
+        hex_mode_action.triggered.connect(self.toggle_hex_mode)
+        context_menu.addAction(hex_mode_action)
+        
+        context_menu.addSeparator()
+        
+        # Scroll to bottom action
+        scroll_to_bottom_action = QAction("Scroll to Bottom", self)
+        scroll_to_bottom_action.triggered.connect(self.scroll_to_bottom)
+        context_menu.addAction(scroll_to_bottom_action)
+        
+        # Clear terminal
+        clear_action = QAction("Clear Terminal", self)
+        clear_action.triggered.connect(self.clear_terminal)
+        context_menu.addAction(clear_action)
+        
+        # Show the context menu at the specified position
+        context_menu.exec(global_position)
+    
+    def _update_terminal_display_style(self):
+        """Update terminal display style with current settings"""
+        font = QFont(AppFonts.CONSOLE_FAMILY, self.current_font_size)
+        font.setStyleHint(QFont.StyleHint.Monospace)
+        self.terminal_display.setFont(font)
+        
+        # Update stylesheet
+        wrap_mode = "word-wrap" if self.word_wrap_enabled else "nowrap"
+        self.terminal_display.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                color: {AppColors.TEXT_DEFAULT};
+                border: none;
+                selection-background-color: {AppColors.SELECTION_BG};
+                selection-color: {AppColors.SELECTION_TEXT};
+                white-space: {wrap_mode};
+            }}
+        """)
+        
+        if self.word_wrap_enabled:
+            self.terminal_display.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+        else:
+            self.terminal_display.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+    
+    def toggle_auto_scroll(self):
+        """Toggle auto-scroll on/off"""
+        self.auto_scroll_enabled = not self.auto_scroll_enabled
+        self.formatter.set_auto_scroll_enabled(self.auto_scroll_enabled)
+        
+        if self.auto_scroll_enabled:
+            self.formatter.force_scroll_to_bottom(self.terminal_display)
+    
+    def toggle_hex_mode(self):
+        """Toggle hex display mode"""
+        self.hex_display_mode = not self.hex_display_mode
+        
+        if self.hex_display_mode:
+            self.formatter.append_status(
+                self.terminal_display,
+                "Hex display mode enabled",
+                "status"
+            )
+        else:
+            self.formatter.append_status(
+                self.terminal_display,
+                "Hex display mode disabled",
+                "status"
+            )
+    
+    def increase_font_size(self):
+        """Increase terminal font size"""
+        if self.current_font_size < 24:
+            self.current_font_size += 1
+            self._update_terminal_display_style()
+    
+    def decrease_font_size(self):
+        """Decrease terminal font size"""
+        if self.current_font_size > 8:
+            self.current_font_size -= 1
+            self._update_terminal_display_style()
+    
+    def reset_font_size(self):
+        """Reset font size to default"""
+        self.current_font_size = AppFonts.FONT_SIZE_LARGE
+        self._update_terminal_display_style()
+    
+    def toggle_word_wrap(self):
+        """Toggle word wrap on/off"""
+        self.word_wrap_enabled = not self.word_wrap_enabled
+        self._update_terminal_display_style()
+    
+    def scroll_to_bottom(self):
+        """Manually scroll to bottom"""
+        self.formatter.force_scroll_to_bottom(self.terminal_display)
