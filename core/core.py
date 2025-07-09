@@ -440,13 +440,20 @@ class Hub4comProcess(QThread):
     
     def run(self):
         try:
+            # Configure subprocess to hide console window
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+            
             self.process = subprocess.Popen(
                 self.command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
-                universal_newlines=True
+                universal_newlines=True,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                startupinfo=startupinfo
             )
             
             # Wait a moment to check if process starts successfully

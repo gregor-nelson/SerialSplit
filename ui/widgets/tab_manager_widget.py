@@ -83,10 +83,10 @@ class SerialPortManagerWidget(QWidget):
         # Connect tab change events
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
     
-    def set_current_port(self, port_name: str, port_info: Optional[SerialPortInfo] = None):
+    def set_current_port(self, port_name: str, port_info: Optional[SerialPortInfo] = None, baud_rate: int = None):
         """Set the current port in the test and terminal widgets (called from main GUI)"""
         self.test_widget.set_current_port(port_name, port_info)
-        self.terminal_widget.set_current_port(port_name, port_info)
+        self.terminal_widget.set_current_port(port_name, port_info, baud_rate)
     
     def get_current_port(self) -> Optional[str]:
         """Get the currently set port from the test widget"""
@@ -99,14 +99,14 @@ class SerialPortManagerWidget(QWidget):
         pass
     
     # Forward monitor widget methods for compatibility
-    def update_port_info(self, port_info: SerialPortInfo, enhanced_display: str):
+    def update_port_info(self, port_info: SerialPortInfo, enhanced_display: str, baud_rate: int = None):
         """Update port information display"""
         # Update monitor widget
         self.monitor_widget.update_port_info(port_info, enhanced_display)
         
         # Update test and terminal widgets with current port
         self.test_widget.set_current_port(port_info.port_name, port_info)
-        self.terminal_widget.set_current_port(port_info.port_name, port_info)
+        self.terminal_widget.set_current_port(port_info.port_name, port_info, baud_rate)
     
     def set_port_type(self, port_type: str):
         """Set the port type display"""
@@ -118,6 +118,10 @@ class SerialPortManagerWidget(QWidget):
         if hasattr(self.monitor_widget, 'get_monitoring_controls'):
             return self.monitor_widget.get_monitoring_controls()
         return None
+    
+    def update_baud_rate(self, baud_rate: int):
+        """Update baud rate in terminal widget"""
+        self.terminal_widget.update_baud_rate(baud_rate)
     
     def hide_all(self):
         """Hide all port information"""

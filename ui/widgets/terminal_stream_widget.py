@@ -39,6 +39,9 @@ class TerminalStreamWidget(QWidget):
         self.encoding = 'utf-8'  # Default encoding
         self.hex_display_mode = False  # Toggle for hex display mode
         
+        # Dynamic configuration
+        self.current_baud_rate = 9600  # Default baud rate
+        
         # User preference settings
         self.auto_scroll_enabled = True
         self.current_font_size = AppFonts.FONT_SIZE_LARGE
@@ -299,9 +302,13 @@ class TerminalStreamWidget(QWidget):
             }}
         """)
     
-    def set_current_port(self, port_name: str, port_info: Optional[SerialPortInfo] = None):
+    def set_current_port(self, port_name: str, port_info: Optional[SerialPortInfo] = None, baud_rate: int = None):
         """Set the current port for terminal monitoring"""
         self.current_port = port_info
+        
+        # Update baud rate if provided
+        if baud_rate is not None:
+            self.current_baud_rate = baud_rate
         
         if port_name and port_name != "No ports available":
             # Update label to show current port
@@ -324,6 +331,8 @@ class TerminalStreamWidget(QWidget):
                 display_text = f"{port_name}"
                 self._apply_status_style("info")
             
+            # Add baud rate to display text
+            display_text += f" @ {self.current_baud_rate} baud"
             self.port_label.setText(display_text)
             self.header_widget.setVisible(True)
             self.separator.setVisible(True)
@@ -339,6 +348,24 @@ class TerminalStreamWidget(QWidget):
                 self.stop_monitoring()
         else:
             self.hide_all()
+    
+    def update_baud_rate(self, new_baud_rate: int):
+        """Update the baud rate and restart monitoring if active"""
+        if new_baud_rate != self.current_baud_rate:
+            self.current_baud_rate = new_baud_rate
+            
+            # Update the port label to show new baud rate
+            if self.current_port:
+                current_text = self.port_label.text()
+                # Remove old baud rate info and add new one
+                if ' @ ' in current_text:
+                    base_text = current_text.split(' @ ')[0]
+                    self.port_label.setText(f"{base_text} @ {self.current_baud_rate} baud")
+            
+            # If currently monitoring, restart with new baud rate
+            if self.port_monitor and self.port_monitor.monitoring:
+                self.stop_monitoring()
+                self.start_monitoring()
     
     def toggle_monitoring(self):
         """Toggle terminal monitoring on/off"""
@@ -358,8 +385,8 @@ class TerminalStreamWidget(QWidget):
         # Stop existing monitor
         self.stop_monitoring()
         
-        # Create new monitor
-        self.port_monitor = SerialPortMonitor(self.current_port.port_name, 9600)
+        # Create new monitor with current baud rate
+        self.port_monitor = SerialPortMonitor(self.current_port.port_name, self.current_baud_rate)
         self.port_monitor.data_received.connect(self._handle_incoming_data)
         self.port_monitor.stats_updated.connect(self._handle_stats_update)
         self.port_monitor.error_occurred.connect(self._handle_monitoring_error)
@@ -368,11 +395,11 @@ class TerminalStreamWidget(QWidget):
             self._update_monitor_button_icon(True)
             self._apply_status_style("monitoring")
             
-            # Add connection start message
+            # Add connection start message with current baud rate
             self.formatter.format_connection_start(
                 self.terminal_display, 
                 self.current_port.port_name, 
-                9600
+                self.current_baud_rate
             )
     
     def stop_monitoring(self):

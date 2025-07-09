@@ -7,5 +7,6 @@ from .help_dialog import HelpManager, HelpTopic
 from .pair_creation_dialog import PairCreationDialog
 from .configuration_summary_dialog import ConfigurationSummaryDialog
 from .launch_dialog import LaunchDialog
+from .terminal_dialog import TerminalDialog
 
-__all__ = ['PortScanDialog', 'HelpManager', 'HelpTopic', 'PairCreationDialog', 'ConfigurationSummaryDialog', 'LaunchDialog']
+__all__ = ['PortScanDialog', 'HelpManager', 'HelpTopic', 'PairCreationDialog', 'ConfigurationSummaryDialog', 'LaunchDialog', 'TerminalDialog']

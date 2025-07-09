@@ -187,12 +187,12 @@ class Hub4comGUI(QMainWindow):
         'icons': {
             "refresh": "REFRESH", "create": "CREATE", "delete": "DELETE", "settings": "SETTINGS",
             "help": "HELP", "list": "SEARCH", "play": "PLAY", "stop": "STOP", 
-            "port": "PORT", "configure": "CONFIGURE"
+            "port": "PORT", "configure": "CONFIGURE", "terminal": "TERMINAL_SETTINGS"
         },
         'text': {
             "refresh": "Refresh", "create": "New", "delete": "Delete", "settings": "Settings",
             "help": "Help", "list": "Scan", "play": "Start", "stop": "Stop", 
-            "port": "Ports", "configure": "Config"
+            "port": "Ports", "configure": "Config", "terminal": "Terminal"
         },
         'primary_actions': ["play", "create"]
     }
@@ -445,9 +445,10 @@ class Hub4comGUI(QMainWindow):
                 title="Port Discovery",
                 buttons=[
                     ButtonConfig("list", self.show_port_scanner, "Scan ports for detailed analysis", True),
-                    ButtonConfig("refresh", self.refresh_port_lists, "Refresh port lists", True)
+                    ButtonConfig("refresh", self.refresh_port_lists, "Refresh port lists", True),
+                    ButtonConfig("terminal", self.show_terminal_dialog, "Open standalone terminal window", True)
                 ],
-                width_hint=140  # Increased width
+                width_hint=180  # Increased width for third button
             ),
             ControlPanelColumn(
                 title="Port Management",
@@ -668,6 +669,13 @@ class Hub4comGUI(QMainWindow):
         """Handle incoming baud rate change"""
         if self.ui_refs['sync_baud_rates'].isChecked():
             self.set_all_baud_rates(self.ui_refs['incoming_baud'].currentText())
+        
+        # Update terminal widget with new baud rate
+        try:
+            current_baud = int(self.ui_refs['incoming_baud'].currentText())
+            self.port_manager_widget.update_baud_rate(current_baud)
+        except ValueError:
+            pass  # Ignore invalid baud rate values
   
     # ========================================================================
     # PORT SCANNING
@@ -691,6 +699,12 @@ class Hub4comGUI(QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.app_state['scanned_ports'] = dialog.ports
             self.refresh_port_lists()
+    
+    def show_terminal_dialog(self):
+        """Show the standalone terminal dialog"""
+        from ui.dialogs.terminal_dialog import TerminalDialog
+        dialog = TerminalDialog(self)
+        dialog.show()
     
     def refresh_port_lists(self):
         """Refresh all port combo boxes with scanned ports"""
@@ -810,8 +824,9 @@ class Hub4comGUI(QMainWindow):
             enhanced_text = HelpManager.get_tooltip("port_type_virtual")
             style_type = "virtual"
         
-        # Update the tab manager with comprehensive port info
-        self.port_manager_widget.update_port_info(port_info, enhanced_text)
+        # Update the tab manager with comprehensive port info including baud rate
+        current_baud = int(self.ui_refs['incoming_baud'].currentText())
+        self.port_manager_widget.update_port_info(port_info, enhanced_text, current_baud)
         self.port_manager_widget.set_port_type(style_type)
     
     # ========================================================================

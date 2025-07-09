@@ -1005,7 +1005,7 @@ class AppStyles:
         base = AppStyles.icon_button()
         return base + f"""
         QPushButton:hover {{
-            background-color: {AppColors.ERROR_BACKGROUND};
+            background-color: {AppColors.BACKGROUND_LIGHT};
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.ERROR_PRIMARY};
         }}
         """

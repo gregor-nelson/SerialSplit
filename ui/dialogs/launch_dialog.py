@@ -62,7 +62,7 @@ class LaunchDialog(QDialog):
         
         content = f"""
         {HTMLTheme.get_styles()}
-        <h2>Serial Port Configuration Complete</h2>
+        <h2>Serial Port Configuration</h2>
         <p><i>The system has been initialised with default routing parameters.</i></p>
         
         <h3>Configured Components</h3>
