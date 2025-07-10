@@ -701,10 +701,23 @@ class Hub4comGUI(QMainWindow):
             self.refresh_port_lists()
     
     def show_terminal_dialog(self):
-        """Show the standalone terminal dialog"""
-        from ui.dialogs.terminal_dialog import TerminalDialog
-        dialog = TerminalDialog(self)
-        dialog.show()
+        """Show the standalone terminal window"""
+        try:
+            from ui.dialogs.terminal_dialog import SerialMonitorWindow
+            
+            # Create terminal window
+            terminal_window = SerialMonitorWindow()
+            terminal_window.show()
+            
+            # Keep reference so it doesn't get garbage collected
+            if not hasattr(self, 'terminal_windows'):
+                self.terminal_windows = []
+            self.terminal_windows.append(terminal_window)
+            
+        except ImportError as e:
+            self._show_message("Error", f"Could not load terminal component: {e}", "error")
+        except Exception as e:
+            self._show_message("Error", f"Failed to open terminal window: {e}", "error")
     
     def refresh_port_lists(self):
         """Refresh all port combo boxes with scanned ports"""
@@ -1799,6 +1812,15 @@ class Hub4comGUI(QMainWindow):
         
         if failed_threads:
             print(f"Warning: The following threads did not stop gracefully: {', '.join(failed_threads)}")
+        
+        # Close any open terminal windows
+        if hasattr(self, 'terminal_windows'):
+            for window in self.terminal_windows:
+                try:
+                    if window and not window.isHidden():
+                        window.close()
+                except Exception:
+                    pass  # Ignore errors when closing terminal windows
         
         # Handle hub4com process
         if self.app_state['hub4com_process'] and self.app_state['hub4com_process'].isRunning():
