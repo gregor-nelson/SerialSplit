@@ -145,6 +145,10 @@ class TerminalPane(QWidget):
         self.consecutive_errors = 0  # Track consecutive errors
         self.max_consecutive_errors = 5  # Stop processing after this many consecutive errors
         
+        # Help display management
+        self.help_displayed = False
+        self.auto_scroll_state_before_help = True
+        
         self._setup_ui()
         self._setup_context_menu()
         
@@ -196,6 +200,10 @@ class TerminalPane(QWidget):
         # Focus handling
         self.terminal.installEventFilter(self)
         
+        # Install event filter for ESC key handling
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.installEventFilter(self)
+        
     def _setup_context_menu(self):
         """Setup right-click context menu"""
         self.terminal.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -210,13 +218,12 @@ class TerminalPane(QWidget):
         """Create terminal menu matching main GUI style"""
         menu = QMenu(self)
         # Remove explicit styling to match primary GUI approach
-        
         # Header
-        menu.addAction("Terminal Settings").setEnabled(False)
+        # menu.addAction("Terminal Settings").setEnabled(False)
         menu.addSeparator()
-        
+
         # Connection section
-        menu.addAction("Connection").setEnabled(False)
+        # menu.addAction("Connection").setEnabled(False)
         
         if self.is_connected:
             disconnect = menu.addAction("Disconnect")
@@ -224,12 +231,10 @@ class TerminalPane(QWidget):
         else:
             connect = menu.addAction("Connect")
             connect.triggered.connect(self.connect)
-        
-        menu.addSeparator()
-        
+
         # Display Settings section
-        menu.addAction("Display Settings").setEnabled(False)
-        
+        # menu.addAction("Display Settings").setEnabled(False)
+        menu.addSeparator()
         auto_scroll = menu.addAction(
             self.checkbox_icon(self.formatter.is_auto_scroll_enabled()), 
             "Auto-scroll"
@@ -251,11 +256,15 @@ class TerminalPane(QWidget):
         menu.addSeparator()
         
         # Terminal Options section
-        menu.addAction("Terminal Options").setEnabled(False)
+        # menu.addAction("Terminal Options").setEnabled(False)
         
         # Font size submenu
         font_menu = menu.addMenu("Font Size")
         self._create_font_size_menu(font_menu)
+        
+        # Baud rate submenu
+        baud_menu = menu.addMenu("Baud Rate")
+        self._create_baud_rate_menu(baud_menu)
         
         clear = menu.addAction("Clear Terminal")
         clear.triggered.connect(self._clear_terminal)
@@ -266,7 +275,7 @@ class TerminalPane(QWidget):
         menu.addSeparator()
         
         # Pane Management section
-        menu.addAction("Pane Management").setEnabled(False)
+        # menu.addAction("Pane Management").setEnabled(False)
         
         split_v = menu.addAction("Split Pane Vertically")
         split_v.setShortcut("Alt+Shift+-")
@@ -283,7 +292,7 @@ class TerminalPane(QWidget):
         menu.addSeparator()
         
         # Edit Actions section
-        menu.addAction("Edit Actions").setEnabled(False)
+        # menu.addAction("Edit Actions").setEnabled(False)
         
         copy = menu.addAction("Copy")
         copy.setShortcut("Ctrl+C")
@@ -297,7 +306,135 @@ class TerminalPane(QWidget):
         scroll_bottom = menu.addAction("Scroll to Bottom")
         scroll_bottom.triggered.connect(self._scroll_to_bottom)
         
+        menu.addSeparator()
+        
+        # Help section
+        help_action = menu.addAction("Help")
+        help_action.triggered.connect(self._show_help)
+        
         return menu
+    
+    def _show_help(self):
+        """Show help inline in the terminal window"""
+        # Prevent help spam
+        if self.help_displayed:
+            self.formatter.append_status(
+                self.terminal,
+                "Help already displayed. Press ESC to return to auto-scroll mode.",
+                "warning"
+            )
+            return
+            
+        # Store current auto-scroll state
+        self.auto_scroll_state_before_help = self.formatter.is_auto_scroll_enabled()
+        
+        # Disable auto-scroll to keep help visible
+        self.formatter.set_auto_scroll_enabled(False)
+        
+        # Mark help as displayed
+        self.help_displayed = True
+        
+        # Display help with separators
+        self.formatter.append_separator(self.terminal, "TERMINAL HELP")
+        
+        # Add initial [HELP] marker
+        self.formatter.append_status(
+            self.terminal,
+            "Start Of Help Content",
+            "help"
+        )
+        
+        help_sections = [
+            ("CONNECTION", [
+                "- Auto-detects baud rate",
+                "- Supports standard serial protocols",
+                "- Real-time data display"
+            ]),
+            ("DISPLAY OPTIONS", [
+                "- Auto-scroll: Enabled by default",
+                "- Hex Display Mode: Show data as hex",
+                "- Local Echo: Echo typed characters"
+            ]),
+            ("DEFAULTS", [
+                "- Baud Rate: 115200",
+                "- Data Bits: 8",
+                "- Parity: None",
+                "- Stop Bits: 1",
+                "- Font Size: 10pt"
+            ]),
+            ("KEYBOARD SHORTCUTS", [
+                "Navigation:",
+                "- Alt+Arrow Keys: Navigate between panes",
+                "- Ctrl+Tab: Next tab",
+                "- Ctrl+Shift+Tab: Previous tab",
+                "",
+                "Pane Management:",
+                "- Alt+Shift+-: Split pane vertically",
+                "- Alt+Shift++: Split pane horizontally",
+                "- Ctrl+Shift+W: Close current pane",
+                "",
+                "Terminal Actions:",
+                "- Ctrl+C: Copy selected text",
+                "- Ctrl+A: Select all text",
+                "- Ctrl++: Increase font size",
+                "- Ctrl+-: Decrease font size",
+                "",
+                "Window Management:",
+                "- Ctrl+N: New connection",
+                "- Ctrl+W: Close current tab",
+                "- F1: Show this help"
+            ])
+        ]
+        
+        cursor = self.terminal.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        
+        for section_title, section_items in help_sections:
+            # Add section header without [HELP] prefix
+            cursor.insertText(f"\n{section_title}\n", self.formatter._get_format('help', bold=True))
+            
+            # Add section items without [HELP] prefix
+            for item in section_items:
+                if item:  # Skip empty lines
+                    cursor.insertText(f"{item}\n", self.formatter._get_format('help'))
+                else:
+                    # Add empty line for spacing
+                    cursor.insertText("\n")
+            
+            # Add spacing between sections
+            cursor.insertText("\n")
+        
+        # Add final [HELP] marker
+        self.formatter.append_status(
+            self.terminal,
+            "End Of Help Content - Press ESC to return to auto-scroll mode",
+            "help"
+        )
+        
+        # End help display
+        self.formatter.append_separator(self.terminal)
+    
+    def _dismiss_help(self):
+        """Dismiss help display and restore auto-scroll state"""
+        if not self.help_displayed:
+            return
+            
+        # Mark help as dismissed
+        self.help_displayed = False
+        
+        # Restore auto-scroll state
+        self.formatter.set_auto_scroll_enabled(self.auto_scroll_state_before_help)
+        
+        # Show confirmation message
+        self.formatter.append_status(
+            self.terminal,
+            "Help dismissed - Auto-scroll restored",
+            "status"
+        )
+        
+        # Auto-scroll to bottom if enabled
+        if self.auto_scroll_state_before_help:
+            self.formatter.force_scroll_to_bottom(self.terminal)
     
     def _create_font_size_menu(self, menu: QMenu):
         """Create font size submenu matching main GUI pattern"""
@@ -338,6 +475,18 @@ class TerminalPane(QWidget):
         reset_font = menu.addAction("Reset to Default")
         reset_font.triggered.connect(self._reset_font_size)
     
+    def _create_baud_rate_menu(self, menu: QMenu):
+        """Create baud rate submenu matching font size pattern"""
+        # Standard baud rates
+        standard_rates = [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
+        current_baud = self.config.baudrate
+        
+        for rate in standard_rates:
+            action = menu.addAction(f"{rate}")
+            action.triggered.connect(lambda checked, r=rate: self._set_baud_rate(r))
+            if rate == current_baud:
+                action.setIcon(self.checkbox_icon(True))
+    
     def checkbox_icon(self, checked: bool) -> QIcon:
         """Generate Windows 10 style checkbox icon - shared with main GUI"""
         if checked:
@@ -369,6 +518,11 @@ class TerminalPane(QWidget):
                 self.focusChanged.emit(False)
             elif event.type() == QEvent.Type.KeyPress and self.local_echo_enabled:
                 return self._handle_key_press(event)
+        elif obj == self and event.type() == QEvent.Type.KeyPress:
+            # Handle ESC key for help dismissal
+            if event.key() == Qt.Key.Key_Escape and self.help_displayed:
+                self._dismiss_help()
+                return True
         return super().eventFilter(obj, event)
     
     def _handle_key_press(self, event):
@@ -697,6 +851,11 @@ class TerminalPane(QWidget):
         self.line_buffer = ""
         self.buffer_timer.stop()
         
+        # Reset help display state
+        self.help_displayed = False
+        if not self.auto_scroll_state_before_help:
+            self.formatter.set_auto_scroll_enabled(self.auto_scroll_state_before_help)
+        
         # Reset error detection but keep connection state
         if self.is_connected:
             self.reset_baud_rate_detection()
@@ -727,6 +886,98 @@ class TerminalPane(QWidget):
         font = self.terminal.font()
         font.setPointSize(10)  # Default console font size
         self.terminal.setFont(font)
+    
+    def _set_baud_rate(self, baud_rate: int):
+        """Set terminal baud rate with graceful automatic reconnection"""
+        if self.config.baudrate == baud_rate:
+            return  # Already at this baud rate
+        
+        old_baud = self.config.baudrate
+        self.config.baudrate = baud_rate
+        
+        # Reset baud rate detection when rate changes
+        self.reset_baud_rate_detection()
+        
+        if self.is_connected and self.serial_worker:
+            # For active connections, always do graceful reconnect for reliability
+            self.formatter.append_status(
+                self.terminal,
+                f"Switching baud rate from {old_baud} to {baud_rate}...",
+                "info"
+            )
+            
+            # Store connection state for seamless reconnection
+            port_name = self.config.port
+            was_monitoring = getattr(self, 'monitoring_active', False)
+            
+            try:
+                # Graceful disconnect
+                if was_monitoring:
+                    self._stop_monitoring()
+                self.disconnect()
+                
+                # Brief pause to ensure port is released
+                from PyQt6.QtCore import QTimer
+                QTimer.singleShot(100, lambda: self._complete_baud_rate_change(
+                    baud_rate, old_baud, port_name, was_monitoring
+                ))
+                
+            except Exception as e:
+                self.formatter.append_status(
+                    self.terminal,
+                    f"Error during disconnect: {str(e)}",
+                    "error"
+                )
+                # Revert baud rate on failure
+                self.config.baudrate = old_baud
+        else:
+            # Not connected, just update the setting
+            self.formatter.append_status(
+                self.terminal,
+                f"Baud rate set to {baud_rate} (will apply on next connection)",
+                "info"
+            )
+    
+    def _complete_baud_rate_change(self, baud_rate: int, old_baud: int, port_name: str, was_monitoring: bool):
+        """Complete the baud rate change after disconnect delay"""
+        try:
+            # Reconnect with new baud rate
+            self.connect()
+            
+            # Restore monitoring if it was active
+            if was_monitoring:
+                self._start_monitoring()
+            
+            self.formatter.append_status(
+                self.terminal,
+                f"Successfully switched to {baud_rate} baud",
+                "success"
+            )
+            
+        except Exception as reconnect_error:
+            self.formatter.append_status(
+                self.terminal,
+                f"Failed to reconnect at {baud_rate} baud: {str(reconnect_error)}",
+                "error"
+            )
+            
+            # Attempt to restore original connection
+            self.config.baudrate = old_baud
+            try:
+                self.connect()
+                if was_monitoring:
+                    self._start_monitoring()
+                self.formatter.append_status(
+                    self.terminal,
+                    f"Restored connection at original baud rate {old_baud}",
+                    "warning"
+                )
+            except Exception as restore_error:
+                self.formatter.append_status(
+                    self.terminal,
+                    f"Failed to restore original connection: {str(restore_error)}",
+                    "error"
+                )
     
     def _handle_encoding_error(self):
         """Handle encoding errors with intelligent baud rate detection"""
@@ -1384,7 +1635,7 @@ class SerialMonitorWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Serial Monitor")
+        self.setWindowTitle("Serial Terminal")
         self.setMinimumSize(800, 600)
         self.tabs: Dict[QWidget, SplitContainer] = {}
         self._setup_ui()

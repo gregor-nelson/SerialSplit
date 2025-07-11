@@ -5,6 +5,7 @@ Handles port scanning, display, and export functionality with modern Windows-sty
 """
 
 import json
+import subprocess
 from typing import Optional
 
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
@@ -26,6 +27,7 @@ class PortScanDialog(QDialog):
         super().__init__(parent)
         self.ports = []
         self.scanner = None
+        self.current_port = None  # Track currently selected port
         
         # Get window configuration from ResponsiveWindowManager
         self.window_config = ResponsiveWindowManager.calculate_dialog_config(800, 500)
@@ -318,6 +320,16 @@ class PortScanDialog(QDialog):
         self.details_text.setPlaceholderText("Select a port to view detailed information...")
         layout.addWidget(self.details_text)
         
+        # Add registry button for virtual ports
+        self.registry_btn = ThemeManager.create_button(
+            "Open Registry", 
+            self.open_registry,
+            "secondary"
+        )
+        self.registry_btn.setToolTip("Open Windows Registry Editor at this port's location")
+        self.registry_btn.setVisible(False)  # Hidden by default
+        layout.addWidget(self.registry_btn)
+        
         layout.addStretch()
         return panel
     
@@ -500,6 +512,13 @@ class PortScanDialog(QDialog):
     
     def show_port_details(self, port: SerialPortInfo):
         """Show detailed information about selected port with rich formatting"""
+        # Store current port for registry access
+        self.current_port = port
+        
+        # Show/hide registry button based on port type
+        is_virtual = "Virtual" in port.port_type
+        self.registry_btn.setVisible(is_virtual)
+        
         # Create professional HTML-formatted details using HTMLTheme
         port_type_class = "port-type-physical" if port.port_type == "Physical" else "port-type-virtual"
         
@@ -558,6 +577,22 @@ class PortScanDialog(QDialog):
             html_content += "</div>"
         
         self.details_text.setHtml(html_content)
+    
+    def open_registry(self):
+        """Open Windows Registry Editor at the port's registry location"""
+        if not hasattr(self, 'current_port') or not self.current_port:
+            return
+        
+        try:
+            # Use Popen with DETACHED_PROCESS to completely detach from parent
+            subprocess.Popen(
+                ["regedit"],
+                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+                close_fds=True
+            )
+        except Exception:
+            # Fail silently
+            pass
     
     def export_ports(self):
         """Export port information to JSON"""

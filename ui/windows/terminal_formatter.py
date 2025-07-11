@@ -38,6 +38,7 @@ class TerminalStreamFormatter:
             'status': AppColors.CMD_HIGHLIGHT,       # Same white as CommandFormatter highlight
             'default': AppColors.CMD_DEFAULT,        # Same default as CommandFormatter
             'warning': AppColors.CMD_PARAMETER,      # Same parameter gray as CommandFormatter
+            'help': AppColors.CMD_HIGHLIGHT,         # Same white as status for help messages
         }
         
         # Windows 10 Dark Mode NMEA Message Colors - Muted Terminal Palette with Subtle Variations
@@ -223,7 +224,8 @@ class TerminalStreamFormatter:
                 'outgoing': 'Send',
                 'status': 'Info',
                 'error': 'Error',
-                'warning': 'Warning'
+                'warning': 'Warning',
+                'help': 'Help'
             }
             prefix = prefix_map.get(data_type, data_type.upper())
             cursor.insertText(f"[{prefix}] ", self._get_format(data_type, bold=True))

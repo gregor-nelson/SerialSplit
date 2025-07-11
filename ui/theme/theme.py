@@ -1075,8 +1075,15 @@ class IconManager:
     @staticmethod
     def create_svg_icon(svg_template: str, color: str, size: QSize) -> QIcon:
         """Create a QIcon from SVG template with Windows 10 native icon states"""
-        # Replace color placeholder in SVG
-        svg_data = svg_template.format(color=color)
+        # Check if SVG needs color formatting or uses currentColor
+        if '{color}' in svg_template:
+            # Replace color placeholder in SVG
+            svg_data = svg_template.format(color=color)
+            disabled_svg = svg_template.format(color=AppColors.ICON_DISABLED)
+        else:
+            # Use SVG as-is (uses currentColor or CSS classes)
+            svg_data = svg_template
+            disabled_svg = svg_template
         
         # Create QIcon with multiple states
         icon = QIcon()
@@ -1092,7 +1099,6 @@ class IconManager:
         icon.addPixmap(normal_pixmap, QIcon.Mode.Selected, QIcon.State.Off)
         
         # Disabled state
-        disabled_svg = svg_template.format(color=AppColors.ICON_DISABLED)
         disabled_pixmap = IconManager._svg_to_pixmap(disabled_svg, size)
         icon.addPixmap(disabled_pixmap, QIcon.Mode.Disabled, QIcon.State.Off)
         
