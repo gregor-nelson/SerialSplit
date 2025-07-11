@@ -986,24 +986,24 @@ class HelpContentRegistry:
         """Get HUB4COM command reference content"""
         try:
             script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            help_file = os.path.join(script_dir, "hub4comhelp.txt")
+            help_file = os.path.join(script_dir, "Hub4ComReadMe.txt")
             with open(help_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             return f"{HTMLTheme.get_styles()}<pre>{content}</pre>"
         except:
-            return f"{HTMLTheme.get_styles()}<p>HUB4COM reference file not found. Please ensure hub4comhelp.txt is in the application directory.</p>"
+            return f"{HTMLTheme.get_styles()}<p>HUB4COM reference file not found. Please ensure Hub4ComReadMe.txt is in the application directory.</p>"
     
     @staticmethod
     def _get_com0com_reference_content() -> str:
         """Get COM0COM command reference content"""
         try:
             script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            help_file = os.path.join(script_dir, "com0com_help_command.txt")
+            help_file = os.path.join(script_dir, "Com0ComReadMe.txt")
             with open(help_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             return f"{HTMLTheme.get_styles()}<pre>{content}</pre>"
         except:
-            return f"{HTMLTheme.get_styles()}<p>COM0COM reference file not found. Please ensure com0com_help_command.txt is in the application directory.</p>"
+            return f"{HTMLTheme.get_styles()}<p>COM0COM reference file not found. Please ensure Com0ComReadMe.txt is in the application directory.</p>"
     
     @staticmethod
     def _get_port_types_content() -> str:
