@@ -28,3 +28,4 @@ missing module named fcntl - imported by subprocess (optional), serial.serialpos
 missing module named termios - imported by serial.serialposix (top-level)
 missing module named 'System.IO' - imported by serial.serialcli (top-level)
 missing module named System - imported by serial.serialcli (top-level)
+missing module named 'win32com.gen_py' - imported by win32com (conditional, optional)
