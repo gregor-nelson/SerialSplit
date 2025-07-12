@@ -122,9 +122,35 @@ class AppIcons:
     REFRESH = f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
         {_DEFS}
-        <g filter="url(#win10-shadow)" transform="rotate(15, 24, 24)">
-            <path d="M35 28A11 11 0 1 1 31.6 14.5M35 15V21H29" 
-                  stroke="url(#primary-gradient)" stroke-width="{_STROKE_WIDTH}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <g filter="url(#win10-shadow)">
+            <!-- Circular arrow with rich gradient and multiple layers -->
+            <g transform="translate(24, 24)">
+                <!-- Background circle for depth -->
+                <circle r="16" fill="{_COLORS['BACKGROUND']}" opacity="0.3"/>
+                <!-- Main refresh arrow -->
+                <path d="M-12 0A12 12 0 1 1 8.5 -8.5M12 -12V-6H6" 
+                      stroke="url(#primary-gradient)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Inner highlight path -->
+                <path d="M-10 0A10 10 0 1 1 7 -7M10 -10V-7H7" 
+                      stroke="{_COLORS['PRIMARY_BLUE_LIGHT']}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+                <!-- Arrow head enhancement -->
+                <g fill="url(#primary-gradient)">
+                    <path d="M12 -12L6 -6L9 -9Z"/>
+                </g>
+                <!-- Arrow head highlight -->
+                <path d="M11 -11L7 -7L9 -9Z" fill="{_COLORS['WHITE']}" opacity="0.4"/>
+            </g>
+            <!-- Motion indicator dots -->
+            <g fill="url(#success-gradient)" opacity="0.7">
+                <circle cx="38" cy="20" r="1.5"/>
+                <circle cx="36" cy="14" r="1"/>
+                <circle cx="32" cy="10" r="0.8"/>
+            </g>
+            <!-- Secondary motion trail -->
+            <g transform="translate(24, 24) rotate(-30)">
+                <path d="M14 0A14 14 0 0 1 10 -10" 
+                      stroke="url(#success-gradient)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4" stroke-dasharray="3 2"/>
+            </g>
         </g>
     </svg>
     """
@@ -151,16 +177,26 @@ class AppIcons:
     """
 
     SETTINGS = f"""
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-        {_DEFS}
-        <g filter="url(#win10-shadow)">
-            <circle cx="24" cy="24" r="10" fill="url(#gray-gradient)"/>
-            <path d="M24 10v4M24 34v4M14 14l3 3M31 31l-3-3M10 24h4M34 24h4M14 34l3-3M31 17l-3 3" 
-                  stroke="{_COLORS['GRAY_DARK']}" stroke-width="{_STROKE_WIDTH}" stroke-linecap="round"/>
-            <circle cx="24" cy="24" r="5" fill="url(#primary-gradient)"/>
-            <circle cx="24" cy="24" r="2" fill="{_COLORS['WHITE']}"/>
-        </g>
-    </svg>
+   <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="a" gradientUnits="userSpaceOnUse" x1="22.27" y1="11.73" x2="9.646" y2="24.354" gradientTransform="matrix(2 0 0 -2 0 68)">
+      <stop offset="0" style="stop-color:#fff;stop-opacity:1"/>
+      <stop offset=".242" style="stop-color:#f2f2f2;stop-opacity:1"/>
+      <stop offset="1" style="stop-color:#ccc;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="b" gradientUnits="userSpaceOnUse" x1="10.386" y1="23.614" x2="20.234" y2="13.766" gradientTransform="matrix(2 0 0 -2 0 68)">
+      <stop offset=".229" style="stop-color:#0669bc;stop-opacity:1"/>
+      <stop offset=".804" style="stop-color:#104e91;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="c" gradientUnits="userSpaceOnUse" x1="1.185" y1="32.737" x2="27.173" y2="6.749" gradientTransform="matrix(2 0 0 -2 0 68)">
+      <stop offset=".145" style="stop-color:#8a9198;stop-opacity:1"/>
+      <stop offset=".894" style="stop-color:#63707b;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+  <path style="stroke:none;fill-rule:nonzero;fill:url(#a)" d="M50 32c0 9.941-8.059 18-18 18s-18-8.059-18-18 8.059-18 18-18 18 8.059 18 18m0 0"/>
+  <path style="stroke:none;fill-rule:nonzero;fill:url(#b)" d="M44 32c0 6.629-5.371 12-12 12s-12-5.371-12-12 5.371-12 12-12 12 5.371 12 12m0 0"/>
+  <path style="stroke:none;fill-rule:nonzero;fill:url(#c)" d="M63.05 24.637a11.23 11.23 0 0 1-9.573-5.5 10.86 10.86 0 0 1-.258-10.543A32.1 32.1 0 0 0 41.332 2 11.23 11.23 0 0 1 32 6.93 11.22 11.22 0 0 1 22.672 2a32.1 32.1 0 0 0-11.89 6.594 10.85 10.85 0 0 1-.259 10.543 11.23 11.23 0 0 1-9.574 5.5 30.1 30.1 0 0 0-.367 13.398 11.24 11.24 0 0 1 9.941 5.508 10.87 10.87 0 0 1-.355 11.566A32.1 32.1 0 0 0 21.914 62a11.258 11.258 0 0 1 20.172 0 32 32 0 0 0 11.742-6.89 10.86 10.86 0 0 1-.351-11.567 11.24 11.24 0 0 1 9.941-5.508 30.2 30.2 0 0 0-.367-13.398M32 48c-8.836 0-16-7.164-16-16s7.164-16 16-16 16 7.164 16 16-7.164 16-16 16m0 0"/>
+</svg>
     """
 
     DELETE = f"""

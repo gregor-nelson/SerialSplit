@@ -256,7 +256,7 @@ class ControlPanelBuilder:
     def _create_column(self, column: ControlPanelColumn) -> QWidget:
         """Create a single column with title and buttons"""
         widget = QWidget()
-        widget.setMinimumWidth(column.width_hint)
+        widget.setFixedWidth(column.width_hint)  # Use fixed width for consistency
         
         layout = QVBoxLayout(widget)
         layout.setSpacing(3)  # Compact spacing between title and buttons
@@ -273,13 +273,21 @@ class ControlPanelBuilder:
         button_layout.setSpacing(4)  # Compact spacing between buttons
         button_layout.setContentsMargins(0, 0, 0, 0)
         
+        # Apply alignment based on button count for visual consistency
+        if len(column.buttons) == 2:
+            # Left-align 2-button sections to match visual flow
+            pass  # No leading stretch
+        else:
+            # Center-align 3+ button sections
+            button_layout.addStretch()
+        
         # Create buttons using parent's button creation method
         button_refs = self.parent._create_icon_button_group(column.buttons, button_layout)
         
         # Update parent's UI references
         self.parent.ui_refs.update(button_refs)
         
-        # Add stretch to left-align buttons
+        # Add trailing stretch for both cases
         button_layout.addStretch()
         
         layout.addLayout(button_layout)
@@ -295,12 +303,13 @@ class ControlPanelBuilder:
         return separator
     
     def _create_status_section(self, indicators: List[StatusIndicator]) -> QWidget:
-        """Create status indicators section"""
+        """Create status indicators section with fixed width to prevent jitter"""
         if len(indicators) == 1:
-            # Single status indicator
+            # Single status indicator with fixed width to prevent layout jitter
             status_label = QLabel(indicators[0].initial_text)
             status_label.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8))  # Use SMALL_SIZE
-            status_label.setStyleSheet(f"QLabel {{ color: {AppColors.CONTROL_PANEL_STATUS_TEXT}; padding: 4px 8px; font-style: italic; }}")  # Compact padding
+            status_label.setStyleSheet(f"QLabel {{ color: {AppColors.CONTROL_PANEL_STATUS_TEXT}; padding: 4px 8px; font-style: italic; }}")
+            status_label.setMinimumWidth(200)  # Reserve space for longer status messages
             self.parent.ui_refs[indicators[0].key] = status_label
             return status_label
         else:
@@ -313,7 +322,8 @@ class ControlPanelBuilder:
             for indicator in indicators:
                 label = QLabel(indicator.initial_text)
                 label.setFont(QFont(AppFonts.DEFAULT_FAMILY, 8))  # Use SMALL_SIZE
-                label.setStyleSheet(f"QLabel {{ color: {AppColors.CONTROL_PANEL_STATUS_TEXT}; padding: 2px 8px; font-style: italic; }}")  # Compact padding
+                label.setStyleSheet(f"QLabel {{ color: {AppColors.CONTROL_PANEL_STATUS_TEXT}; padding: 2px 8px; font-style: italic; }}")
+                label.setMinimumWidth(200)  # Reserve space for longer status messages
                 layout.addWidget(label)
                 self.parent.ui_refs[indicator.key] = label
             

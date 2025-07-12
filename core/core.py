@@ -11,6 +11,8 @@ from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+from enum import Enum
+from dataclasses import field
 
 # Try to import winreg, fallback gracefully if not available
 try:
@@ -28,8 +30,25 @@ except ImportError:
     SERIAL_AVAILABLE = False
     print("Warning: pyserial module not available. Port monitoring will be disabled.")
 
+# Try to import WMI for advanced hardware detection, fallback gracefully
+try:
+    import wmi
+    WMI_AVAILABLE = True
+except ImportError:
+    WMI_AVAILABLE = False
+
 from PyQt6.QtCore import QThread, pyqtSignal, QMutex, QSettings
 from PyQt6.QtWidgets import QApplication
+
+
+class PortStatus(Enum):
+    """Enumeration for serial port status"""
+    AVAILABLE = "Available"
+    IN_USE = "In Use"
+    BUSY = "Busy"
+    RESERVED = "Reserved"
+    ERROR = "Error"
+    UNKNOWN = "Unknown"
 
 
 @dataclass
@@ -49,11 +68,20 @@ class SerialPortInfo:
     """Information about a detected serial port"""
     port_name: str
     device_name: str
-    port_type: str  # 'Physical', 'Virtual (Moxa)', 'Virtual (Other)'
+    port_type: str  # 'Physical', 'Virtual (Moxa)', 'Virtual (Other)', 'Virtual (COM0COM)'
     registry_key: str
     description: str = ""
     is_moxa: bool = False
     moxa_details: Optional[Dict] = None
+    
+    # Enhanced fields for detailed port information
+    manufacturer: str = "Unknown"
+    status: PortStatus = PortStatus.UNKNOWN
+    location: str = ""  # USB Hub, Internal, Network, etc.
+    capabilities: List[str] = field(default_factory=list)  # Hardware Flow Control, High Speed, etc.
+    last_activity: Optional[datetime] = None
+    driver_version: str = ""
+    hardware_id: str = ""
 
 
 @dataclass
@@ -110,6 +138,475 @@ class AdvancedStatistics:
             self.tx_packet_sizes = []
 
 
+class PortCapabilityAnalyzer:
+    """Analyzes serial port hardware capabilities, driver information, and system integration"""
+    
+    def __init__(self, fast_mode=True):
+        """Initialize the port capability analyzer"""
+        self.wmi_available = WMI_AVAILABLE
+        self.winreg_available = WINREG_AVAILABLE
+        self._wmi_connection = None
+        self._manufacturer_cache = {}
+        self._wmi_ports_cache = None
+        self._wmi_drivers_cache = None
+        self._enable_fast_mode = fast_mode
+        self._cache_initialized = False
+        
+    def _get_wmi_connection(self):
+        """Get or create WMI connection with error handling"""
+        if not self.wmi_available:
+            return None
+            
+        if self._wmi_connection is None:
+            try:
+                self._wmi_connection = wmi.WMI()
+            except Exception:
+                self.wmi_available = False
+                return None
+        return self._wmi_connection
+    
+    def _initialize_wmi_cache(self):
+        """Initialize WMI cache with bulk data retrieval for performance"""
+        if self._cache_initialized or not self.wmi_available:
+            return
+        
+        try:
+            wmi_conn = self._get_wmi_connection()
+            if wmi_conn:
+                # Cache all serial ports in one query
+                self._wmi_ports_cache = {}
+                for port in wmi_conn.Win32_SerialPort():
+                    if hasattr(port, 'DeviceID') and port.DeviceID:
+                        self._wmi_ports_cache[port.DeviceID] = port
+                
+                # Skip driver cache - not needed for simplified dialog
+                self._wmi_drivers_cache = {}
+                
+            self._cache_initialized = True
+        except Exception as e:
+            print(f"Warning: WMI cache initialization failed: {str(e)}")
+            self._cache_initialized = True  # Prevent retries
+    
+    def analyze_port_capabilities(self, port_info: SerialPortInfo) -> SerialPortInfo:
+        """
+        Analyze port capabilities and enhance SerialPortInfo with detailed information
+        
+        Args:
+            port_info: Basic SerialPortInfo to enhance
+            
+        Returns:
+            SerialPortInfo: Enhanced port information with capabilities
+        """
+        try:
+            # Initialize WMI cache if needed
+            if not self._cache_initialized:
+                self._initialize_wmi_cache()
+            
+            # Always detect manufacturer (fast operation)
+            port_info.manufacturer = self._detect_manufacturer(port_info)
+            
+            # Always analyze basic capabilities (fast operation)
+            port_info.capabilities = self._analyze_hardware_capabilities(port_info)
+            
+            # Always get location (fast operation)
+            port_info.location = self._get_connection_topology(port_info)
+            
+            if self._enable_fast_mode:
+                # Fast mode: use heuristic status detection
+                port_info.status = self._get_heuristic_status(port_info)
+                # Skip expensive driver version and hardware ID lookup
+                port_info.driver_version = ""
+                port_info.hardware_id = ""
+            else:
+                # Full mode: complete analysis
+                port_info.driver_version = self._get_driver_version(port_info)
+                port_info.status = self._check_port_status(port_info)
+                port_info.hardware_id = self._get_hardware_id(port_info)
+            
+        except Exception as e:
+            # Production-grade error handling - don't crash on capability detection failures
+            print(f"Warning: Capability analysis failed for {port_info.port_name}: {str(e)}")
+            
+        return port_info
+    
+    def _detect_manufacturer(self, port_info: SerialPortInfo) -> str:
+        """Detect port manufacturer from hardware information"""
+        # Check cache first
+        cache_key = f"{port_info.device_name}_{port_info.port_name}"
+        if cache_key in self._manufacturer_cache:
+            return self._manufacturer_cache[cache_key]
+        
+        manufacturer = "Unknown"
+        
+        try:
+            # Virtual port manufacturer detection
+            if port_info.port_type.startswith("Virtual"):
+                if "COM0COM" in port_info.port_type:
+                    manufacturer = "com0com"
+                elif "Moxa" in port_info.port_type:
+                    manufacturer = "Moxa"
+                elif "VSPD" in port_info.device_name.upper():
+                    manufacturer = "Eltima"
+                else:
+                    manufacturer = "Virtual"
+            else:
+                # Physical port manufacturer detection
+                manufacturer = self._detect_physical_manufacturer(port_info)
+        
+        except Exception:
+            # Fallback to device name pattern matching
+            manufacturer = self._fallback_manufacturer_detection(port_info)
+        
+        # Cache the result
+        self._manufacturer_cache[cache_key] = manufacturer
+        return manufacturer
+    
+    def _detect_physical_manufacturer(self, port_info: SerialPortInfo) -> str:
+        """Detect manufacturer for physical ports using cached WMI and optimized registry"""
+        try:
+            # Try cached WMI data first
+            if self._wmi_ports_cache and port_info.port_name in self._wmi_ports_cache:
+                port = self._wmi_ports_cache[port_info.port_name]
+                if hasattr(port, 'Manufacturer') and port.Manufacturer:
+                    return port.Manufacturer
+            
+            # Fast mode: skip expensive registry scanning
+            if self._enable_fast_mode:
+                return self._fallback_manufacturer_detection(port_info)
+            
+            # Full mode: use optimized registry scanning
+            return self._optimized_registry_manufacturer_detection(port_info)
+            
+        except Exception:
+            return self._fallback_manufacturer_detection(port_info)
+    
+    def _registry_manufacturer_detection(self, port_info: SerialPortInfo) -> str:
+        """Detect manufacturer from Windows registry"""
+        if not self.winreg_available:
+            return "Unknown"
+        
+        try:
+            # Search in device enumeration keys
+            enum_key = r"SYSTEM\CurrentControlSet\Enum"
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, enum_key) as key:
+                # Common device paths for serial ports
+                device_paths = ["USB", "FTDIBUS", "ACPI", "PCI"]
+                
+                for device_path in device_paths:
+                    try:
+                        with winreg.OpenKey(key, device_path) as device_key:
+                            # Enumerate devices under this path
+                            i = 0
+                            while i < 100:  # Reasonable limit
+                                try:
+                                    device_name = winreg.EnumKey(device_key, i)
+                                    if self._device_matches_port(device_name, port_info):
+                                        with winreg.OpenKey(device_key, device_name) as specific_device:
+                                            # Look for manufacturer info
+                                            j = 0
+                                            while j < 50:
+                                                try:
+                                                    instance_name = winreg.EnumKey(specific_device, j)
+                                                    with winreg.OpenKey(specific_device, instance_name) as instance:
+                                                        try:
+                                                            mfg, _ = winreg.QueryValueEx(instance, "Mfg")
+                                                            if mfg and mfg != "Unknown":
+                                                                return mfg
+                                                        except FileNotFoundError:
+                                                            pass
+                                                    j += 1
+                                                except OSError:
+                                                    break
+                                    i += 1
+                                except OSError:
+                                    break
+                    except FileNotFoundError:
+                        continue
+        except Exception:
+            pass
+        
+        return self._fallback_manufacturer_detection(port_info)
+    
+    def _optimized_registry_manufacturer_detection(self, port_info: SerialPortInfo) -> str:
+        """Optimized registry manufacturer detection with reduced iteration"""
+        if not self.winreg_available:
+            return "Unknown"
+        
+        try:
+            # Search in device enumeration keys with reduced limits
+            enum_key = r"SYSTEM\CurrentControlSet\Enum"
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, enum_key) as key:
+                # Prioritized device paths for serial ports
+                device_paths = ["USB", "FTDIBUS"]  # Most common first
+                
+                for device_path in device_paths:
+                    try:
+                        with winreg.OpenKey(key, device_path) as device_key:
+                            # Reduced enumeration limits for performance
+                            i = 0
+                            while i < 20:  # Reduced from 100
+                                try:
+                                    device_name = winreg.EnumKey(device_key, i)
+                                    if self._device_matches_port(device_name, port_info):
+                                        with winreg.OpenKey(device_key, device_name) as specific_device:
+                                            # Reduced instance enumeration
+                                            j = 0
+                                            while j < 5:  # Reduced from 50
+                                                try:
+                                                    instance_name = winreg.EnumKey(specific_device, j)
+                                                    with winreg.OpenKey(specific_device, instance_name) as instance:
+                                                        try:
+                                                            mfg, _ = winreg.QueryValueEx(instance, "Mfg")
+                                                            if mfg and mfg != "Unknown":
+                                                                return mfg
+                                                        except FileNotFoundError:
+                                                            pass
+                                                    j += 1
+                                                except OSError:
+                                                    break
+                                    i += 1
+                                except OSError:
+                                    break
+                    except FileNotFoundError:
+                        continue
+        except Exception:
+            pass
+        
+        return self._fallback_manufacturer_detection(port_info)
+    
+    def _get_heuristic_status(self, port_info: SerialPortInfo) -> PortStatus:
+        """Fast heuristic status detection without expensive I/O operations"""
+        # Virtual ports are typically always available
+        if port_info.port_type.startswith("Virtual"):
+            if "COM0COM" in port_info.port_type:
+                return PortStatus.AVAILABLE  # com0com ports are usually available
+            elif "Moxa" in port_info.port_type:
+                return PortStatus.UNKNOWN  # Network status requires checking
+            else:
+                return PortStatus.AVAILABLE
+        
+        # Physical ports - assume available unless we know otherwise
+        return PortStatus.AVAILABLE
+    
+    def _device_matches_port(self, device_name: str, port_info: SerialPortInfo) -> bool:
+        """Check if a device name might match the port"""
+        device_lower = device_name.lower()
+        port_device_lower = port_info.device_name.lower()
+        
+        # Look for common patterns
+        if "serial" in device_lower or "uart" in device_lower:
+            return True
+        if port_info.port_name.replace("COM", "") in device_name:
+            return True
+        if any(part in device_lower for part in port_device_lower.split() if len(part) > 3):
+            return True
+        
+        return False
+    
+    def _fallback_manufacturer_detection(self, port_info: SerialPortInfo) -> str:
+        """Fallback manufacturer detection using device name patterns"""
+        device_name = port_info.device_name.upper()
+        
+        # Common manufacturer patterns
+        if "FTDI" in device_name:
+            return "FTDI"
+        elif "PROLIFIC" in device_name or "PL23" in device_name:
+            return "Prolific"
+        elif "CH34" in device_name or "CH91" in device_name:
+            return "WCH"
+        elif "CP21" in device_name or "SILABS" in device_name:
+            return "Silicon Labs"
+        elif "INTEL" in device_name:
+            return "Intel"
+        elif "VIA" in device_name:
+            return "VIA"
+        elif "MOXA" in device_name or "NPDRV" in device_name:
+            return "Moxa"
+        elif "16550" in device_name:
+            return "Generic 16550"
+        else:
+            return "Unknown"
+    
+    def _get_driver_version(self, port_info: SerialPortInfo) -> str:
+        """Get driver version information from cache"""
+        if not self._wmi_drivers_cache:
+            return ""
+        
+        try:
+            # Search cached driver data
+            for device_name, driver in self._wmi_drivers_cache.items():
+                if port_info.port_name in device_name or \
+                   any(part in device_name for part in port_info.device_name.split() if len(part) > 3):
+                    if hasattr(driver, 'DriverVersion') and driver.DriverVersion:
+                        return driver.DriverVersion
+        except Exception:
+            pass
+        
+        return ""
+    
+    def _analyze_hardware_capabilities(self, port_info: SerialPortInfo) -> List[str]:
+        """Analyze hardware capabilities of the port"""
+        capabilities = []
+        
+        try:
+            # Virtual port capabilities
+            if port_info.port_type.startswith("Virtual"):
+                if "COM0COM" in port_info.port_type:
+                    capabilities.extend(["Null Modem", "Configurable"])
+                    if port_info.moxa_details:
+                        capabilities.append("Network Capable")
+                elif "Moxa" in port_info.port_type:
+                    capabilities.extend(["Network Serial", "TCP/IP"])
+                else:
+                    capabilities.append("Virtual")
+            else:
+                # Physical port capabilities
+                capabilities.extend(self._detect_physical_capabilities(port_info))
+                
+        except Exception:
+            capabilities = ["Standard"]
+        
+        return capabilities if capabilities else ["Standard"]
+    
+    def _detect_physical_capabilities(self, port_info: SerialPortInfo) -> List[str]:
+        """Detect capabilities for physical serial ports"""
+        capabilities = []
+        manufacturer = port_info.manufacturer
+        device_name = port_info.device_name.upper()
+        
+        # High-speed capabilities
+        if any(pattern in device_name for pattern in ["FT232", "FT4232", "CH340", "CP21"]):
+            capabilities.append("High Speed")
+        
+        # Flow control capabilities
+        if any(pattern in manufacturer.upper() for pattern in ["FTDI", "PROLIFIC", "SILICON"]):
+            capabilities.append("Hardware Flow Control")
+        
+        # USB capabilities
+        if any(pattern in device_name for pattern in ["USB", "FT", "CH34", "CP21"]):
+            capabilities.append("USB")
+        
+        # Multi-port capabilities
+        if any(pattern in device_name for pattern in ["4232", "2232", "QUAD"]):
+            capabilities.append("Multi-port")
+        
+        return capabilities
+    
+    def _get_connection_topology(self, port_info: SerialPortInfo) -> str:
+        """Get connection topology/location information"""
+        try:
+            # Virtual port locations
+            if port_info.port_type.startswith("Virtual"):
+                if "COM0COM" in port_info.port_type:
+                    return "Virtual Pair"
+                elif "Moxa" in port_info.port_type:
+                    return "Network"
+                else:
+                    return "Virtual"
+            
+            # Physical port topology detection
+            return self._detect_physical_location(port_info)
+            
+        except Exception:
+            return "Unknown"
+    
+    def _detect_physical_location(self, port_info: SerialPortInfo) -> str:
+        """Detect physical location for hardware ports using cache"""
+        try:
+            # Try cached WMI data first
+            if self._wmi_ports_cache and port_info.port_name in self._wmi_ports_cache:
+                port = self._wmi_ports_cache[port_info.port_name]
+                if hasattr(port, 'PNPDeviceID') and port.PNPDeviceID:
+                    device_id = port.PNPDeviceID.upper()
+                    if device_id.startswith("USB"):
+                        return self._parse_usb_location(device_id)
+                    elif device_id.startswith("PCI"):
+                        return "Internal PCI"
+                    elif device_id.startswith("ACPI"):
+                        return "Internal"
+        except Exception:
+            pass
+        
+        return self._fallback_location_detection(port_info)
+    
+    def _parse_usb_location(self, device_id: str) -> str:
+        """Parse USB device location from device ID"""
+        try:
+            # Extract USB hub information if available
+            if "VID_" in device_id and "PID_" in device_id:
+                # This is a USB device
+                parts = device_id.split("\\")
+                if len(parts) > 2:
+                    usb_info = parts[2]
+                    # Try to extract hub/port information
+                    if "&" in usb_info:
+                        location_part = usb_info.split("&")[-1]
+                        if location_part.isdigit():
+                            return f"USB Port {location_part}"
+                return "USB"
+        except Exception:
+            pass
+        
+        return "USB"
+    
+    def _fallback_location_detection(self, port_info: SerialPortInfo) -> str:
+        """Fallback location detection using device name patterns"""
+        device_name = port_info.device_name.upper()
+        
+        if any(pattern in device_name for pattern in ["USB", "FT", "CH34", "CP21"]):
+            return "USB"
+        elif any(pattern in device_name for pattern in ["PCI", "UART"]):
+            return "Internal"
+        elif "MOXA" in device_name:
+            return "Network"
+        else:
+            return "Unknown"
+    
+    def _check_port_status(self, port_info: SerialPortInfo) -> PortStatus:
+        """Check current port status"""
+        if not SERIAL_AVAILABLE:
+            return PortStatus.UNKNOWN
+        
+        try:
+            # Try to open the port briefly to check availability
+            test_port = serial.Serial()
+            test_port.port = port_info.port_name
+            test_port.timeout = 0.1
+            
+            try:
+                test_port.open()
+                test_port.close()
+                return PortStatus.AVAILABLE
+            except serial.SerialException as e:
+                error_msg = str(e).lower()
+                if "access is denied" in error_msg or "permission denied" in error_msg:
+                    return PortStatus.IN_USE
+                elif "could not open port" in error_msg:
+                    if "moxa" in port_info.manufacturer.lower():
+                        return PortStatus.ERROR  # Network issue
+                    else:
+                        return PortStatus.ERROR  # Device disconnected
+                else:
+                    return PortStatus.BUSY
+        except Exception:
+            return PortStatus.UNKNOWN
+    
+    def _get_hardware_id(self, port_info: SerialPortInfo) -> str:
+        """Get hardware ID for the port from cache"""
+        if not self._wmi_ports_cache:
+            return ""
+        
+        try:
+            if port_info.port_name in self._wmi_ports_cache:
+                port = self._wmi_ports_cache[port_info.port_name]
+                if hasattr(port, 'PNPDeviceID') and port.PNPDeviceID:
+                    return port.PNPDeviceID
+        except Exception:
+            pass
+        
+        return ""
+
+
 class SettingsManager:
     """Manages application settings using QSettings for cross-platform persistence"""
     
@@ -155,7 +652,7 @@ class ResponsiveWindowManager:
     SMALL_SCREEN_HEIGHT_RATIO = 0.90
     LARGE_SCREEN_DEFAULT_WIDTH = 1200
     LARGE_SCREEN_DEFAULT_HEIGHT = 900
-    ABSOLUTE_MIN_WIDTH = 800
+    ABSOLUTE_MIN_WIDTH = 960
     ABSOLUTE_MIN_HEIGHT = 600
     
     @classmethod
@@ -279,18 +776,86 @@ class ResponsiveWindowManager:
 
 
 class PortScanner(QThread):
-    """Thread for scanning Windows registry for serial ports"""
+    """Thread for scanning Windows registry for serial ports with progressive loading capability"""
     scan_completed = pyqtSignal(list)
     scan_progress = pyqtSignal(str)
     
+    # Progressive loading signals
+    port_basic_data = pyqtSignal(int, object)  # row, SerialPortInfo with basic data
+    port_enhanced_data = pyqtSignal(int, object)  # row, SerialPortInfo with enhanced data  
+    port_status_data = pyqtSignal(int, object)  # row, SerialPortInfo with status/driver data
+    scan_phase_changed = pyqtSignal(str)  # Current phase description
+    
+    def __init__(self, complete_scan=False):
+        super().__init__()
+        self.complete_scan = complete_scan
+        self.capability_analyzer = PortCapabilityAnalyzer(fast_mode=not complete_scan)
+    
     def run(self):
+        """Progressive port scanning with real-time UI updates"""
         try:
+            # Phase 1: Registry scan - immediate basic data
+            self.scan_phase_changed.emit("Scanning registry...")
             self.scan_progress.emit("Scanning Windows registry...")
-            ports = self.scan_registry_ports()
-            self.scan_completed.emit(ports)
+            
+            basic_ports = self.scan_registry_ports()
+            if not basic_ports:
+                self.scan_completed.emit([])
+                return
+            
+            # Emit basic port data immediately (Port, Type columns)
+            for row, port in enumerate(basic_ports):
+                self.port_basic_data.emit(row, port)
+            
+            # PRODUCTION FIX: Emit basic ports immediately for main GUI
+            # This allows port selection while advanced scanning continues in background
+            self.scan_completed.emit(basic_ports)
+            
+            # Phase 2: Quick enhancement - per-port analysis
+            self.scan_phase_changed.emit("Analyzing capabilities...")
+            enhanced_ports = []
+            
+            for row, port in enumerate(basic_ports):
+                try:
+                    # Quick enhancement (Manufacturer, Location, Capabilities, Parameters)
+                    enhanced_port = self.quick_enhance_port(port)
+                    enhanced_ports.append(enhanced_port)
+                    self.port_enhanced_data.emit(row, enhanced_port)
+                    
+                    # Update progress
+                    progress = f"Analyzing {port.port_name} ({row+1}/{len(basic_ports)})"
+                    self.scan_progress.emit(progress)
+                    
+                except Exception as e:
+                    print(f"Warning: Quick enhancement failed for {port.port_name}: {str(e)}")
+                    enhanced_ports.append(port)
+                    self.port_enhanced_data.emit(row, port)
+            
+            # Phase 3: Complete analysis - status info (always performed)
+            self.scan_phase_changed.emit("Checking port status...")
+            final_ports = []
+            
+            for row, port in enumerate(enhanced_ports):
+                try:
+                    # Complete analysis (Status column)
+                    final_port = self.complete_enhance_port(port)
+                    final_ports.append(final_port)
+                    self.port_status_data.emit(row, final_port)
+                    
+                    # Update progress
+                    progress = f"Checking {port.port_name} status ({row+1}/{len(enhanced_ports)})"
+                    self.scan_progress.emit(progress)
+                    
+                except Exception as e:
+                    print(f"Warning: Status check failed for {port.port_name}: {str(e)}")
+                    final_ports.append(port)
+                    self.port_status_data.emit(row, port)
+            
+            # Final enhanced data is available, but main GUI already has basic ports
+            # Advanced dialog can listen to port_status_data signals for progressive updates
+                
         except Exception as e:
             self.scan_progress.emit(f"Error scanning ports: {str(e)}")
-            # Return empty list on error rather than crashing
             self.scan_completed.emit([])
     
     def scan_registry_ports(self) -> List[SerialPortInfo]:
@@ -416,6 +981,74 @@ class PortScanner(QThread):
         except:
             return (2, port_name)  # Fallback
     
+    def enhance_port_information(self, ports: List[SerialPortInfo]) -> List[SerialPortInfo]:
+        """Enhance port information with detailed capabilities and status"""
+        enhanced_ports = []
+        
+        for i, port in enumerate(ports):
+            try:
+                # Update progress for capability analysis
+                progress_msg = f"Analyzing {port.port_name} ({i+1}/{len(ports)})"
+                self.scan_progress.emit(progress_msg)
+                
+                # Use the capability analyzer to enhance port information
+                enhanced_port = self.capability_analyzer.analyze_port_capabilities(port)
+                enhanced_ports.append(enhanced_port)
+                
+            except Exception as e:
+                # If capability analysis fails, add the basic port info
+                print(f"Warning: Failed to enhance port {port.port_name}: {str(e)}")
+                enhanced_ports.append(port)
+        
+        return enhanced_ports
+    
+    def quick_enhance_port(self, port_info: SerialPortInfo) -> SerialPortInfo:
+        """Quick enhancement for immediate UI feedback (Phase 2)"""
+        try:
+            # Quick manufacturer detection
+            port_info.manufacturer = self.capability_analyzer._detect_manufacturer(port_info)
+            
+            # Quick capabilities analysis  
+            port_info.capabilities = self.capability_analyzer._analyze_hardware_capabilities(port_info)
+            
+            # Quick location detection
+            port_info.location = self.capability_analyzer._get_connection_topology(port_info)
+            
+            # Set default status for fast mode
+            port_info.status = PortStatus.UNKNOWN
+            
+            # Skip driver info entirely - not needed for dialog
+            port_info.driver_version = ""
+            port_info.hardware_id = ""
+            
+        except Exception as e:
+            print(f"Warning: Quick enhancement failed for {port_info.port_name}: {str(e)}")
+            
+        return port_info
+    
+    def complete_enhance_port(self, port_info: SerialPortInfo) -> SerialPortInfo:
+        """Complete enhancement for detailed data (Phase 3)"""
+        try:
+            # Initialize WMI cache if needed
+            if not self.capability_analyzer._cache_initialized:
+                self.capability_analyzer._initialize_wmi_cache()
+            
+            # Get detailed status information
+            port_info.status = self.capability_analyzer._check_port_status(port_info)
+            
+            # Skip driver info - not needed for simplified dialog
+            port_info.driver_version = ""
+            port_info.hardware_id = ""
+            
+        except Exception as e:
+            print(f"Warning: Complete enhancement failed for {port_info.port_name}: {str(e)}")
+            # Provide fallback values
+            port_info.status = PortStatus.UNKNOWN
+            port_info.driver_version = ""
+            port_info.hardware_id = ""
+                
+        return port_info
+
 
 
 class PortConfig:

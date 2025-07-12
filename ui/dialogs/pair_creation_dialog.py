@@ -81,7 +81,7 @@ class PairCreationDialog(QDialog):
         <h3>Create Virtual Port Pair</h3>
         <p>Create a new pair of connected virtual serial ports.</p>
         <div class="info-box">
-            <p><b>TIP:</b> Leave the names empty to let COM0COM automatically assign port names like <code>COM3</code>, <code>COM4</code>, etc.</p>
+            <p><b>TIP:</b> Leave the names empty to let COM0COM automatically assign port names</p>
             <p>Or enter specific names like <code>COM10</code>, <code>COM11</code> if you need particular port numbers.</p>
         </div>
         """

@@ -14,6 +14,7 @@ from ui.theme.theme import (
     ThemeManager, AppStyles, AppDimensions, AppColors, AppFonts, 
     AppMessages, Config
 )
+from ui.theme.icons.icons import AppIcons
 from ui.dialogs.help_dialog import HelpManager
 
 
@@ -41,57 +42,62 @@ class OutputPortWidget(QWidget):
         ThemeManager.set_widget_margins(main_layout, "none")  # No extra margins like incoming port widgets
         main_layout.setSpacing(AppDimensions.SPACING_MEDIUM)  # Match incoming port spacing
         
-        # Main horizontal layout to match incoming port structure
-        layout = QHBoxLayout()
+        # Match incoming port design exactly - simple vertical layout
+        layout = QVBoxLayout()
         ThemeManager.set_widget_margins(layout, "none")
-        layout.setSpacing(AppDimensions.SPACING_MEDIUM)  # Match incoming port spacing
+        layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         
-        # Port label using theme manager
-        self.label = ThemeManager.create_port_label(self.port_number)
-        layout.addWidget(self.label)
+        # Port label with remove button in far corner of same row
+        label_layout = QHBoxLayout()
+        self.label = ThemeManager.create_label(f"Port {self.port_number}:")
+        label_layout.addWidget(self.label)
+        label_layout.addStretch()  # Push button to far right
         
-        # Port selection combo
+        # Remove button - match port test/monitor widget style exactly
+        self.remove_btn = QPushButton()
+        self.remove_btn.setFixedSize(24, 24)
+        self.remove_btn.setToolTip(f"Remove port {self.port_number}")
+        self.remove_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent;
+                padding: 0px;
+            }}
+            QPushButton:hover {{
+                background-color: {AppColors.BUTTON_HOVER};
+                border: 1px solid {AppColors.BORDER_DEFAULT};
+            }}
+            QPushButton:pressed {{
+                background-color: {AppColors.BUTTON_PRESSED};
+            }}
+            QPushButton:disabled {{
+                background-color: transparent;
+            }}
+        """)
+        self._update_delete_button_icon()
+        label_layout.addWidget(self.remove_btn)
+        
+        layout.addLayout(label_layout)
+        
+        # Port selection combo (full width like incoming port)
         self.port_combo = ThemeManager.create_combobox(editable=True)
         self.populate_ports(available_ports)
         self.port_combo.currentTextChanged.connect(self.port_changed.emit)
-        self.port_combo.currentTextChanged.connect(self.update_port_type_indicator)
-        self.port_combo.setMinimumWidth(AppDimensions.COMBOBOX_MIN_WIDTH)
         self.port_combo.setFixedHeight(AppDimensions.COMBOBOX_HEIGHT)
-        layout.addWidget(self.port_combo, 2)  # Give it more stretch
+        layout.addWidget(self.port_combo)
         
-        # Separator using theme
-        layout.addWidget(ThemeManager.create_separator("vertical"))
+        # Baud rate label on its own line (exactly like incoming port)
+        layout.addWidget(ThemeManager.create_label("Baud Rate:"))
         
-        # Baud rate label using theme
-        layout.addWidget(ThemeManager.create_baud_label())
-        
-        # Baud rate selection
+        # Baud rate selection (full width like incoming port)
         self.baud_combo = ThemeManager.create_combobox()
         self.populate_baud_rates(Config.DEFAULT_BAUD)
         self.baud_combo.currentTextChanged.connect(self.port_changed.emit)
-        self.baud_combo.setFixedWidth(AppDimensions.WIDTH_BAUD_COMBO)
         self.baud_combo.setFixedHeight(AppDimensions.COMBOBOX_HEIGHT)
         layout.addWidget(self.baud_combo)
         
-        # Remove button with theme-based styling
-        self.remove_btn = ThemeManager.create_icon_button(
-            "REMOVE",
-            f"Remove port {self.port_number}",
-            "small"
-        )
-        # Apply danger hover style
-        self.remove_btn.setStyleSheet(AppStyles.icon_button_hover_danger())
-        layout.addWidget(self.remove_btn)
         
         main_layout.addLayout(layout)
         
-        # Port type indicator using theme with fixed dimensions to match combo box
-        self.port_type_label = ThemeManager.create_port_type_indicator()
-        self.port_type_label.setFixedHeight(AppDimensions.COMBOBOX_HEIGHT)
-        self.port_type_label.setFixedWidth(AppDimensions.COMBOBOX_MIN_WIDTH)
-        
-        # Add label directly to main layout without custom indentation
-        main_layout.addWidget(self.port_type_label)
     
     def populate_ports(self, available_ports: List[str]):
         """Populate port combo with available ports (simple version)"""
@@ -103,8 +109,7 @@ class OutputPortWidget(QWidget):
             self.port_combo.setEnabled(False)
     
     def populate_ports_enhanced(self, ports: List[SerialPortInfo]):
-        """Populate port combo with enhanced port information"""
-        self.scanned_ports = ports
+        """Populate port combo with enhanced port information - optimized like incoming ports"""
         current_port = self.port_combo.currentData() or self.port_combo.currentText()
         
         self.port_combo.clear()
@@ -113,44 +118,40 @@ class OutputPortWidget(QWidget):
         if not ports:
             self.port_combo.addItem(AppMessages.NO_DEVICES)
             self.port_combo.setEnabled(False)
-            self.port_type_label.setVisible(False)
             return
         
-        # Add scanned ports with enhanced display formatting
+        # Add scanned ports using the same fast logic as incoming ports
         for port in ports:
-            # Create enhanced display text with status indicator
-            display_text = port.port_name
-            
-            # Add device type and status information
-            if port.is_moxa:
-                display_text += "  •  Moxa Device"
-                if port.device_name and port.device_name != "Unknown":
-                    display_text += f"  •  {port.device_name}"
-            elif port.port_type.startswith("Virtual"):
-                virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
-                display_text += f"  •  {virtual_type} Port"
-            else:
-                display_text += "  •  Hardware Port"
-                if port.device_name and port.device_name != "Unknown":
-                    display_text += f"  •  {port.device_name}"
-            
-            # Add item with custom data
+            display_text = self._create_port_display_text(port)
             self.port_combo.addItem(display_text, port.port_name)
-            
-            
         
         # Restore previous selection if possible
         if current_port:
             index = self.port_combo.findData(current_port)
             if index >= 0:
                 self.port_combo.setCurrentIndex(index)
-            else:
-                # Try to find by text if data lookup failed
-                index = self.port_combo.findText(current_port, Qt.MatchFlag.MatchStartsWith)
-                if index >= 0:
-                    self.port_combo.setCurrentIndex(index)
+            elif self.port_combo.count() > 0:
+                self.port_combo.setCurrentIndex(0)
         
-        self.update_port_type_indicator()
+    
+    def _create_port_display_text(self, port):
+        """Create enhanced display text for port - copied from incoming port logic"""
+        display_text = port.port_name
+        
+        if port.is_moxa:
+            display_text += "  •  Moxa Device"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        elif port.port_type.startswith("Virtual"):
+            virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
+            display_text += f"  •  {virtual_type} Port"
+        else:
+            display_text += "  •  Hardware Port"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        
+        return display_text
+    
     
     def populate_baud_rates(self, default=Config.DEFAULT_BAUD):
         """Populate combo box with common baud rate options"""
@@ -163,34 +164,6 @@ class OutputPortWidget(QWidget):
         if index >= 0:
             self.baud_combo.setCurrentIndex(index)
     
-    def update_port_type_indicator(self):
-        """Update the port type indicator with theme messages and styling"""
-        if not self.scanned_ports:
-            self.port_type_label.setVisible(False)
-            return
-        
-        current_port = self.port_combo.currentData() or self.port_combo.currentText().split(" ")[0]
-        if not current_port or current_port == AppMessages.NO_DEVICES:
-            self.port_type_label.setVisible(False)
-            return
-        
-        # Find port info
-        port_info = next((p for p in self.scanned_ports if p.port_name == current_port), None)
-        if port_info:
-            self.port_type_label.setVisible(True)
-            
-            # Use centralized tooltip system with enhanced status indicators
-            if port_info.is_moxa:
-                self.port_type_label.setText(HelpManager.get_tooltip("port_type_moxa"))
-                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("moxa"))
-            elif port_info.port_type == "Physical":
-                self.port_type_label.setText(HelpManager.get_tooltip("port_type_physical"))
-                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("available"))
-            else:
-                self.port_type_label.setText(HelpManager.get_tooltip("port_type_virtual"))
-                self.port_type_label.setStyleSheet(AppStyles.port_type_indicator("virtual"))
-        else:
-            self.port_type_label.setVisible(False)
     
     def get_current_port_info(self) -> Optional[SerialPortInfo]:
         """Get the SerialPortInfo for the currently selected port"""
@@ -214,7 +187,7 @@ class OutputPortWidget(QWidget):
     def renumber(self, new_number: int):
         """Update the port number after reordering"""
         self.port_number = new_number
-        self.label.setText(AppMessages.BUTTON_PORT_LABEL.format(number=new_number))
+        self.label.setText(f"Port {new_number}:")
         self.remove_btn.setToolTip(f"Remove port {new_number}")
     
     def setEnabled(self, enabled: bool):
@@ -242,3 +215,15 @@ class OutputPortWidget(QWidget):
         """Handle mouse release to restore normal state"""
         # No styling changes needed for borderless design
         super().mouseReleaseEvent(event)
+    
+    def _update_delete_button_icon(self):
+        """Update delete button icon to match port test/monitor widget style"""
+        from ui.theme.theme import IconManager
+        
+        icon = IconManager.create_svg_icon(
+            AppIcons.DELETE,
+            AppColors.TEXT_DEFAULT,
+            IconManager.get_scaled_size(14)
+        )
+        self.remove_btn.setIcon(icon)
+        self.remove_btn.setIconSize(IconManager.get_scaled_size(14))

@@ -258,8 +258,8 @@ class AppDimensions:
     HEIGHT_BUTTON_CONTAINER = 45       # Button container height
     
     # === ADDITIONAL BUTTON DIMENSIONS ===
-    BUTTON_MIN_WIDTH = 90              # Minimum button width (from gui.py)
-    BUTTON_MAX_WIDTH = 120             # Maximum button width (from gui.py)
+    BUTTON_MIN_WIDTH = 90                 # Minimum button width (from gui.py)
+    BUTTON_MAX_WIDTH = 120             # Maximum button width - same as min for consistent layout
     BUTTON_HEIGHT_CONTROL = 32         # Control button height (from gui.py)
     
     # === CHART & VISUALIZATION DIMENSIONS ===
@@ -727,6 +727,7 @@ class AppStyles:
         QListWidget:focus {{
             border: {AppDimensions.BORDER_WIDTH_STANDARD}px solid {AppColors.BORDER_FOCUS};
         }}
+        {AppStyles.scrollbar()}
         """
     
     @staticmethod

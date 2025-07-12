@@ -20,6 +20,7 @@ import queue
 from ui.windows.terminal_formatter import TerminalStreamFormatter
 from ui.theme.theme import AppColors, AppDimensions, AppFonts, ThemeManager
 from ui.theme.icons.icons import AppIcons
+from core.core import SerialPortInfo, PortScanner
 
 # ===== DATA CLASSES =====
 @dataclass
@@ -1136,6 +1137,7 @@ class WelcomeConfigWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.advanced_visible = False
+  # Store enhanced port information
         self._setup_ui()
         self._populate_ports()
         
@@ -1253,20 +1255,79 @@ class WelcomeConfigWidget(QWidget):
         
         
     def _populate_ports(self):
-        """Populate available serial ports"""
+        """Populate available serial ports using enhanced registry scanning"""
+        # Clear current ports
         self.port_combo.clear()
-        ports = serial.tools.list_ports.comports()
+        self.port_combo.addItem("Scanning ports...")
+        self.connect_btn.setEnabled(False)
         
-        if ports:
-            for port in ports:
-                display_name = f"{port.device}"
-                if port.description and port.description != "n/a":
-                    display_name += f" - {port.description}"
-                self.port_combo.addItem(display_name, port.device)
-            self.connect_btn.setEnabled(True)
-        else:
-            self.port_combo.addItem("No ports available")
+        # Use direct port scanning for fast terminal loading
+        self._scan_ports_direct()
+    
+    def _scan_ports_direct(self):
+        """Direct port scanning for fast terminal loading"""
+        self._fallback_to_basic_scan()
+    
+    def _fallback_to_basic_scan(self):
+        """Direct port detection using existing PortScanner registry logic"""
+        self.port_combo.clear()
+        
+        try:
+            # Use existing PortScanner class for synchronous registry scanning
+            scanner = PortScanner()
+            ports = scanner.scan_registry_ports()
+            
+            if ports:
+                for port in ports:
+                    display_name = self._create_port_display_text(port)
+                    self.port_combo.addItem(display_name, port.port_name)
+                self.connect_btn.setEnabled(True)
+            else:
+                # Fallback to basic serial.tools if registry scan fails
+                self._basic_serial_scan()
+        except Exception as e:
+            print(f"Error scanning registry ports: {e}")
+            # Fallback to basic serial.tools scanning
+            self._basic_serial_scan()
+    
+    def _basic_serial_scan(self):
+        """Fallback to basic serial.tools.list_ports when registry scanning fails"""
+        try:
+            ports = serial.tools.list_ports.comports()
+            
+            if ports:
+                for port in ports:
+                    display_name = f"{port.device}"
+                    if port.description and port.description != "n/a":
+                        display_name += f" - {port.description}"
+                    self.port_combo.addItem(display_name, port.device)
+                self.connect_btn.setEnabled(True)
+            else:
+                self.port_combo.addItem("No ports available")
+                self.connect_btn.setEnabled(False)
+        except Exception as e:
+            print(f"Error with basic port scan: {e}")
+            self.port_combo.addItem("Port scanning failed")
             self.connect_btn.setEnabled(False)
+    
+    def _create_port_display_text(self, port):
+        """Create display text for SerialPortInfo objects with type indicators"""
+        display_text = port.port_name
+        
+        if port.is_moxa:
+            display_text += "  •  Moxa"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        elif port.port_type.startswith("Virtual"):
+            virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
+            display_text += f"  •  {virtual_type} Port"
+        else:
+            display_text += "  •  Hardware Port"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        
+        return display_text
+    
             
     def _handle_connect(self):
         """Handle connect button click"""
@@ -1279,8 +1340,7 @@ class WelcomeConfigWidget(QWidget):
         )
         
         self.connectionRequested.emit(config)
-        
-        
+    
 
 # ===== SPLIT CONTAINER =====
 class SplitContainer(QWidget):
@@ -1496,6 +1556,7 @@ class QuickConnectDialog(QDialog):
         self.setWindowTitle("New Connection")
         self.setModal(True)
         self.setFixedSize(400, 300)
+  # Store enhanced port information
         self._setup_ui()
         self._populate_ports()
         
@@ -1586,7 +1647,7 @@ class QuickConnectDialog(QDialog):
         
         self.refresh_btn = QPushButton("Refresh Ports")
         self.refresh_btn.setStyleSheet("background-color: #5A5A5A; padding: 8px 16px;")
-        self.refresh_btn.clicked.connect(self._populate_ports)
+        self.refresh_btn.clicked.connect(self._refresh_ports)
         
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setStyleSheet("background-color: #5A5A5A; padding: 8px 16px;")
@@ -1601,20 +1662,123 @@ class QuickConnectDialog(QDialog):
         layout.addLayout(button_layout)
         
     def _populate_ports(self):
-        """Populate available serial ports"""
+        """Populate available serial ports using enhanced registry scanning"""
+        # Clear current ports
         self.port_combo.clear()
-        ports = serial.tools.list_ports.comports()
+        self.port_combo.addItem("Scanning ports...")
+        self.connect_btn.setEnabled(False)
         
-        if ports:
-            for port in ports:
-                display_name = f"{port.device}"
-                if port.description and port.description != "n/a":
-                    display_name += f" - {port.description}"
-                self.port_combo.addItem(display_name, port.device)
-            self.connect_btn.setEnabled(True)
+        # Use direct port scanning for fast terminal loading
+        self._scan_ports_direct()
+    
+    def _scan_ports_direct(self):
+        """Direct port scanning for fast terminal loading"""
+        self._fallback_to_basic_scan()
+    
+    def _fallback_to_basic_scan(self):
+        """Direct port detection using existing PortScanner registry logic"""
+        self.port_combo.clear()
+        
+        try:
+            # Use existing PortScanner class for synchronous registry scanning
+            scanner = PortScanner()
+            ports = scanner.scan_registry_ports()
+            
+            if ports:
+                for port in ports:
+                    display_name = self._create_port_display_text(port)
+                    self.port_combo.addItem(display_name, port.port_name)
+                self.connect_btn.setEnabled(True)
+            else:
+                # Fallback to basic serial.tools if registry scan fails
+                self._basic_serial_scan()
+        except Exception as e:
+            print(f"Error scanning registry ports: {e}")
+            # Fallback to basic serial.tools scanning
+            self._basic_serial_scan()
+    
+    def _basic_serial_scan(self):
+        """Fallback to basic serial.tools.list_ports when registry scanning fails"""
+        try:
+            ports = serial.tools.list_ports.comports()
+            
+            if ports:
+                for port in ports:
+                    display_name = f"{port.device}"
+                    if port.description and port.description != "n/a":
+                        display_name += f" - {port.description}"
+                    self.port_combo.addItem(display_name, port.device)
+                self.connect_btn.setEnabled(True)
+            else:
+                self.port_combo.addItem("No ports available")
+                self.connect_btn.setEnabled(False)
+        except Exception as e:
+            print(f"Error with basic port scan: {e}")
+            self.port_combo.addItem("Port scanning failed")
+            self.connect_btn.setEnabled(False)
+    
+    def _create_port_display_text(self, port):
+        """Create display text for SerialPortInfo objects with type indicators"""
+        display_text = port.port_name
+        
+        if port.is_moxa:
+            display_text += "  •  Moxa"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        elif port.port_type.startswith("Virtual"):
+            virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
+            display_text += f"  •  {virtual_type} Port"
         else:
+            display_text += "  •  Hardware Port"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        
+        return display_text
+    
+    def _on_scan_progress(self, message):
+        """Handle scan progress updates"""
+        # Update the first item to show progress
+        if self.port_combo.count() > 0:
+            self.port_combo.setItemText(0, message)
+    
+    def _on_enhanced_ports_scanned(self, ports):
+        """Handle enhanced port scan results"""
+        self.scanned_ports = ports
+        self.port_combo.clear()
+        
+        if not ports:
             self.port_combo.addItem("No ports available")
             self.connect_btn.setEnabled(False)
+            return
+        
+        # Populate with enhanced port information
+        for port in ports:
+            display_text = self._create_enhanced_port_display_text(port)
+            self.port_combo.addItem(display_text, port.port_name)
+        
+        self.connect_btn.setEnabled(True)
+    
+    def _on_scan_finished(self):
+        """Handle scan completion"""
+        self.port_scanner = None
+    
+    def _create_enhanced_port_display_text(self, port):
+        """Create enhanced display text for port with type indicators"""
+        display_text = port.port_name
+        
+        if port.is_moxa:
+            display_text += "  •  Moxa Device"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        elif port.port_type.startswith("Virtual"):
+            virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
+            display_text += f"  •  {virtual_type} Port"
+        else:
+            display_text += "  •  Hardware Port"
+            if port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        
+        return display_text
             
     def get_config(self) -> SerialConfig:
         """Get the serial configuration from dialog"""
@@ -1627,6 +1791,55 @@ class QuickConnectDialog(QDialog):
             parity=parity_map[self.parity_combo.currentText()],
             stopbits=float(self.stopbits_combo.currentText())
         )
+    
+    def _check_for_moxa_port(self):
+        """Check if selected port is a MOXA device and provide recommendations"""
+        current_port_name = self.port_combo.currentData() or self.port_combo.currentText()
+        
+        # Find the port info from scanned ports
+        selected_port = None
+        for port in self.scanned_ports:
+            if port.port_name == current_port_name:
+                selected_port = port
+                break
+        
+        if selected_port and selected_port.is_moxa:
+            # Show MOXA recommendations dialog
+            self._show_moxa_recommendations(selected_port)
+    
+    def _show_moxa_recommendations(self, port_info):
+        """Show MOXA port recommendations dialog"""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("MOXA Device Detected")
+        msg_box.setIcon(QMessageBox.Icon.Information)
+        
+        # Build recommendation text
+        recommendations_text = f"MOXA virtual port detected: {port_info.port_name}\n\n"
+        recommendations_text += "Recommendations for MOXA devices:\n"
+        
+        if hasattr(port_info, 'moxa_details') and port_info.moxa_details:
+            for recommendation in port_info.moxa_details.get('recommendations', []):
+                recommendations_text += f"• {recommendation}\n"
+        else:
+            recommendations_text += "• Disable CTS handshaking for network serial servers\n"
+            recommendations_text += "• Check network connectivity to MOXA device\n"
+            recommendations_text += "• Verify MOXA driver configuration\n"
+            recommendations_text += "• Consider matching baud rate to source device\n"
+        
+        recommendations_text += "\nThese settings may help improve connection reliability."
+        
+        msg_box.setText(recommendations_text)
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg_box.exec()
+    
+    def _refresh_ports(self):
+        """Refresh the ports list manually"""
+        self._populate_ports()
+    
+    def cleanup(self):
+        """Clean up any running port scanner threads"""
+        if self.port_scanner and self.port_scanner.isRunning():
+            self.port_scanner.wait(1000)  # Wait up to 1 second for completion
 
 
 # ===== MAIN WINDOW =====

@@ -8,11 +8,60 @@ Displays system initialisation summary
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, 
                              QPushButton, QLabel, QFrame, QCheckBox)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QIcon, QPixmap, QPainter
+from PyQt6.QtSvg import QSvgRenderer
+from PyQt6.QtCore import QByteArray
 
 from ui.theme.theme import (ThemeManager, AppStyles, AppFonts, AppDimensions, 
                            AppColors, HTMLTheme)
 from core.core import DefaultConfig, SettingsManager
+
+
+class CustomCheckbox(QPushButton):
+    """Custom checkbox using SVG icons"""
+    
+    def __init__(self, text="", parent=None):
+        super().__init__(text, parent)
+        self._checked = False
+        self.setCheckable(True)
+        self.setStyleSheet("QPushButton { text-align: left; border: none; background: transparent; }")
+        self.clicked.connect(self._toggle_state)
+        self._update_icon()
+    
+    def checkbox_icon(self, checked: bool) -> QIcon:
+        """Generate Windows 10 style checkbox icon"""
+        if checked:
+            svg = f'''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.CHECKBOX_BORDER_COLOR}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
+                <rect x="2" y="2" width="12" height="12" fill="{AppColors.BACKGROUND_WHITE}"/>
+                <path d="M4 8l2 2 6-6" stroke="{AppColors.CHECKBOX_CHECK_COLOR}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            </svg>'''
+        else:
+            svg = f'''<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="15" height="15" fill="{AppColors.BACKGROUND_WHITE}" stroke="{AppColors.CHECKBOX_BORDER_COLOR}" stroke-width="1"/>
+            </svg>'''
+        
+        renderer = QSvgRenderer(QByteArray(svg.encode()))
+        pixmap = QPixmap(16, 16)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        renderer.render(painter)
+        painter.end()
+        return QIcon(pixmap)
+    
+    def _toggle_state(self):
+        self._checked = not self._checked
+        self._update_icon()
+    
+    def _update_icon(self):
+        self.setIcon(self.checkbox_icon(self._checked))
+    
+    def isChecked(self):
+        return self._checked
+    
+    def setChecked(self, checked):
+        self._checked = checked
+        self._update_icon()
 
 
 class LaunchDialog(QDialog):
@@ -63,7 +112,7 @@ class LaunchDialog(QDialog):
         content = f"""
         {HTMLTheme.get_styles()}
         <h2>Serial Port Configuration</h2>
-        <p><i>The system has been initialised with default routing parameters.</i></p>
+        <p><i>The system has been configured with default routing parameters.</i></p>
         
         <h3>Configured Components</h3>
         <ul>
@@ -73,7 +122,7 @@ class LaunchDialog(QDialog):
             <li><b>Timing Control:</b> <span class="success-icon">Enabled</span></li>
         </ul>
         
-        <div class="status-box">
+        <div>
             <h4>Application Connection</h4>
             <p>Applications should connect to {connection_ports} respectively.</p>
             <p>Data routing begins when the service is started.</p>
@@ -81,7 +130,7 @@ class LaunchDialog(QDialog):
         </div>
         
         <h3>System Status</h3>
-        <p><b><span class="success-icon">●</span> System parameters are optimised for standard serial communication protocols.</b></p>
+        <p><b><span class="success-icon">●</span> Parameters are set for standard serial communication protocols.</b></p>
         
         <p><i>Click "View Technical Details" for comprehensive configuration information.</i></p>
         """
@@ -123,10 +172,8 @@ class LaunchDialog(QDialog):
         footer_layout = QVBoxLayout()
         footer_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
         
-        # Don't show again checkbox using theme
-        self.dont_show_checkbox = ThemeManager.create_checkbox(
-            "Don't show this dialog on startup"
-        )
+        # Don't show again checkbox using custom SVG styling
+        self.dont_show_checkbox = CustomCheckbox("Don't show this dialog on startup")
         footer_layout.addWidget(self.dont_show_checkbox)
         
         # Buttons layout
@@ -178,6 +225,7 @@ class LaunchDialog(QDialog):
             # Handle import error gracefully
             print(f"Error importing ConfigurationSummaryDialog: {e}")
     
+
     def should_show_again(self):
         """Return whether this dialog should be shown again"""
         return not self.dont_show_checkbox.isChecked()

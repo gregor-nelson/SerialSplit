@@ -123,7 +123,7 @@ class Hub4comGUI(QMainWindow):
         """Create scrollable central widget"""
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setStyleSheet(AppStyles.scroll_area())
         
@@ -223,9 +223,8 @@ class Hub4comGUI(QMainWindow):
         return btn
     
     def _configure_button_size(self, btn: QPushButton):
-        """Configure button size using theme dimensions"""
-        btn.setMinimumWidth(AppDimensions.BUTTON_MIN_WIDTH)
-        btn.setMaximumWidth(AppDimensions.BUTTON_MAX_WIDTH)
+        """Configure button size using fixed width for consistency"""
+        btn.setFixedWidth(88)  # Optimized width for 3-button sections with proper spacing
         btn.setMinimumHeight(AppDimensions.BUTTON_HEIGHT_CONTROL)
         btn.setMaximumHeight(AppDimensions.BUTTON_HEIGHT_CONTROL)
         btn.setFont(QFont(AppFonts.DEFAULT_FAMILY, AppFonts.FONT_SIZE_SMALL))
@@ -267,8 +266,8 @@ class Hub4comGUI(QMainWindow):
             QPushButton {{
                 background-color: {AppColors.BUTTON_TRANSPARENT};
                 border: 1px solid {AppColors.BUTTON_TRANSPARENT};
-                padding: {AppDimensions.PADDING_BUTTON_DETAILED};
-                text-align: left;
+                padding: {AppDimensions.PADDING_BUTTON_STANDARD};
+                text-align: center;
                 font-family: {AppFonts.DEFAULT_FAMILY};
                 font-size: {AppFonts.FONT_SIZE_SMALL}pt;
                 color: {AppColors.CONTROL_PANEL_TEXT};
@@ -295,8 +294,8 @@ class Hub4comGUI(QMainWindow):
             QPushButton {{
                 background-color: {AppColors.BUTTON_BLUE_LIGHT};
                 border: 1px solid {AppColors.BUTTON_BLUE_BORDER};
-                padding: {AppDimensions.PADDING_BUTTON_DETAILED};
-                text-align: left;
+                padding: {AppDimensions.PADDING_BUTTON_STANDARD};
+                text-align: center;
                 font-family: "Segoe UI";
                 font-size: 8pt;
                 color: {AppColors.BUTTON_ACCENT_TEXT};
@@ -387,7 +386,7 @@ class Hub4comGUI(QMainWindow):
                     ButtonConfig("refresh", self.list_com0com_pairs, "Refresh port pairs list", True),
                     ButtonConfig("create", self.create_com0com_pair, "Create new virtual port pair", True)
                 ],
-                width_hint=160  # Increased width
+                width_hint=272  # Exact width for 3 buttons at 88px each + spacing
             ),
             ControlPanelColumn(
                 title="Pair Configuration",
@@ -396,7 +395,7 @@ class Hub4comGUI(QMainWindow):
                     ButtonConfig("settings", self.show_settings_menu, "Configure selected pair", False, "settings_btn"),
                     ButtonConfig("help", lambda: self._show_help(HelpTopic.COM0COM_SETTINGS), "Help and documentation", True)
                 ],
-                width_hint=180  # Increased width
+                width_hint=272  # Exact width for 3 buttons at 88px each + spacing
             )
         ]
         
@@ -448,7 +447,7 @@ class Hub4comGUI(QMainWindow):
                     ButtonConfig("refresh", self.refresh_port_lists, "Refresh port lists", True),
                     ButtonConfig("terminal", self.show_terminal_dialog, "Open standalone terminal window", True)
                 ],
-                width_hint=180  # Increased width for third button
+                width_hint=272  # Exact width for 3 buttons at 88px each + spacing
             ),
             ControlPanelColumn(
                 title="Port Management",
@@ -457,7 +456,7 @@ class Hub4comGUI(QMainWindow):
                     ButtonConfig("delete", self.remove_all_output_ports, "Remove all output ports", True, "remove_all_ports_btn"),
                     ButtonConfig("configure", self.show_launch_dialog, "Show launch configuration summary", True)
                 ],
-                width_hint=160  # Increased width
+                width_hint=272  # Exact width for 3 buttons at 88px each + spacing
             ),
             ControlPanelColumn(
                 title="Hub4com Control",
@@ -466,7 +465,7 @@ class Hub4comGUI(QMainWindow):
                     ButtonConfig("play", self.start_hub4com, "Start hub4com routing", True, "start_btn"),
                     ButtonConfig("stop", self.stop_hub4com, "Stop hub4com routing", False, "stop_btn")
                 ],
-                width_hint=150  # Increased width
+                width_hint=272  # Exact width for 3 buttons at 88px each + spacing
             )
         ]
     
@@ -534,11 +533,32 @@ class Hub4comGUI(QMainWindow):
         return group
     
     def _create_outgoing_ports_section(self) -> QGroupBox:
-        """Create outgoing ports configuration - direct layout like incoming port"""
-        group, layout = self._create_groupbox_with_layout("Outgoing Ports")
+        """Create outgoing ports configuration with scroll container"""
+        group, main_layout = self._create_groupbox_with_layout("Outgoing Ports")
         
-        # Store reference to the main layout for direct widget placement
-        self.output_ports_layout = layout
+        # Create scroll area for output port widgets
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setMaximumHeight(300)  # Constrain height to force scrolling
+        scroll_area.setStyleSheet(AppStyles.scroll_area())
+        
+        # Create container widget for output port widgets
+        scroll_widget = QWidget()
+        scroll_widget.setStyleSheet(f"QWidget {{ background-color: {AppColors.BACKGROUND_LIGHT}; }}")
+        
+        # Create layout for output port widgets (this is where widgets get added)
+        self.output_ports_layout = QVBoxLayout(scroll_widget)
+        ThemeManager.set_widget_margins(self.output_ports_layout, "none")
+        self.output_ports_layout.setSpacing(AppDimensions.SPACING_MEDIUM)
+        self.output_ports_layout.addStretch()  # Push widgets to top
+        
+        # Connect container to scroll area
+        scroll_area.setWidget(scroll_widget)
+        
+        # Add scroll area to main layout
+        main_layout.addWidget(scroll_area)
         
         return group
     
@@ -598,6 +618,8 @@ class Hub4comGUI(QMainWindow):
         
         # Add widget without stretch factor for consistent spacing
         insert_position = len(self.app_state['output_port_widgets']) - 1
+        
+        
         self.output_ports_layout.insertWidget(insert_position, widget)
         
         # Add stretch at the end to push all widgets to the top
@@ -1049,9 +1071,8 @@ class Hub4comGUI(QMainWindow):
     
     def _prompt_user_choice(self, title: str, message: str, yes_action: callable = None, allow_no: bool = False) -> bool:
         """Prompt user with yes/no choice and optionally execute action"""
-        reply = QMessageBox.question(
-            self, title, message,
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        reply = ThemeManager.create_dark_message_box(
+            self, title, message, "question"
         )
         
         if reply == QMessageBox.StandardButton.Yes:
@@ -1366,7 +1387,8 @@ class Hub4comGUI(QMainWindow):
         list_widget.setPalette(palette)
 
         if not pairs:
-            self._update_status("No port pairs configured", component='com0com')
+            # Add artificial delay to ensure user sees the refresh feedback
+            QTimer.singleShot(1500, lambda: self._update_status("No port pairs configured", component='com0com'))
             no_pairs_item = QListWidgetItem(
                 "No virtual port pairs found yet.\n\n"
                 "Click 'Create New Pair' to create your first pair of connected virtual ports.\n"
@@ -1382,7 +1404,8 @@ class Hub4comGUI(QMainWindow):
                 self._add_pair_to_list(pair_num, ports)
         
         count = len(pairs)
-        self._update_status(f"Found {count} port pair{'s' if count != 1 else ''}", component='com0com')
+        # Add artificial delay to ensure user sees the refresh feedback
+        QTimer.singleShot(1500, lambda: self._update_status(f"Found {count} port pair{'s' if count != 1 else ''}", component='com0com'))
     
     def _add_pair_to_list(self, pair_num: str, ports: Dict):
         """Add a single pair to the list"""

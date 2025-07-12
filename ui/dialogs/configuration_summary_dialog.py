@@ -65,12 +65,9 @@ class ConfigurationSummaryDialog(QDialog):
         
         content = f"""
         {HTMLTheme.get_styles()}
-        <h2>Virtual COM Port Configuration Summary</h2>
-        <p><i>Configuration completed successfully - System ready for operation</i></p>
+        <h2>Virtual COM Port Configuration</h2>
         
-        <h3>Virtual COM Port Infrastructure</h3>
-        <p><b>Status:</b> <span class="success-icon">✓</span> {port_data['status_text']}</p>
-        
+        <h3>Virtual COM Port Infrastructure</h3>        
         <h4>Configured Port Pairs:</h4>
         <ul>
             {port_data['pairs_html']}
@@ -79,7 +76,6 @@ class ConfigurationSummaryDialog(QDialog):
         <p><b>Technical Configuration:</b> Baud rate timing synchronisation enabled, buffer overrun protection active, bidirectional data flow configured</p>
         
         <h3>Hub4com Routing Service</h3>
-        <p><b>Status:</b> <span class="success-icon">✓</span> Routing service configured and operational</p>
         
         <h4>Output Port Configuration:</h4>
         <ul>
@@ -91,7 +87,6 @@ class ConfigurationSummaryDialog(QDialog):
         <h3>External Application Configuration</h3>
         
         <div class="warning-box">
-            <p><b>Important Configuration Requirement</b></p>
             <p>External applications must connect to the designated client ports for proper data routing functionality.</p>
         </div>
         
@@ -113,10 +108,6 @@ class ConfigurationSummaryDialog(QDialog):
             [Application A] ↔ COM132 ↔ COM131 ↔ Hub4com ↔ COM141 ↔ COM142 ↔ [Application B]
             <br><br>
             <i>Bidirectional Data Flow | Error Handling | Automatic Reconnection</i>
-        </div>
-        
-        <div class="footer-box">
-            <p><b><span class="success-icon">●</span> System configured and ready for external application connections</b></p>
         </div>
         """
         
