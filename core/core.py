@@ -1162,7 +1162,7 @@ class Com0comProcess(QThread):
             cmd,
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=30
         )
         
         output = result.stdout + result.stderr
@@ -1178,7 +1178,7 @@ class Com0comProcess(QThread):
             cmd,
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=30
         )
         
         if result.returncode == 0:
@@ -1195,7 +1195,7 @@ class Com0comProcess(QThread):
             list_cmd,
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=30
         )
         
         existing_pairs = []
@@ -1229,7 +1229,7 @@ class Com0comProcess(QThread):
                     create_cmd,
                     capture_output=True,
                     text=True,
-                    timeout=15
+                    timeout=45
                 )
                 
                 if create_result.returncode == 0:
@@ -1319,7 +1319,7 @@ class Com0comProcess(QThread):
                 list_cmd,
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=30
             )
             
             existing_pairs_dict = {}
@@ -1369,7 +1369,7 @@ class Com0comProcess(QThread):
                         create_cmd,
                         capture_output=True,
                         text=True,
-                        timeout=15
+                        timeout=45
                     )
                     
                     if create_result.returncode == 0:

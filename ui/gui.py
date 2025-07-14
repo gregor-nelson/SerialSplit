@@ -1343,8 +1343,13 @@ class Hub4comGUI(QMainWindow):
                 if info_msg:
                     self._show_message("Success", info_msg)
                 
-                self.list_com0com_pairs()
-                self.refresh_port_lists()
+                # Add delay for port creation to allow Windows to register new ports
+                if operation == OperationType.CREATE_PAIR:
+                    QTimer.singleShot(2000, self.list_com0com_pairs)
+                    QTimer.singleShot(2000, self.refresh_port_lists)
+                else:
+                    self.list_com0com_pairs()
+                    self.refresh_port_lists()
             else:
                 self._update_status(f"Failed to {op_name} port pair", component='com0com')
                 self._show_message("Error", f"Failed to {op_name} port pair:\n{output}", "error")
