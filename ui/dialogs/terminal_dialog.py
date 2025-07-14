@@ -16,11 +16,38 @@ from PyQt6.QtGui import *
 from PyQt6.QtSvg import QSvgRenderer
 from datetime import datetime
 import queue
+import atexit
+
 
 from ui.windows.terminal_formatter import TerminalStreamFormatter
 from ui.theme.theme import AppColors, AppDimensions, AppFonts, ThemeManager
 from ui.theme.icons.icons import AppIcons
 from core.core import SerialPortInfo, PortScanner
+
+
+class SerialPortRegistry:
+    _ports = set()
+    
+    @classmethod
+    def register(cls, worker):
+        cls._ports.add(worker)
+    
+    @classmethod
+    def unregister(cls, worker):
+        cls._ports.discard(worker)
+    
+    @classmethod
+    def cleanup_all(cls):
+        for worker in list(cls._ports):
+            try:
+                if hasattr(worker, 'serial_port') and worker.serial_port:
+                    worker.serial_port.close()
+            except:
+                pass
+
+# Register cleanup on program exit
+atexit.register(SerialPortRegistry.cleanup_all)
+
 
 # ===== DATA CLASSES =====
 @dataclass
@@ -64,6 +91,9 @@ class SerialWorker(QThread):
                 timeout=0.1
             )
             
+            # ADD THIS LINE - Register with cleanup registry
+            SerialPortRegistry.register(self)
+            
             self.running = True
             self.connectionStateChanged.emit(True)
             
@@ -84,23 +114,29 @@ class SerialWorker(QThread):
         except serial.SerialException as e:
             self.errorOccurred.emit(str(e))
         finally:
+            # ADD THIS LINE - Unregister from cleanup registry
+            SerialPortRegistry.unregister(self)
+            
             if self.serial_port and self.serial_port.is_open:
                 self.serial_port.close()
-            self.connectionStateChanged.emit(False)
-            
+            self.connectionStateChanged.emit(False)  
+                 
     def stop(self):
-        """Stop the worker thread safely"""
+        """Stop the worker thread safely with graceful shutdown"""
         self.running = False
-        # Wait for thread to finish naturally first
-        if not self.wait(1000):  # 1 second timeout
-            # Only force close if thread won't stop
-            if self.serial_port and self.serial_port.is_open:
-                try:
-                    self.serial_port.close()
-                except (serial.SerialException, OSError) as e:
-                    print(f"Port cleanup error: {e}")
-            self.wait(500)  # Brief wait after forced close
         
+        # Close the serial port to interrupt any blocking reads
+        if self.serial_port and self.serial_port.is_open:
+            try:
+                self.serial_port.close()
+            except Exception as e:
+                print(f"Error closing port during stop: {e}")
+        
+        # Wait for thread to finish with longer timeout
+        if not self.wait(2000):  # 2 seconds
+            print(f"Warning: Serial thread did not stop cleanly for {self.config.port}")
+            # Don't call terminate() - let Python/atexit handle cleanup
+            #   
     def write(self, data: bytes):
         """Queue data to be written"""
         if self.running:
@@ -718,13 +754,22 @@ class TerminalPane(QWidget):
             except (TypeError, RuntimeError):
                 pass  # Signals already disconnected
             
-            # Stop worker gracefully
+            # Force stop worker and ensure thread termination
             self.serial_worker.stop()
+            
+            # Force thread termination if it doesn't stop gracefully
+            if not self.serial_worker.wait(2000):  # Wait 2 seconds
+                self.serial_worker.terminate()
+                self.serial_worker.wait(1000)  # Wait another second for termination
+            
             self.serial_worker = None
         
         # Clear buffer and stop timer
         self.line_buffer = ""
         self.buffer_timer.stop()
+        
+        # Mark as disconnected to prevent further operations
+        self.is_connected = False
             
     def _on_data_received(self, data: bytes):
         """Handle received data with proper line buffering"""
@@ -1013,7 +1058,7 @@ class TerminalPane(QWidget):
                 
                 # Brief pause to ensure port is released
                 from PyQt6.QtCore import QTimer
-                QTimer.singleShot(100, lambda: self._complete_baud_rate_change(
+                QTimer.singleShot(500, lambda: self._complete_baud_rate_change(
                     baud_rate, old_baud, port_name, was_monitoring
                 ))
                 
@@ -1105,69 +1150,31 @@ class TerminalPane(QWidget):
         # Reset baud rate detection when port changes
         self.reset_baud_rate_detection()
         
-        if self.is_connected and self.serial_worker:
-            # For active connections, always do graceful reconnect for reliability
+        # Always cleanup existing worker before attempting new connection
+        if self.serial_worker:
+            self.disconnect()
+        
+        # Show connecting message
+        self.formatter.append_status(
+            self.terminal,
+            f"Connecting to {new_port}...",
+            "info"
+        )
+        
+        try:
+            # Brief pause to ensure port is released, then connect
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(500, self.connect)
+            
+        except Exception as connect_error:
             self.formatter.append_status(
                 self.terminal,
-                f"Switching COM port from {old_port} to {new_port}...",
-                "info"
+                f"Failed to start connection to {new_port}: {str(connect_error)}",
+                "error"
             )
             
-            # Store connection state for seamless reconnection
-            current_baud = self.config.baudrate
-            was_monitoring = getattr(self, 'monitoring_active', False)
-            
-            try:
-                # Graceful disconnect
-                if was_monitoring:
-                    try:
-                        self._stop_monitoring()
-                    except AttributeError:
-                        pass  # Monitoring not implemented yet
-                self.disconnect()
-                
-                # Brief pause to ensure port is released
-                from PyQt6.QtCore import QTimer
-                QTimer.singleShot(100, lambda: self._complete_com_port_change(
-                    new_port, old_port, current_baud, was_monitoring
-                ))
-                
-            except Exception as e:
-                self.formatter.append_status(
-                    self.terminal,
-                    f"Error during disconnect: {str(e)}",
-                    "error"
-                )
-                # Revert port on failure
-                self.config.port = old_port
-        else:
-            # Not currently connected, but user explicitly requested port switch
-            # So we should attempt to connect to the new port immediately
-            self.formatter.append_status(
-                self.terminal,
-                f"Connecting to {new_port}...",
-                "info"
-            )
-            
-            try:
-                # Attempt immediate connection to new port
-                self.connect()
-                # Note: Success/failure will be reported by _on_connection_state_changed
-                
-            except Exception as connect_error:
-                self.formatter.append_status(
-                    self.terminal,
-                    f"Failed to start connection to {new_port}: {str(connect_error)}",
-                    "error"
-                )
-                
-                # Revert to original port on failure
-                self.config.port = old_port
-                self.formatter.append_status(
-                    self.terminal,
-                    f"Reverted to {old_port}",
-                    "warning"
-                )
+            # Revert to original port on failure
+            self.config.port = old_port
     
     def _complete_com_port_change(self, new_port: str, old_port: str, baud_rate: int, was_monitoring: bool):
         """Complete the COM port change after disconnect delay"""
@@ -1705,10 +1712,18 @@ class SplitContainer(QWidget):
         return splitter
     
     def cleanup(self):
-        """Cleanup all panes in container"""
+        """Single point of cleanup for split container"""
+        # Clean up all panes in the container
         for pane in self.panes:
-            pane.cleanup()
-    
+            try:
+                pane.cleanup()
+            except Exception as e:
+                print(f"Error cleaning up pane: {e}")
+        
+        # Clear the panes list
+        self.panes.clear()
+        self.active_pane = None
+        
     def _close_pane(self, pane: TerminalPane):
         """Close a pane and reorganize layout"""
         if len(self.panes) == 1:
@@ -2097,7 +2112,7 @@ class SerialMonitorWindow(QMainWindow):
         self._apply_window_style()
         
         # Show connection dialog after window is shown
-        QTimer.singleShot(100, self._show_initial_connection_dialog)
+        QTimer.singleShot(200, self._show_initial_connection_dialog)
         
     def _setup_ui(self):
         """Setup main window UI"""
@@ -2498,10 +2513,21 @@ class SerialMonitorWindow(QMainWindow):
             self.status_bar.showMessage("No active connection")
     
     def closeEvent(self, event):
-        """Handle window close with cleanup"""
-        self.cleanup()
-        event.accept()
-    
+        """Handle window close with simple cleanup"""
+        try:
+            # Stop the status timer
+            self.status_timer.stop()
+            
+            # Signal all workers to stop gracefully
+            for container in self.tabs.values():
+                container.cleanup()
+            
+            # Accept the event and let atexit handle final cleanup
+            event.accept()
+        except Exception as e:
+            print(f"Error during close: {e}")
+            event.accept()
+
     def _show_settings_menu(self):
         """Show settings menu for the active pane"""
         container = self._get_current_container()

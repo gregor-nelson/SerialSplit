@@ -23,10 +23,10 @@ class OutputPortWidget(QWidget):
     
     port_changed = pyqtSignal()
     
-    def __init__(self, port_number: int, available_ports: List[str], parent=None):
+    def __init__(self, port_number: int, scanned_ports: List[SerialPortInfo], parent=None):
         super().__init__(parent)
         self.port_number = port_number
-        self.scanned_ports: List[SerialPortInfo] = []
+        self.scanned_ports: List[SerialPortInfo] = scanned_ports or []
         
         # Apply borderless styling for seamless integration
         self.setStyleSheet("QWidget { background-color: transparent; border: none; }")
@@ -34,9 +34,9 @@ class OutputPortWidget(QWidget):
         # Set consistent size policy without fixed height constraints
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         
-        self.init_ui(available_ports)
+        self.init_ui(scanned_ports)
     
-    def init_ui(self, available_ports: List[str]):
+    def init_ui(self, scanned_ports: List[SerialPortInfo]):
         """Initialize the user interface to match incoming port layout exactly"""
         main_layout = QVBoxLayout(self)
         ThemeManager.set_widget_margins(main_layout, "none")  # No extra margins like incoming port widgets
@@ -80,7 +80,7 @@ class OutputPortWidget(QWidget):
         
         # Port selection combo (full width like incoming port)
         self.port_combo = ThemeManager.create_combobox(editable=True)
-        self.populate_ports(available_ports)
+        self.populate_ports(scanned_ports)
         self.port_combo.currentTextChanged.connect(self.port_changed.emit)
         self.port_combo.setFixedHeight(AppDimensions.COMBOBOX_HEIGHT)
         layout.addWidget(self.port_combo)
@@ -99,17 +99,8 @@ class OutputPortWidget(QWidget):
         main_layout.addLayout(layout)
         
     
-    def populate_ports(self, available_ports: List[str]):
-        """Populate port combo with available ports (simple version)"""
-        self.port_combo.clear()
-        if available_ports:
-            self.port_combo.addItems(available_ports)
-        else:
-            self.port_combo.addItem(AppMessages.NO_DEVICES)
-            self.port_combo.setEnabled(False)
-    
-    def populate_ports_enhanced(self, ports: List[SerialPortInfo]):
-        """Populate port combo with enhanced port information - optimized like incoming ports"""
+    def populate_ports(self, ports: List[SerialPortInfo]):
+        """Populate port combo with enhanced port information using SerialPortInfo objects"""
         current_port = self.port_combo.currentData() or self.port_combo.currentText()
         
         self.port_combo.clear()

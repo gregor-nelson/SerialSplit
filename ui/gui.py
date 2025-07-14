@@ -598,9 +598,9 @@ class Hub4comGUI(QMainWindow):
     def add_output_port(self):
         """Add a new output port configuration with consistent spacing"""
         port_number = len(self.app_state['output_port_widgets']) + 1
-        available_ports = self.get_available_ports()
+        scanned_ports = self.app_state['scanned_ports']
         
-        widget = OutputPortWidget(port_number, available_ports, self)
+        widget = OutputPortWidget(port_number, scanned_ports, self)
         widget.remove_btn.clicked.connect(lambda: self.remove_output_port(widget))
         widget.port_combo.currentTextChanged.connect(self.update_preview)
         widget.baud_combo.currentTextChanged.connect(self.update_preview)
@@ -608,7 +608,7 @@ class Hub4comGUI(QMainWindow):
         
         # If ports have already been scanned, populate the new widget immediately
         if self.app_state['scanned_ports']:
-            widget.populate_ports_enhanced(self.app_state['scanned_ports'])
+            widget.populate_ports(self.app_state['scanned_ports'])
         
         self.app_state['output_port_widgets'].append(widget)
         
@@ -671,9 +671,9 @@ class Hub4comGUI(QMainWindow):
             widget.port_number = i + 1
             widget.findChild(QLabel).setText(f"Port {i + 1}:")
     
-    def get_available_ports(self) -> List[str]:
-        """Get list of available ports"""
-        return [p.port_name for p in self.app_state['scanned_ports']] if self.app_state['scanned_ports'] else []
+    def get_available_ports(self) -> List[SerialPortInfo]:
+        """Get list of available ports as SerialPortInfo objects"""
+        return self.app_state['scanned_ports'] if self.app_state['scanned_ports'] else []
     
     def set_all_baud_rates(self, rate: str):
         """Set all ports to the same baud rate"""
@@ -827,7 +827,7 @@ class Hub4comGUI(QMainWindow):
     def _update_output_port_widgets(self, ports):
         """Update all output port widgets"""
         for widget in self.app_state['output_port_widgets']:
-            widget.populate_ports_enhanced(ports)
+            widget.populate_ports(ports)
     
     def on_ports_scanned(self, ports):
         """Handle completed port scan for combo boxes"""
@@ -1174,41 +1174,57 @@ class Hub4comGUI(QMainWindow):
             
             # Schedule follow-up actions
             QTimer.singleShot(500, self.list_com0com_pairs)
-            QTimer.singleShot(1000, self._populate_default_output_ports)
-            QTimer.singleShot(1500, self._show_configuration_summary)
+            QTimer.singleShot(1500, self._populate_default_output_ports)  # Moved to after port scan completes
+            QTimer.singleShot(2000, self._show_configuration_summary)
         else:
             self._update_status("Virtual COM pair configuration encountered issues - checking existing pairs", component='com0com')
             self.created_pairs_info = []
             self.existing_pairs_info = []
-            QTimer.singleShot(1000, self._populate_default_output_ports)
-            QTimer.singleShot(1500, self._show_configuration_summary)
+            QTimer.singleShot(1500, self._populate_default_output_ports)  # Moved to after port scan completes
+            QTimer.singleShot(2000, self._show_configuration_summary)
     
     def _populate_default_output_ports(self):
-        """Pre-populate output port widgets with default COM131 and COM141"""
+        """Pre-populate output port widgets with default COM131 and COM141 using SerialPortInfo objects"""
         default_config = DefaultConfig()
+        
+        # Check if we have scanned ports data available
+        if not self.app_state['scanned_ports']:
+            # If no ports are scanned yet, schedule this to run later
+            QTimer.singleShot(500, self._populate_default_output_ports)
+            return
         
         # Ensure we have enough output port widgets
         while len(self.app_state['output_port_widgets']) < len(default_config.output_mapping):
             self.add_output_port()
         
-        # Set the default ports and baud rates
+        # Set the default ports and baud rates using SerialPortInfo objects
         for i, port_config in enumerate(default_config.output_mapping):
             if i < len(self.app_state['output_port_widgets']):
                 widget = self.app_state['output_port_widgets'][i]
+                port_name = port_config["port"]
                 
-                # Set port name
-                if hasattr(widget, 'port_combo') and widget.port_combo:
-                    port_name = port_config["port"]
+                # Find the corresponding SerialPortInfo object
+                matching_port = None
+                for port_info in self.app_state['scanned_ports']:
+                    if port_info.port_name == port_name:
+                        matching_port = port_info
+                        break
+                
+                # Set port name using SerialPortInfo data
+                if hasattr(widget, 'port_combo') and widget.port_combo and matching_port:
                     combo = widget.port_combo
                     
-                    # Add if not present and select
-                    port_index = combo.findText(port_name)
-                    if port_index == -1:
-                        combo.addItem(port_name)
-                        port_index = combo.findText(port_name)
-                    
+                    # Use findData to find the SerialPortInfo object
+                    port_index = combo.findData(matching_port.port_name)
                     if port_index != -1:
                         combo.setCurrentIndex(port_index)
+                    else:
+                        # If not found in combo, the port might not be populated yet
+                        # Ensure widget is populated with scanned ports first
+                        widget.populate_ports(self.app_state['scanned_ports'])
+                        port_index = combo.findData(matching_port.port_name)
+                        if port_index != -1:
+                            combo.setCurrentIndex(port_index)
                 
                 # Set baud rate
                 if hasattr(widget, 'baud_combo') and widget.baud_combo:

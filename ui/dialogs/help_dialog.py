@@ -324,7 +324,7 @@ class HelpContentRegistry:
         <h1 style="color: {AppColors.ACCENT_BLUE}; font-size: 18pt; margin-bottom: 5px;">Quick Start Guide</h1>
 
         <div class="info-box">
-        <h3>Welcome to Serial Port Splitter!</h3>
+        <h3>Welcome to Serial Port Splitter</h3>
         <p>This guide will enable operation in just a few minutes. Follow these straightforward steps to begin splitting serial data.</p>
         </div>
 
@@ -332,9 +332,9 @@ class HelpContentRegistry:
         <p>Virtual port pairs are the foundation of serial port splitting. Here's how to create them:</p>
         <ol>
             <li>Click the <b>"Create New Pair"</b> button in the Virtual Ports section</li>
-            <li>The system will automatically assign port numbers (e.g., COM3 ↔ COM4)</li>
+            <li>Select suitable COM numbers for the new port pair example (COM151, COM152)</li>
             <li>Note these port numbers - these will be required for applications</li>
-            <li><b>Important:</b> Applications should connect to the "other side" of the pair from the data source (if this utility uses COM3 as the source, applications connect to COM4)</li>
+            <li><b>Important:</b> Applications should connect to the "other side" of the pair from the data source (if this utility uses COM151 as the source, applications connect to COM152)</li>
         </ol>
 
         <h3>Step 2: Select Data Source</h3>
@@ -348,7 +348,7 @@ class HelpContentRegistry:
         <h3>Step 3: Add Output Destinations</h3>
         <p>Add ports to which data should be sent:</p>
         <ol>
-            <li>Click <b>"Add Output Port"</b> for each destination</li>
+            <li>Click <b>"Add Output Port"</b> for each destination, Note Defaults: COM131 & COM141 </li>
             <li>Select the appropriate COM port from the dropdown</li>
             <li>Set the baud rate to match application requirements</li>
         </ol>
@@ -882,7 +882,7 @@ class HelpContentRegistry:
         <li><b>[CNCA31 ⇄ CNCB31]</b>: These are the internal driver names for the virtual port pair.</li>
         <li><b>[Features: ...]</b>: This section indicates which special emulation features are currently enabled for the port pair.</li>
     </ul>
-    <p><b>Default Configuration:</b> This application creates port pairs using the CNCA31/CNCB31 and CNCA41/CNCB41 naming convention, which typically map to COM131/132 and COM141/142 respectively.</p>
+    <p><b>Default Configuration:</b> This application creates port pairs using the CNCA31/CNCB31 and CNCA41/CNCB41 naming convention, which by default map to COM131/132 and COM141/142 respectively.</p>
 
     <h3>Configuration Settings</h3>
     <p>The following settings control the behaviour of the virtual serial ports to simulate physical hardware characteristics.</p>
@@ -983,27 +983,81 @@ class HelpContentRegistry:
 
     @staticmethod
     def _get_hub4com_reference_content() -> str:
-        """Get HUB4COM command reference content"""
+        """Get HUB4COM command reference content with improved file finding"""
         try:
             script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            help_file = os.path.join(script_dir, "Hub4ComReadMe.txt")
-            with open(help_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-            return f"{HTMLTheme.get_styles()}<pre>{content}</pre>"
-        except:
-            return f"{HTMLTheme.get_styles()}<p>HUB4COM reference file not found. Please ensure Hub4ComReadMe.txt is in the application directory.</p>"
+            
+            # Search for any .txt file containing "hub4com" in the name (case-insensitive)
+            import glob
+            
+            # Get all .txt files in the script directory
+            txt_files = glob.glob(os.path.join(script_dir, "*.txt"))
+            
+            # Find files containing "hub4com" (case-insensitive)
+            hub4com_files = []
+            for file_path in txt_files:
+                filename = os.path.basename(file_path).lower()
+                if "hub4com" in filename:
+                    hub4com_files.append(file_path)
+            
+            # Try to find the best match (prefer "readme" files)
+            help_file = None
+            if hub4com_files:
+                # Sort by preference: readme files first, then others
+                hub4com_files.sort(key=lambda f: (
+                    0 if "readme" in os.path.basename(f).lower() else 1,
+                    os.path.basename(f).lower()
+                ))
+                help_file = hub4com_files[0]
+            
+            if help_file and os.path.exists(help_file):
+                with open(help_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                return f"{HTMLTheme.get_styles()}<pre>{content}</pre>"
+            else:
+                raise FileNotFoundError("No hub4com documentation file found")
+                
+        except Exception as e:
+            return f"{HTMLTheme.get_styles()}<p>HUB4COM reference file not found. Please ensure a .txt file containing 'hub4com' in the name is in the application directory.<br><br>Error: {str(e)}</p>"
     
     @staticmethod
     def _get_com0com_reference_content() -> str:
-        """Get COM0COM command reference content"""
+        """Get COM0COM command reference content with improved file finding"""
         try:
             script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            help_file = os.path.join(script_dir, "Com0ComReadMe.txt")
-            with open(help_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-            return f"{HTMLTheme.get_styles()}<pre>{content}</pre>"
-        except:
-            return f"{HTMLTheme.get_styles()}<p>COM0COM reference file not found. Please ensure Com0ComReadMe.txt is in the application directory.</p>"
+            
+            # Search for any .txt file containing "com0com" in the name (case-insensitive)
+            import glob
+            
+            # Get all .txt files in the script directory
+            txt_files = glob.glob(os.path.join(script_dir, "*.txt"))
+            
+            # Find files containing "com0com" (case-insensitive)
+            com0com_files = []
+            for file_path in txt_files:
+                filename = os.path.basename(file_path).lower()
+                if "com0com" in filename:
+                    com0com_files.append(file_path)
+            
+            # Try to find the best match (prefer "readme" files)
+            help_file = None
+            if com0com_files:
+                # Sort by preference: readme files first, then others
+                com0com_files.sort(key=lambda f: (
+                    0 if "readme" in os.path.basename(f).lower() else 1,
+                    os.path.basename(f).lower()
+                ))
+                help_file = com0com_files[0]
+            
+            if help_file and os.path.exists(help_file):
+                with open(help_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                return f"{HTMLTheme.get_styles()}<pre>{content}</pre>"
+            else:
+                raise FileNotFoundError("No com0com documentation file found")
+                
+        except Exception as e:
+            return f"{HTMLTheme.get_styles()}<p>COM0COM reference file not found. Please ensure a .txt file containing 'com0com' in the name is in the application directory.<br><br>Error: {str(e)}</p>"
     
     @staticmethod
     def _get_port_types_content() -> str:
@@ -1217,7 +1271,6 @@ class HelpContentRegistry:
         <li>Windows 10 or later (for full functionality)</li>
         <li>Administrator privileges (for driver installation)</li>
         <li>com0com virtual serial port driver</li>
-        <li>Python 3.8+ with PyQt6, PyQt6-SVG, pyserial</li>
     </ul>
 </div>
 
