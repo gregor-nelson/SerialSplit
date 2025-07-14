@@ -1120,8 +1120,25 @@ class Hub4comProcess(QThread):
     def stop_process(self):
         self.should_stop = True
         if self.process and self.process.poll() is None:
+            # Give hub4com 2 seconds to cleanup gracefully
             self.process.terminate()
-            self.process.wait()
+            try:
+                self.process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+    
+    def cleanup_com_ports(self):
+        """Force release all COM ports by restarting com0com service"""
+        try:
+            # Stop com0com service
+            subprocess.run(['net', 'stop', 'com0com'], 
+                         capture_output=True, check=False)
+            # Start com0com service
+            subprocess.run(['net', 'start', 'com0com'], 
+                         capture_output=True, check=False)
+        except Exception:
+            # Ignore service restart errors
+            pass
 
 
 class Com0comProcess(QThread):

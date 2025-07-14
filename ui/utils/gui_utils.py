@@ -375,7 +375,7 @@ class CommandBuilder:
         """Add route options to command"""
         output_indices = ','.join(str(i + 1) for i in range(num_ports))
         
-        mode = settings.get('mode', 'one_way')
+        mode = settings.get('mode', 'two_way')
         if mode == 'one_way':
             cmd.append(f'--route=0:{output_indices}')
         elif mode == 'two_way':

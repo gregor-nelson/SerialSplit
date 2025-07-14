@@ -1086,6 +1086,8 @@ class Hub4comGUI(QMainWindow):
         """Stop the hub4com process"""
         if self.app_state['hub4com_process']:
             self.app_state['hub4com_process'].stop_process()
+            # Force release any stuck COM ports
+            self.app_state['hub4com_process'].cleanup_com_ports()
             self._update_status(AppMessages.STOPPING_HUBCOM)
     
     def on_hub4com_output(self, text: str):
@@ -1800,7 +1802,7 @@ class Hub4comGUI(QMainWindow):
         for checkbox, label in port_options:
             is_checked = checkbox.isChecked()
             action = menu.addAction(self.checkbox_icon(is_checked), label)
-            action.triggered.connect(lambda: checkbox.setChecked(not checkbox.isChecked()))
+            action.triggered.connect(lambda checked=False, cb=checkbox: cb.setChecked(not cb.isChecked()))
         
         menu.addSeparator()
         
@@ -1881,6 +1883,9 @@ class Hub4comGUI(QMainWindow):
                     self.app_state['hub4com_process'].wait(3000)
                 event.accept()
             elif reply == QMessageBox.StandardButton.No:
+                # Force cleanup even if user chooses not to stop gracefully
+                if self.app_state['hub4com_process']:
+                    self.app_state['hub4com_process'].cleanup_com_ports()
                 event.accept()
             else:
                 event.ignore()
