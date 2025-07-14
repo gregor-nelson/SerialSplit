@@ -114,9 +114,10 @@ class TerminalPane(QWidget):
     splitRequested = pyqtSignal(object, str)  # (source_pane, direction)
     closeRequested = pyqtSignal(object)  # source_pane
     
-    def __init__(self, config: SerialConfig, parent=None):
+    def __init__(self, config: SerialConfig, parent=None, main_window=None):
         super().__init__(parent)
         self.config = config
+        self.main_window = main_window
         self.formatter = TerminalStreamFormatter()
         self.serial_worker: Optional[SerialWorker] = None
         self.is_connected = False
@@ -266,6 +267,10 @@ class TerminalPane(QWidget):
         # Baud rate submenu
         baud_menu = menu.addMenu("Baud Rate")
         self._create_baud_rate_menu(baud_menu)
+        
+        # COM port submenu
+        com_menu = menu.addMenu("Switch COM Port")
+        self._create_com_port_menu(com_menu)
         
         clear = menu.addAction("Clear Terminal")
         clear.triggered.connect(self._clear_terminal)
@@ -487,6 +492,92 @@ class TerminalPane(QWidget):
             action.triggered.connect(lambda checked, r=rate: self._set_baud_rate(r))
             if rate == current_baud:
                 action.setIcon(self.checkbox_icon(True))
+    
+    def _create_com_port_menu(self, menu: QMenu):
+        """Create COM port submenu with available ports and current selection indicator"""
+        try:
+            # Get available ports using PortScanner
+            scanner = PortScanner()
+            available_ports = scanner.scan_registry_ports()
+            
+            # Fall back to serial.tools.list_ports if registry scan fails
+            if not available_ports:
+                try:
+                    import serial.tools.list_ports
+                    serial_ports = serial.tools.list_ports.comports()
+                    # Convert to our expected format
+                    available_ports = []
+                    for port in serial_ports:
+                        # Create a simple object with the required attributes
+                        class SimplePort:
+                            def __init__(self, device, description):
+                                self.port_name = device
+                                self.device_name = description or "Unknown"
+                                self.is_moxa = False
+                                self.port_type = "Hardware"
+                        
+                        available_ports.append(SimplePort(port.device, port.description))
+                except Exception:
+                    available_ports = []
+            
+            current_port = self.config.port
+            
+            # Get connected ports from main window if available
+            connected_ports = set()
+            if self.main_window:
+                try:
+                    connected_ports = self.main_window.get_connected_ports()
+                except Exception:
+                    pass  # Fallback if main window method not available
+            
+            if not available_ports:
+                no_ports = menu.addAction("No ports available")
+                no_ports.setEnabled(False)
+                return
+            
+            # Add ports to menu with enhanced display format
+            for port in available_ports:
+                display_name = self._create_com_port_display_text(port)
+                
+                # Check if port is in use by another pane
+                is_in_use_by_other = (port.port_name in connected_ports and 
+                                     port.port_name != current_port)
+                
+                if is_in_use_by_other:
+                    display_name += " (In Use)"
+                
+                action = menu.addAction(display_name)
+                action.triggered.connect(lambda checked, port_name=port.port_name: self._set_com_port(port_name))
+                
+                # Show checkbox for current port
+                if port.port_name == current_port:
+                    action.setIcon(self.checkbox_icon(True))
+                
+                # Disable if port is in use by another pane
+                if is_in_use_by_other:
+                    action.setEnabled(False)
+                
+        except Exception as e:
+            error_action = menu.addAction(f"Error scanning ports: {str(e)}")
+            error_action.setEnabled(False)
+    
+    def _create_com_port_display_text(self, port):
+        """Create display text for COM port with type indicators"""
+        display_text = port.port_name
+        
+        if hasattr(port, 'is_moxa') and port.is_moxa:
+            display_text += "  •  Moxa"
+            if hasattr(port, 'device_name') and port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        elif hasattr(port, 'port_type') and port.port_type.startswith("Virtual"):
+            virtual_type = port.port_type.split(' ')[1] if ' ' in port.port_type else "Virtual"
+            display_text += f"  •  {virtual_type} Port"
+        else:
+            display_text += "  •  Hardware Port"
+            if hasattr(port, 'device_name') and port.device_name and port.device_name != "Unknown":
+                display_text += f"  •  {port.device_name}"
+        
+        return display_text
     
     def checkbox_icon(self, checked: bool) -> QIcon:
         """Generate Windows 10 style checkbox icon - shared with main GUI"""
@@ -914,7 +1005,10 @@ class TerminalPane(QWidget):
             try:
                 # Graceful disconnect
                 if was_monitoring:
-                    self._stop_monitoring()
+                    try:
+                        self._stop_monitoring()
+                    except AttributeError:
+                        pass  # Monitoring not implemented yet
                 self.disconnect()
                 
                 # Brief pause to ensure port is released
@@ -947,7 +1041,10 @@ class TerminalPane(QWidget):
             
             # Restore monitoring if it was active
             if was_monitoring:
-                self._start_monitoring()
+                try:
+                    self._start_monitoring()
+                except AttributeError:
+                    pass  # Monitoring not implemented yet
             
             self.formatter.append_status(
                 self.terminal,
@@ -967,12 +1064,143 @@ class TerminalPane(QWidget):
             try:
                 self.connect()
                 if was_monitoring:
-                    self._start_monitoring()
+                    try:
+                        self._start_monitoring()
+                    except AttributeError:
+                        pass  # Monitoring not implemented yet
                 self.formatter.append_status(
                     self.terminal,
                     f"Restored connection at original baud rate {old_baud}",
                     "warning"
                 )
+            except Exception as restore_error:
+                self.formatter.append_status(
+                    self.terminal,
+                    f"Failed to restore original connection: {str(restore_error)}",
+                    "error"
+                )
+    
+    def _set_com_port(self, new_port: str):
+        """Set terminal COM port with graceful automatic reconnection"""
+        if self.config.port == new_port:
+            return  # Already connected to this port
+        
+        # Check if new port is already in use by another pane
+        if self.main_window:
+            try:
+                connected_ports = self.main_window.get_connected_ports()
+                if new_port in connected_ports:
+                    self.formatter.append_status(
+                        self.terminal,
+                        f"Port {new_port} is already in use by another pane",
+                        "error"
+                    )
+                    return
+            except Exception:
+                pass  # Continue if port check fails
+        
+        old_port = self.config.port
+        self.config.port = new_port
+        
+        # Reset baud rate detection when port changes
+        self.reset_baud_rate_detection()
+        
+        if self.is_connected and self.serial_worker:
+            # For active connections, always do graceful reconnect for reliability
+            self.formatter.append_status(
+                self.terminal,
+                f"Switching COM port from {old_port} to {new_port}...",
+                "info"
+            )
+            
+            # Store connection state for seamless reconnection
+            current_baud = self.config.baudrate
+            was_monitoring = getattr(self, 'monitoring_active', False)
+            
+            try:
+                # Graceful disconnect
+                if was_monitoring:
+                    try:
+                        self._stop_monitoring()
+                    except AttributeError:
+                        pass  # Monitoring not implemented yet
+                self.disconnect()
+                
+                # Brief pause to ensure port is released
+                from PyQt6.QtCore import QTimer
+                QTimer.singleShot(100, lambda: self._complete_com_port_change(
+                    new_port, old_port, current_baud, was_monitoring
+                ))
+                
+            except Exception as e:
+                self.formatter.append_status(
+                    self.terminal,
+                    f"Error during disconnect: {str(e)}",
+                    "error"
+                )
+                # Revert port on failure
+                self.config.port = old_port
+        else:
+            # Not currently connected, but user explicitly requested port switch
+            # So we should attempt to connect to the new port immediately
+            self.formatter.append_status(
+                self.terminal,
+                f"Connecting to {new_port}...",
+                "info"
+            )
+            
+            try:
+                # Attempt immediate connection to new port
+                self.connect()
+                # Note: Success/failure will be reported by _on_connection_state_changed
+                
+            except Exception as connect_error:
+                self.formatter.append_status(
+                    self.terminal,
+                    f"Failed to start connection to {new_port}: {str(connect_error)}",
+                    "error"
+                )
+                
+                # Revert to original port on failure
+                self.config.port = old_port
+                self.formatter.append_status(
+                    self.terminal,
+                    f"Reverted to {old_port}",
+                    "warning"
+                )
+    
+    def _complete_com_port_change(self, new_port: str, old_port: str, baud_rate: int, was_monitoring: bool):
+        """Complete the COM port change after disconnect delay"""
+        try:
+            # Reconnect with new port
+            self.connect()
+            
+            # Restore monitoring if it was active
+            if was_monitoring:
+                try:
+                    self._start_monitoring()
+                except AttributeError:
+                    pass  # Monitoring not implemented yet
+            
+            # Note: Success/failure will be reported by _on_connection_state_changed
+            
+        except Exception as reconnect_error:
+            self.formatter.append_status(
+                self.terminal,
+                f"Failed to connect to {new_port}: {str(reconnect_error)}",
+                "error"
+            )
+            
+            # Attempt to restore original connection
+            self.config.port = old_port
+            try:
+                self.connect()
+                if was_monitoring:
+                    try:
+                        self._start_monitoring()
+                    except AttributeError:
+                        pass  # Monitoring not implemented yet
+                # Note: Connection status will be reported by _on_connection_state_changed
             except Exception as restore_error:
                 self.formatter.append_status(
                     self.terminal,
@@ -1348,10 +1576,11 @@ class SplitContainer(QWidget):
     
     activePaneChanged = pyqtSignal(TerminalPane)
     
-    def __init__(self, initial_config: SerialConfig, parent=None):
+    def __init__(self, initial_config: SerialConfig, parent=None, main_window=None):
         super().__init__(parent)
         self.panes: List[TerminalPane] = []
         self.active_pane: Optional[TerminalPane] = None
+        self.main_window = main_window
         self._setup_ui(initial_config)
         
     def _setup_ui(self, config: SerialConfig):
@@ -1366,7 +1595,7 @@ class SplitContainer(QWidget):
         
     def _create_pane(self, config: SerialConfig) -> TerminalPane:
         """Create a new terminal pane"""
-        pane = TerminalPane(config)
+        pane = TerminalPane(config, main_window=self.main_window)
         pane.splitRequested.connect(self._split_pane)
         pane.closeRequested.connect(self._close_pane)
         pane.focusChanged.connect(lambda focused: self._on_pane_focus(pane, focused))
@@ -1850,6 +2079,18 @@ class SerialMonitorWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Serial Terminal")
         self.setMinimumSize(800, 600)
+        
+        # Set custom window icon using terminal settings icon
+        icon_pixmap = QPixmap(64, 64)
+        icon_pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(icon_pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        svg_renderer = QSvgRenderer()
+        svg_renderer.load(AppIcons.TERMINAL_SETTINGS.encode())
+        svg_renderer.render(painter)
+        painter.end()
+        self.setWindowIcon(QIcon(icon_pixmap))
+        
         self.tabs: Dict[QWidget, SplitContainer] = {}
         self._setup_ui()
         self._setup_shortcuts()
@@ -2123,7 +2364,7 @@ class SerialMonitorWindow(QMainWindow):
     def _create_tab(self, config: SerialConfig):
         """Create a new tab with split container"""
         # Create container
-        container = SplitContainer(config)
+        container = SplitContainer(config, main_window=self)
         container.activePaneChanged.connect(self._on_active_pane_changed)
         
         # Store references
@@ -2141,6 +2382,21 @@ class SerialMonitorWindow(QMainWindow):
         """Cleanup all tabs"""
         for container in self.tabs.values():
             container.cleanup()
+    
+    def get_all_active_panes(self):
+        """Get all terminal panes across all containers"""
+        all_panes = []
+        for container in self.tabs.values():
+            all_panes.extend(container.panes)
+        return all_panes
+    
+    def get_connected_ports(self):
+        """Get set of all currently connected ports"""
+        connected_ports = set()
+        for pane in self.get_all_active_panes():
+            if pane.is_connected:
+                connected_ports.add(pane.config.port)
+        return connected_ports
     
     def _close_tab(self, index: int):
         """Close a tab and cleanup"""
