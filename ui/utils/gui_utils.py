@@ -363,6 +363,8 @@ class CommandBuilder:
         
         # Add output ports
         for config in output_configs:
+            if disable_cts:
+                cmd.append('--octs=off')
             cmd.append(f'--baud={config.baud_rate}')
             formatted_port = self.port_manager.format_port_name(config.port_name)
             if not formatted_port:

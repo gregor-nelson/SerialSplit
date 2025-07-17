@@ -66,10 +66,10 @@ class Hub4comGUI(QMainWindow):
             'scanned_ports': [],
             'output_port_widgets': [],
             'route_settings': {
-                'mode': 'two_way',
+                'mode': 'full_network',  # Changed from 'two_way' to use All:All routing
                 'echo_enabled': False,
                 'flow_control_enabled': False,
-                'disable_default_fc': False
+                'disable_default_fc': False  # Let devices control their own flow control for configuration
             },
             'pending_modifications': 0,
             'modification_success': True
@@ -1235,10 +1235,10 @@ class Hub4comGUI(QMainWindow):
                     if baud_index != -1:
                         widget.baud_combo.setCurrentIndex(baud_index)
         
-        # Enable two-way routing by default
-        self.app_state['route_settings']['mode'] = 'two_way'
+        # Enable full network routing by default
+        self.app_state['route_settings']['mode'] = 'full_network'
         
-        self._update_status("Output routing configured: COM131 & COM141 @ 115200 baud, two-way mode enabled", component='com0com')
+        self._update_status("Output routing configured: COM131 & COM141 @ 115200 baud, full network mode enabled", component='com0com')
         QTimer.singleShot(200, self.update_preview)
     
     def show_launch_dialog(self):

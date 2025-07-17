@@ -9,12 +9,19 @@ Main entry point for the application
 
 import sys
 from pathlib import Path
-from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu 
-from PyQt6.QtGui import QPalette, QColor, QIcon, QPixmap, QPainter, QBrush, QPen, QLinearGradient, QAction, QFontDatabase
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QSplashScreen
+from PyQt6.QtGui import QPalette, QColor, QIcon, QPixmap, QPainter, QBrush, QPen, QLinearGradient, QAction, QFontDatabase, QDesktopServices, QCursor, QFont
+from PyQt6.QtCore import Qt, QTimer, QUrl, QRect
 from PyQt6.QtSvg import QSvgRenderer # <-- Import for SVG rendering
 from ui.gui import Hub4comGUI
 from ui.theme.theme import ThemeManager, AppColors  # Import for dark mode global styling
+
+# --- GitHub SVG Icon ---
+GITHUB_ICON_SVG = """
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path fill="{color}" d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.300 24 12c0-6.627-5.373-12-12-12z"/>
+</svg>
+"""
 
 # --- SVG Icon Content ---
 # The polished SVG icon is stored here as a multi-line string.
@@ -118,6 +125,22 @@ APP_ICON_SVG = """
   <circle cx="128" cy="128" r="120" fill="none" stroke="url(#mainGradient)" stroke-width="2" opacity="0.1"/>
 </svg>
 """
+
+
+def load_splash_icon():
+    """Load the splash screen icon from icon.svg file"""
+    icon_path = Path(__file__).parent / "icon.svg"
+    
+    if not icon_path.exists():
+        print("Warning: icon.svg not found, using embedded icon")
+        return APP_ICON_SVG
+    
+    try:
+        with open(icon_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        print(f"Error loading icon.svg: {e}, using embedded icon")
+        return APP_ICON_SVG
 
 
 def load_inter_font():
@@ -267,10 +290,243 @@ def setup_dark_mode_palette(app):
     app.setPalette(palette)
 
 
+class SplashScreen(QSplashScreen):
+    """Custom splash screen for Serial Port Splitter application"""
+    
+    def __init__(self, pixmap):
+        super().__init__(pixmap)
+        
+        # Safe window flags for maximum visibility without breaking anything
+        self.setWindowFlags(
+            Qt.WindowType.SplashScreen | 
+            Qt.WindowType.FramelessWindowHint | 
+            Qt.WindowType.WindowStaysOnTopHint  # Always stays above other windows
+        )
+        
+        # Status and animation state
+        self.status_text = "Loading..."
+        self.loading_dots = 0
+        self.version_text = "Version 0.1"
+        
+        # GitHub profile URL (replace with your GitHub username)
+        self.github_url = "https://github.com/gregor-nelson"  # Replace with your GitHub profile
+        self.github_icon_rect = QRect()  # Will be set in paintEvent
+        self.github_hovered = False
+        
+        # Animation timer
+        self.animation_timer = QTimer()
+        self.animation_timer.timeout.connect(self.update_animation)
+        self.animation_timer.start(500)  # Update every 500ms
+        
+        # Enable mouse tracking for hover effects
+        self.setMouseTracking(True)
+        
+        # Apply dark theme styling
+        self.setStyleSheet(f"""
+            QSplashScreen {{
+                background-color: {AppColors.BACKGROUND_LIGHT};
+                border: 2px solid {AppColors.ACCENT_BLUE};
+            }}
+        """)
+    
+    def update_animation(self):
+        """Update loading animation dots"""
+        self.loading_dots = (self.loading_dots + 1) % 4
+        self.update()
+    
+    def update_status(self, status):
+        """Update status text"""
+        self.status_text = status
+        self.update()
+    
+    def paintEvent(self, event):
+        """Custom paint event to draw splash screen content"""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Get splash screen dimensions
+        rect = self.rect()
+        width = rect.width()
+        height = rect.height()
+        
+        # Draw background
+        painter.fillRect(rect, QColor(AppColors.BACKGROUND_LIGHT))
+        
+        # Draw main application icon (centered, scaled)
+        icon_size = 120
+        icon_x = (width - icon_size) // 2
+        icon_y = 40
+        
+        # Render main application icon
+        splash_icon_svg = load_splash_icon()
+        svg_bytes = splash_icon_svg.encode('utf-8')
+        renderer = QSvgRenderer(svg_bytes)
+        icon_pixmap = QPixmap(icon_size, icon_size)
+        icon_pixmap.fill(Qt.GlobalColor.transparent)
+        icon_painter = QPainter(icon_pixmap)
+        renderer.render(icon_painter)
+        icon_painter.end()
+        
+        painter.drawPixmap(icon_x, icon_y, icon_pixmap)
+        
+        # Draw title (reduced size)
+        title_font = QFont("Segoe UI", 20, QFont.Weight.Bold)  # Reduced from 24 to 20
+        painter.setFont(title_font)
+        painter.setPen(QColor(AppColors.TEXT_DEFAULT))
+        
+        title_rect = painter.fontMetrics().boundingRect("Serial Port Splitter")
+        title_x = (width - title_rect.width()) // 2
+        title_y = icon_y + icon_size + 30
+        
+        painter.drawText(title_x, title_y, "Serial Port Splitter")
+        
+        # Draw version
+        version_font = QFont("Segoe UI", 11)
+        painter.setFont(version_font)
+        painter.setPen(QColor(AppColors.TEXT_DEFAULT))
+        
+        version_rect = painter.fontMetrics().boundingRect(self.version_text)
+        version_x = (width - version_rect.width()) // 2
+        version_y = title_y + 35
+        
+        painter.drawText(version_x, version_y, self.version_text)
+        
+        # Draw GitHub icon (clickable)
+        github_icon_size = 20
+        github_x = (width - github_icon_size) // 2
+        github_y = version_y + 25
+        
+        # Set the clickable area for the GitHub icon
+        self.github_icon_rect = QRect(github_x, github_y, github_icon_size, github_icon_size)
+        
+        # Choose icon color based on hover state
+        github_color = AppColors.ACCENT_BLUE if self.github_hovered else AppColors.TEXT_PRIMARY
+        
+        # Render GitHub icon
+        github_svg = GITHUB_ICON_SVG.format(color=github_color)
+        github_svg_bytes = github_svg.encode('utf-8')
+        github_renderer = QSvgRenderer(github_svg_bytes)
+        github_pixmap = QPixmap(github_icon_size, github_icon_size)
+        github_pixmap.fill(Qt.GlobalColor.transparent)
+        github_painter = QPainter(github_pixmap)
+        github_renderer.render(github_painter)
+        github_painter.end()
+        
+        painter.drawPixmap(github_x, github_y, github_pixmap)
+        
+        # Draw loading animation (positioned with more space from GitHub icon)
+        loading_font = QFont("Segoe UI", 12)
+        painter.setFont(loading_font)
+        painter.setPen(QColor(AppColors.ACCENT_BLUE))
+        
+        # Create animated loading text
+        dots = "." * self.loading_dots
+        loading_text = f"{self.status_text}{dots}"
+        
+        loading_rect = painter.fontMetrics().boundingRect(loading_text)
+        loading_x = (width - loading_rect.width()) // 2
+        loading_y = github_y + 60  # Increased gap from GitHub icon
+        
+        painter.drawText(loading_x, loading_y, loading_text)
+        
+        # Draw loading indicator bar
+        bar_width = 200
+        bar_height = 4
+        bar_x = (width - bar_width) // 2
+        bar_y = loading_y + 25
+        
+        # Background bar
+        painter.fillRect(bar_x, bar_y, bar_width, bar_height, QColor(AppColors.BACKGROUND_WHITE))
+        
+        # Animated progress bar
+        progress_width = int(bar_width * (self.loading_dots + 1) / 4)
+        painter.fillRect(bar_x, bar_y, progress_width, bar_height, QColor(AppColors.ACCENT_BLUE))
+        
+        painter.end()
+    
+    def mousePressEvent(self, event):
+        """Handle mouse clicks on the splash screen"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            if self.github_icon_rect.contains(event.pos()):
+                # Open GitHub profile
+                QDesktopServices.openUrl(QUrl(self.github_url))
+        super().mousePressEvent(event)
+    
+    def mouseMoveEvent(self, event):
+        """Handle mouse movement for hover effects"""
+        old_hovered = self.github_hovered
+        self.github_hovered = self.github_icon_rect.contains(event.pos())
+        
+        # Update cursor and repaint if hover state changed
+        if self.github_hovered != old_hovered:
+            self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor) if self.github_hovered else QCursor(Qt.CursorShape.ArrowCursor))
+            self.update()
+        
+        super().mouseMoveEvent(event)
+    
+    def finish_loading(self):
+        """Clean up splash screen"""
+        self.animation_timer.stop()
+
+
+def create_splash_screen():
+    """Create and return the splash screen"""
+    # Create a pixmap for the splash screen background (adjusted for GitHub icon)
+    splash_pixmap = QPixmap(400, 400)
+    splash_pixmap.fill(Qt.GlobalColor.transparent)
+    
+    # Create splash screen
+    splash = SplashScreen(splash_pixmap)
+    
+    return splash
+
+
+def ensure_splash_visibility(splash):
+    """Safely ensure splash screen appears above other windows"""
+    try:
+        # Standard Qt methods - always safe
+        splash.show()
+        splash.raise_()           # Bring to front of window stack
+        splash.activateWindow()   # Give keyboard focus
+        
+        # Center on screen
+        screen = splash.screen()
+        if screen:
+            screen_geometry = screen.availableGeometry()
+            splash_geometry = splash.geometry()
+            center_x = (screen_geometry.width() - splash_geometry.width()) // 2
+            center_y = (screen_geometry.height() - splash_geometry.height()) // 2
+            splash.move(center_x, center_y)
+        
+    except Exception as e:
+        # Graceful fallback - just show the splash normally
+        print(f"Warning: Could not ensure splash visibility: {e}")
+        splash.show()
+
+
 def main():
     """Main entry point for the Hub4com Launcher application"""
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False) # Prevent app from quitting when window is closed
+    
+    # Create and show splash screen immediately
+    splash = create_splash_screen()
+    
+    # Safely ensure splash appears above other windows
+    ensure_splash_visibility(splash)
+    
+    # Process events to ensure splash is visible
+    app.processEvents()
+    
+    # Set application properties
+    app.setApplicationName("Serial Port Splitter")
+    app.setApplicationVersion("0.1")
+    app.setOrganizationName("SerialSplit")
+    app.setOrganizationDomain("serialsplit.local")
+    
+    # Update splash status
+    splash.update_status("Initializing theme")
+    app.processEvents()
     
     # Apply dark mode palette as a fallback for native components
     setup_dark_mode_palette(app)
@@ -282,9 +538,9 @@ def main():
     # Use Windows 10 system fonts (Segoe UI) - no custom font loading needed
     # load_inter_font()
     
-    # Set application properties
-    app.setApplicationName("Hub4com Launcher with Port Scanner & Baud Rate Support")
-    app.setApplicationVersion("0.1")
+    # Update splash status
+    splash.update_status("Loading system components")
+    app.processEvents()
 
     # Create system tray icon using the new SVG-based function
     # Note: Ensure you have the Qt SVG module installed: pip install PyQt6-Svg
@@ -299,6 +555,10 @@ def main():
     tray_menu.addSeparator()
     tray_menu.addAction(quit_action)
     
+    # Update splash status
+    splash.update_status("Initializing interface")
+    app.processEvents()
+    
     # Create and show main window
     window = Hub4comGUIWithTray(tray_icon)
     window.setWindowIcon(app_icon)
@@ -309,10 +569,19 @@ def main():
     tray_icon.activated.connect(lambda reason: window.show_window() if reason == QSystemTrayIcon.ActivationReason.DoubleClick else None)
     
     tray_icon.setContextMenu(tray_menu)
-    tray_icon.setToolTip("Virtual Port Splitter")
+    tray_icon.setToolTip("Serial Port Splitter")
     tray_icon.show()
     
-    window.show()
+    # Final splash status
+    splash.update_status("Loading")
+    app.processEvents()
+    
+    # Minimum splash display time (for branding)
+    QTimer.singleShot(1500, lambda: (
+        splash.finish_loading(),
+        splash.finish(window),
+        window.show()
+    ))
     
     sys.exit(app.exec())
 

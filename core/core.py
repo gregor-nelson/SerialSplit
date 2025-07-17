@@ -1238,8 +1238,8 @@ class Com0comProcess(QThread):
                 # Create the pair with specific settings
                 create_cmd = [
                     self.setupc_path, "install",
-                    f"PortName={com_a},EmuBR=yes,EmuOverrun=yes",
-                    f"PortName={com_b},EmuBR=yes,EmuOverrun=yes"
+                    f"PortName={com_a},EmuBR=yes,EmuOverrun=yes,AllDataBits=yes,AddRTTO=100,AddRITO=100",
+                    f"PortName={com_b},EmuBR=yes,EmuOverrun=yes,AllDataBits=yes,AddRTTO=100,AddRITO=100"
                 ]
                 
                 create_result = subprocess.run(
@@ -1378,8 +1378,8 @@ class Com0comProcess(QThread):
                     # Create the missing pair
                     create_cmd = [
                         self.setupc_path, "install",
-                        f"PortName={com_a},EmuBR=yes,EmuOverrun=yes",
-                        f"PortName={com_b},EmuBR=yes,EmuOverrun=yes"
+                        f"PortName={com_a},EmuBR=yes,EmuOverrun=yes,AllDataBits=yes,AddRTTO=100,AddRITO=100",
+                        f"PortName={com_b},EmuBR=yes,EmuOverrun=yes,AllDataBits=yes,AddRTTO=100,AddRITO=100"
                     ]
                     
                     create_result = subprocess.run(
