@@ -1,6 +1,8 @@
 # Serial Port Splitter
 
-![Git Screenshot](https://github.com/user-attachments/assets/6c6aea1b-2b3d-4ad0-81f4-0a9b8f3df953)
+<img width="1366" height="736" alt="serialsplit_screen_01" src="https://github.com/user-attachments/assets/df9b9883-4624-4aae-bc99-fd63e6d38b30" />
+
+<img width="1356" height="732" alt="serialsplit_screen_02" src="https://github.com/user-attachments/assets/8ee71ca9-708f-41b1-a143-f765c842f9ac" />
 
 A professional Python PyQt6 GUI application for managing virtual serial ports using `com0com` and `hub4com`. This application provides a comprehensive interface for creating virtual serial port pairs and routing data between multiple ports, offering similar functionality to commercial products like FabulaTech's Serial Port Splitter.
 
