@@ -4,7 +4,7 @@
 
 <img width="1356" height="732" alt="serialsplit_screen_02" src="https://github.com/user-attachments/assets/8ee71ca9-708f-41b1-a143-f765c842f9ac" />
 
-A professional Python PyQt6 GUI application for managing virtual serial ports using `com0com` and `hub4com`. This application provides a comprehensive interface for creating virtual serial port pairs and routing data between multiple ports, offering similar functionality to commercial products like FabulaTech's Serial Port Splitter.
+A Python based PyQt6 GUI application for managing virtual serial ports using `com0com` and `hub4com`. This application provides a interface for creating virtual serial port pairs and routing data between multiple ports, offering similar functionality to commercial products like FabulaTech's Serial Port Splitter.
 
 ## Key Features
 
@@ -19,13 +19,7 @@ A professional Python PyQt6 GUI application for managing virtual serial ports us
 - **Flexible Baud Rates**: Different baud rates for each port connection
 - **Handshake Control**: CTS handshaking and flow control options
 - **Command Preview**: Review hub4com commands before execution
-
-### Modern Interface
-- **Dark Theme**: Professional dark UI with SVG icons
-- **Responsive Design**: Adaptive layout for different screen sizes
-- **System Tray**: Background operation with system tray integration
-- **Contextual Help**: Built-in help system with detailed guides
-
+- 
 ### Port Detection & Testing
 - **Smart Classification**: Distinguishes between physical, virtual, and Moxa ports
 - **Port Testing**: Comprehensive port diagnostics and parameter detection
@@ -33,26 +27,11 @@ A professional Python PyQt6 GUI application for managing virtual serial ports us
 
 ## Installation & Setup
 
-### Prerequisites
-- Windows 10/11 (required for com0com integration)
-- Python 3.8 or higher
-- com0com virtual serial port driver
-
-### Dependencies
-```bash
-pip install PyQt6 PyQt6-SVG pyserial
-```
-
 ### Required External Tools
 - **com0com**: Virtual serial port driver (auto-detected at `C:\Program Files (x86)\com0com\setupc.exe`)
 - **hub4com**: Serial port routing utility (bundled with application)
 
 ## Usage
-
-### Run from Source
-```bash
-python main.py
-```
 
 ### Build Executable
 ```bash
@@ -72,8 +51,8 @@ Both pairs include:
 ## Architecture
 
 ### Core Components
-- **`main.py`**: Application entry point with system tray integration
-- **`core/core.py`**: Business logic layer with threading support
+- **`main.py`**: Entry point with system tray integration
+- **`core/core.py`**: Logic layer with threading support
   - `ResponsiveWindowManager`: Adaptive UI sizing
   - `PortScanner`: Windows registry-based port detection
   - `Hub4comProcess`: Subprocess management for hub4com
@@ -102,13 +81,6 @@ Both pairs include:
 - Comprehensive error reporting
 - Timeout handling for subprocess operations
 - Graceful fallback when dependencies unavailable
-
-## System Requirements
-
-- **OS**: Windows 10/11 (for full functionality)
-- **Python**: 3.8+
-- **Dependencies**: PyQt6, PyQt6-SVG, pyserial (optional)
-- **External Tools**: com0com driver, hub4com utility
 
 ## Use Cases
 
