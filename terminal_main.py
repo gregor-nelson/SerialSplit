@@ -14,7 +14,7 @@ from PyQt6.QtGui import QPalette, QColor, QIcon, QPixmap, QPainter, QFontDatabas
 from PyQt6.QtCore import Qt, QTimer, QUrl, QRect
 from PyQt6.QtSvg import QSvgRenderer
 from ui.dialogs.terminal_dialog import SerialMonitorWindow
-from ui.theme.theme import ThemeManager, AppColors
+from ui.theme.theme import ThemeManager, AppColors, AppFonts
 
 # --- Clean GitHub SVG Icon ---
 GITHUB_ICON_SVG = """
@@ -209,47 +209,34 @@ def setup_terminal_dark_mode(app):
 
 
 class TerminalSplashScreen(QSplashScreen):
-    """Custom splash screen for Serial Terminal application"""
+    """Professional Windows-style splash screen for Serial Terminal"""
     
     def __init__(self, pixmap):
         super().__init__(pixmap)
         
-        # Safe window flags for maximum visibility without breaking anything
+        # Window flags for clean appearance
         self.setWindowFlags(
             Qt.WindowType.SplashScreen | 
             Qt.WindowType.FramelessWindowHint | 
-            Qt.WindowType.WindowStaysOnTopHint  # Always stays above other windows
+            Qt.WindowType.WindowStaysOnTopHint
         )
         
-        # Status and animation state
-        self.status_text = "Loading..."
-        self.loading_dots = 0
+        # Status and progress tracking
+        self.status_text = "Loading components..."
+        self.progress = 0
         self.version_text = "Version 1.0"
         
-        # GitHub profile URL (replace with your GitHub username)
-        self.github_url = "https://github.com/gregor-nelson"  # Replace with your GitHub profile
-        self.github_icon_rect = QRect()  # Will be set in paintEvent
-        self.github_hovered = False
-        
-        # Animation timer
-        self.animation_timer = QTimer()
-        self.animation_timer.timeout.connect(self.update_animation)
-        self.animation_timer.start(500)  # Update every 500ms
-        
-        # Enable mouse tracking for hover effects
-        self.setMouseTracking(True)
-        
-        # Apply dark theme styling
+        # Apply professional theme styling
         self.setStyleSheet(f"""
             QSplashScreen {{
                 background-color: {AppColors.BACKGROUND_LIGHT};
-                border: 2px solid {AppColors.ACCENT_BLUE};
+                border: 1px solid {AppColors.BORDER_DEFAULT};
             }}
         """)
     
-    def update_animation(self):
-        """Update loading animation dots"""
-        self.loading_dots = (self.loading_dots + 1) % 4
+    def set_progress(self, value):
+        """Set progress value (0-100)"""
+        self.progress = max(0, min(100, value))
         self.update()
     
     def update_status(self, status):
@@ -258,7 +245,7 @@ class TerminalSplashScreen(QSplashScreen):
         self.update()
     
     def paintEvent(self, event):
-        """Custom paint event to draw splash screen content"""
+        """Professional Windows-style splash screen paint event"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
@@ -270,128 +257,52 @@ class TerminalSplashScreen(QSplashScreen):
         # Draw background
         painter.fillRect(rect, QColor(AppColors.BACKGROUND_LIGHT))
         
-        # Draw terminal icon (centered, scaled)
-        icon_size = 120
-        icon_x = (width - icon_size) // 2
-        icon_y = 40
-        
-        # Render terminal icon
-        svg_bytes = TERMINAL_ICON_SVG.encode('utf-8')
-        renderer = QSvgRenderer(svg_bytes)
-        icon_pixmap = QPixmap(icon_size, icon_size)
-        icon_pixmap.fill(Qt.GlobalColor.transparent)
-        icon_painter = QPainter(icon_pixmap)
-        renderer.render(icon_painter)
-        icon_painter.end()
-        
-        painter.drawPixmap(icon_x, icon_y, icon_pixmap)
-        
-        # Draw title (reduced size)
-        title_font = QFont("Segoe UI", 20, QFont.Weight.Bold)  # Reduced from 24 to 20
-        painter.setFont(title_font)
+        # Application name in top-left (no icon)
+        name_font = QFont(AppFonts.DEFAULT_FAMILY, 12, QFont.Weight.Medium)  # 12pt matches CAPTION_SIZE
+        painter.setFont(name_font)
         painter.setPen(QColor(AppColors.TEXT_DEFAULT))
+        painter.drawText(20, 32, "Serial Terminal")
         
-        title_rect = painter.fontMetrics().boundingRect("Serial Terminal")
-        title_x = (width - title_rect.width()) // 2
-        title_y = icon_y + icon_size + 30
-        
-        painter.drawText(title_x, title_y, "Serial Terminal")
-        
-        # Draw version
-        version_font = QFont("Segoe UI", 11)
+        # Version text below name using theme font sizes
+        version_font = QFont(AppFonts.DEFAULT_FAMILY, 9)  # 9pt matches DEFAULT_SIZE
         painter.setFont(version_font)
-        painter.setPen(QColor(AppColors.TEXT_DEFAULT  ))
+        painter.setPen(QColor(AppColors.TEXT_DISABLED))  # Use theme disabled color for muted text
+        painter.drawText(20, 48, self.version_text)
         
-        version_rect = painter.fontMetrics().boundingRect(self.version_text)
-        version_x = (width - version_rect.width()) // 2
-        version_y = title_y + 35
-        
-        painter.drawText(version_x, version_y, self.version_text)
-        
-        # Draw GitHub icon (clickable)
-        github_icon_size = 20
-        github_x = (width - github_icon_size) // 2
-        github_y = version_y + 25
-        
-        # Set the clickable area for the GitHub icon
-        self.github_icon_rect = QRect(github_x, github_y, github_icon_size, github_icon_size)
-        
-        # Choose icon color based on hover state
-        github_color = AppColors.ACCENT_BLUE if self.github_hovered else AppColors.TEXT_PRIMARY
-        
-        # Render GitHub icon
-        github_svg = GITHUB_ICON_SVG.format(color=github_color)
-        github_svg_bytes = github_svg.encode('utf-8')
-        github_renderer = QSvgRenderer(github_svg_bytes)
-        github_pixmap = QPixmap(github_icon_size, github_icon_size)
-        github_pixmap.fill(Qt.GlobalColor.transparent)
-        github_painter = QPainter(github_pixmap)
-        github_renderer.render(github_painter)
-        github_painter.end()
-        
-        painter.drawPixmap(github_x, github_y, github_pixmap)
-        
-        # Draw loading animation (positioned with more space from GitHub icon)
-        loading_font = QFont("Segoe UI", 12)
-        painter.setFont(loading_font)
+        # Status text (loading message) using theme font sizes
+        status_font = QFont(AppFonts.DEFAULT_FAMILY, 9)  # 9pt matches DEFAULT_SIZE
+        painter.setFont(status_font)
         painter.setPen(QColor(AppColors.ACCENT_BLUE))
+        painter.drawText(20, height - 45, self.status_text)
         
-        # Create animated loading text
-        dots = "." * self.loading_dots
-        loading_text = f"{self.status_text}{dots}"
-        
-        loading_rect = painter.fontMetrics().boundingRect(loading_text)
-        loading_x = (width - loading_rect.width()) // 2
-        loading_y = github_y + 60  # Increased gap from GitHub icon
-        
-        painter.drawText(loading_x, loading_y, loading_text)
-        
-        # Draw loading indicator bar
-        bar_width = 200
-        bar_height = 4
-        bar_x = (width - bar_width) // 2
-        bar_y = loading_y + 25
+        # Progress bar
+        bar_width = width - 40
+        bar_height = 2
+        bar_x = 20
+        bar_y = height - 25
         
         # Background bar
         painter.fillRect(bar_x, bar_y, bar_width, bar_height, QColor(AppColors.BACKGROUND_WHITE))
         
-        # Animated progress bar
-        progress_width = int(bar_width * (self.loading_dots + 1) / 4)
+        # Progress bar fill
+        progress_width = int(bar_width * self.progress / 100)
         painter.fillRect(bar_x, bar_y, progress_width, bar_height, QColor(AppColors.ACCENT_BLUE))
-        
-        # Note: Footer is drawn after version text above
         
         painter.end()
     
     def mousePressEvent(self, event):
-        """Handle mouse clicks on the splash screen"""
-        if event.button() == Qt.MouseButton.LeftButton:
-            if self.github_icon_rect.contains(event.pos()):
-                # Open GitHub profile
-                QDesktopServices.openUrl(QUrl(self.github_url))
+        """Handle mouse clicks (minimal for professional appearance)"""
         super().mousePressEvent(event)
-    
-    def mouseMoveEvent(self, event):
-        """Handle mouse movement for hover effects"""
-        old_hovered = self.github_hovered
-        self.github_hovered = self.github_icon_rect.contains(event.pos())
-        
-        # Update cursor and repaint if hover state changed
-        if self.github_hovered != old_hovered:
-            self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor) if self.github_hovered else QCursor(Qt.CursorShape.ArrowCursor))
-            self.update()
-        
-        super().mouseMoveEvent(event)
     
     def finish_loading(self):
         """Clean up splash screen"""
-        self.animation_timer.stop()
+        pass
 
 
 def create_splash_screen():
-    """Create and return the splash screen"""
-    # Create a pixmap for the splash screen background (adjusted for GitHub icon)
-    splash_pixmap = QPixmap(400, 400)
+    """Create and return the professional splash screen"""
+    # Create a smaller, professional splash screen (320x180px)
+    splash_pixmap = QPixmap(320, 180)
     splash_pixmap.fill(Qt.GlobalColor.transparent)
     
     # Create splash screen
@@ -443,8 +354,9 @@ def main():
     app.setOrganizationName("SerialSplit")
     app.setOrganizationDomain("serialsplit.local")
     
-    # Update splash status
-    splash.update_status("Initializing theme")
+    # Update splash status with progress
+    splash.update_status("Initializing theme...")
+    splash.set_progress(20)
     app.processEvents()
     
     # Apply dark mode palette
@@ -457,14 +369,16 @@ def main():
     # load_terminal_fonts()
     
     # Update splash status
-    splash.update_status("Scanning serial ports")
+    splash.update_status("Scanning serial ports...")
+    splash.set_progress(50)
     app.processEvents()
     
     # Create terminal icon
     terminal_icon = create_terminal_icon()
     
     # Update splash status
-    splash.update_status("Loading terminal interface")
+    splash.update_status("Loading interface...")
+    splash.set_progress(80)
     app.processEvents()
     
     # Create and configure terminal window
@@ -473,7 +387,8 @@ def main():
     terminal_window.setWindowTitle("Serial Terminal")
     
     # Final splash status
-    splash.update_status("Loading")
+    splash.update_status("Loading...")
+    splash.set_progress(100)
     app.processEvents()
     
     # Minimum splash display time (for branding)
