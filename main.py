@@ -129,7 +129,7 @@ APP_ICON_SVG = """
 
 def load_splash_icon():
     """Load the splash screen icon from icon.svg file"""
-    icon_path = Path(__file__).parent / "icon.svg"
+    icon_path = Path(__file__).parent / "assets/icon.svg"
     
     if not icon_path.exists():
         print("Warning: icon.svg not found, using embedded icon")
